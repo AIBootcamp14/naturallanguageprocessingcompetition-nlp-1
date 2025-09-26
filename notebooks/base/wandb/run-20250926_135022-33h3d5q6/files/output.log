@@ -1,0 +1,18 @@
+---------- Make training arguments complete ----------
+---------- Make trainer ----------
+---------- Make trainer complete ----------
+/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/transformers/trainer.py:645: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
+  self.scaler = torch.cuda.amp.GradScaler()
+/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/transformers/trainer.py:2664: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  else torch.cuda.amp.autocast(cache_enabled=cache_enabled, dtype=self.amp_dtype)
+------------------------------------------------------------------------------------------------------------------------------------------------------
+PRED:  #Person1# 은 천식 검사를 위해 폐 전문의에게 천식 검사를 위해 폐 전문의에게 가보시는 게 좋다고 합니다.
+GOLD: #Person2# 는 숨쉬기 어려워합니다. 의사는 #Person2# 에게 증상을 확인하고, 천식 검사를 위해 폐 전문의에게 가볼 것을 권합니다.
+------------------------------------------------------------------------------------------------------------------------------------------------------
+PRED:   야 Jimmy는 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게 #Person2#에게
+GOLD: #Person1# 는 Jimmy를 운동하러 초대하고 팔과 복근 운동을 하도록 설득합니다.
+------------------------------------------------------------------------------------------------------------------------------------------------------
+PRED:  #Person2# 는 #Person2#에게 과일이랑 채소, 닭고기를 먹으라고 제안합니다.
+GOLD: #Person1# 은 건강에 안 좋은 음식을 그만 먹기로 결심하고, #Person2# 는 자신의 건강한 식단을 #Person1# 에게 공유합니다.
+/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/transformers/trainer.py:2664: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.
+  else torch.cuda.amp.autocast(cache_enabled=cache_enabled, dtype=self.amp_dtype)
