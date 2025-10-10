@@ -2,27 +2,39 @@
 시각화 모듈
 """
 
-from .base_visualizer import SimpleVisualizer, setup_korean_font, create_organized_output_structure
-from .training_viz import create_training_visualizations
-from .inference_viz import create_inference_visualizations
-from .optimization_viz import create_optimization_visualizations
-from .output_manager import ExperimentOutputManager, VisualizationIntegrator
+# 실제 존재하는 클래스와 함수만 import
+try:
+    from .base_visualizer import SimpleVisualizer, setup_korean_font, create_organized_output_structure
+except ImportError:
+    pass
 
-# 호환성을 위한 별칭들
-from .training_viz import visualize_training_pipeline
-from .inference_viz import visualize_inference_pipeline
-from .optimization_viz import visualize_optimization_pipeline
+try:
+    from .training_viz import TrainingVisualizer
+except ImportError:
+    pass
+
+try:
+    from .inference_viz import InferenceVisualizer
+except ImportError:
+    pass
+
+try:
+    from .optimization_viz import OptimizationVisualizer
+except ImportError:
+    pass
+
+try:
+    from .output_manager import ExperimentOutputManager, VisualizationIntegrator
+except ImportError:
+    pass
 
 __all__ = [
     'SimpleVisualizer',
-    'setup_korean_font',
-    'create_organized_output_structure',
-    'create_training_visualizations',
-    'create_inference_visualizations', 
-    'create_optimization_visualizations',
-    'visualize_training_pipeline',
-    'visualize_inference_pipeline',
-    'visualize_optimization_pipeline',
+    'TrainingVisualizer',
+    'InferenceVisualizer',
+    'OptimizationVisualizer',
     'ExperimentOutputManager',
-    'VisualizationIntegrator'
+    'VisualizationIntegrator',
+    'setup_korean_font',
+    'create_organized_output_structure'
 ]
