@@ -1,0 +1,29 @@
+[2025-10-10 09:04:02] ==================================================
+[2025-10-10 09:04:02] K-Fold Cross Validation Experiment
+[2025-10-10 09:04:02] Timestamp: 20251010_090402
+[2025-10-10 09:04:02] Folds: 5
+[2025-10-10 09:04:02] ==================================================
+[2025-10-10 09:04:02] KFold configured:
+[2025-10-10 09:04:02]   - Splits: 5
+[2025-10-10 09:04:02]   - Shuffle: True
+[2025-10-10 09:04:02]   - Random State: 42
+[2025-10-10 09:04:02] Loading data from config path:
+[2025-10-10 09:04:02]   - Train: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/train.csv
+[2025-10-10 09:04:02] 
+Data loaded: 12457 samples
+[2025-10-10 09:04:02] Fold 1: Train=9965, Val=2492
+[2025-10-10 09:04:02] Fold 2: Train=9965, Val=2492
+[2025-10-10 09:04:02] Fold 3: Train=9966, Val=2491
+[2025-10-10 09:04:02] Fold 4: Train=9966, Val=2491
+[2025-10-10 09:04:02] Fold 5: Train=9966, Val=2491
+[2025-10-10 09:04:02] 
+GPU: NVIDIA GeForce RTX 4090
+[2025-10-10 09:04:02] GPU Tier: LOW
+[2025-10-10 09:04:02] Will clear GPU cache between folds
+[2025-10-10 09:04:02] 
+Starting K-Fold Cross Validation...
+[2025-10-10 09:04:02] --------------------------------------------------
+[2025-10-10 09:04:02] 
+=== Training Fold 1/5 ===
+[2025-10-10 09:04:02] GPU cache cleared
+[2025-10-10 09:04:02] Fold 1 training would start here...

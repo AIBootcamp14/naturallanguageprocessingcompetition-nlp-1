@@ -1,0 +1,214 @@
+# 단일 모델 실험 설정 파일
+# SOLAR-10.7B 또는 Polyglot-Ko 단일 모델 최적화
+
+# 경로 설정
+paths:
+  data_dir: "../../../data/raw"  # 원본 데이터 경로
+  train_file: "../../../data/raw/train.csv"
+  dev_file: "../../../data/raw/dev.csv"
+  test_file: "../../../data/raw/test.csv"
+  output_dir: "./models/single_model"
+  log_dir: "./logs/single_model"
+  submission_dir: "./submissions/single_model"
+  visualization_dir: "./logs/single_model/visualizations"
+  cache_dir: "./cache"
+
+# 모델 설정 (여러 모델 중 선택)
+models:
+  solar:
+    name: "upstage/SOLAR-10.7B-Instruct-v1.0"
+    model_type: "llm"
+    use_lora: true
+    lora_r: 16
+    lora_alpha: 32
+    lora_dropout: 0.1
+    load_in_8bit: true
+    max_input_length: 1024
+    max_target_length: 150
+
+  polyglot:
+    name: "EleutherAI/polyglot-ko-12.8b"
+    model_type: "llm"
+    use_lora: true
+    lora_r: 8
+    lora_alpha: 16
+    lora_dropout: 0.05
+    load_in_8bit: true
+    max_input_length: 1024
+    max_target_length: 150
+
+  kullm:
+    name: "nlpai-lab/kullm-v2"
+    model_type: "llm"
+    use_lora: true
+    lora_r: 8
+    lora_alpha: 16
+    lora_dropout: 0.1
+    load_in_4bit: true
+    max_input_length: 768
+    max_target_length: 128
+
+# 현재 실험할 모델 선택
+current_model: "solar"  # solar, polyglot, kullm 중 선택
+
+# LoRA/QLoRA 설정
+peft:
+  task_type: "CAUSAL_LM"
+  target_modules:
+    - "q_proj"
+    - "v_proj"
+    - "k_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  inference_mode: false
+
+# 학습 설정
+training:
+  seed: 42
+  num_epochs: 5
+  batch_size: 4  # LLM은 메모리 제약으로 작게 설정
+  gradient_accumulation_steps: 8  # 실제 배치 크기 = 4 * 8 = 32
+  learning_rate: 2e-5
+  warmup_steps: 500
+  weight_decay: 0.01
+  max_grad_norm: 0.3
+
+  # 옵티마이저
+  optimizer: "paged_adamw_8bit"  # 메모리 효율적인 옵티마이저
+  adam_epsilon: 1e-8
+
+  # 스케줄러
+  scheduler_type: "cosine"
+
+  # 조기 종료
+  early_stopping_patience: 3
+  early_stopping_threshold: 0.001
+
+  # 체크포인트
+  save_strategy: "steps"
+  save_steps: 500
+  evaluation_strategy: "steps"
+  eval_steps: 500
+  save_total_limit: 3
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_rouge_l"
+
+  # Gradient Checkpointing (메모리 절약)
+  gradient_checkpointing: true
+
+  # Mixed Precision
+  fp16: true
+  fp16_opt_level: "O2"
+
+# Instruction 템플릿
+prompt_template:
+  system_prompt: "당신은 대화를 요약하는 전문가입니다. 주어진 대화를 간결하고 정확하게 요약해주세요."
+
+  instruction_format: |
+    ### Instruction:
+    다음 대화를 3-5문장으로 요약해주세요. 핵심 내용과 중요한 정보를 포함시켜주세요.
+
+    ### Input:
+    {dialogue}
+
+    ### Response:
+    {summary}
+
+  inference_format: |
+    ### Instruction:
+    다음 대화를 3-5문장으로 요약해주세요. 핵심 내용과 중요한 정보를 포함시켜주세요.
+
+    ### Input:
+    {dialogue}
+
+    ### Response:
+
+# 평가 설정
+evaluation:
+  metrics:
+    - "rouge"
+    - "bleu"
+  rouge_types:
+    - "rouge-1"
+    - "rouge-2"
+    - "rouge-l"
+  generation_config:
+    max_new_tokens: 150
+    num_beams: 4
+    no_repeat_ngram_size: 3
+    temperature: 0.7
+    top_p: 0.9
+    top_k: 50
+    do_sample: true
+
+# 추론 설정
+inference:
+  batch_size: 8
+  max_new_tokens: 150
+  min_length: 20
+  num_beams: 4
+  no_repeat_ngram_size: 3
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+  do_sample: true
+  early_stopping: true
+
+# Solar API 설정 (비교용)
+solar_api:
+  enabled: false
+  api_key: "up_rMJWNzzBi6YsD47RhwXPWZrZ0JKsT"
+  model: "solar-1-mini-chat"
+  max_tokens: 150
+  temperature: 0.7
+  top_p: 0.9
+
+# WandB 설정
+wandb:
+  project: "nlp-competition"
+  entity: "ieyeppo"
+  name: "single-model-{model_name}"
+  tags:
+    - "single_model"
+    - "llm"
+    - "lora"
+  notes: "단일 LLM 모델 최적화 실험"
+  mode: "online"
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  save_to_file: true
+  log_every_n_steps: 50
+  use_notebook_logger: true
+  notebook_logger_path: "../../../../src/logging/notebook_logger.py"
+
+# GPU 설정
+gpu:
+  device: "cuda"
+  cuda_device: 0
+  mixed_precision: true
+  memory_fraction: 0.95
+  empty_cache_steps: 100
+  use_gpu_optimization: true
+  gpu_check_path: "../../../../src/utils/gpu_optimization/team_gpu_check.py"
+
+# 실험 추적
+experiment:
+  name: "single_model_{model_name}_lora"
+  description: "단일 LLM 모델 LoRA 파인튜닝"
+  version: "1.0.0"
+  timestamp: true
+  save_config: true
+
+# Optuna 하이퍼파라미터 (나중에 사용)
+optuna:
+  enabled: false
+  n_trials: 20
+  study_name: "single_model_optimization"
+  storage: "sqlite:///optuna_single_model.db"
+  direction: "maximize"
+  metric: "rouge_l"

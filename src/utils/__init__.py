@@ -23,7 +23,7 @@ from .config import set_seed                                  # 랜덤 시드 �
 from .config import set_seed                                # 랜덤 시드 고정 함수
 
 # ------------------------- GPU 최적화 함수 Import ------------------------- #
-from .gpu_optimization import check_gpu_compatibility       # GPU 호환성 체크 함수
+from .gpu_optimization import check_gpu_tier       # GPU 체크 함수
 
 # ------------------------- 외부 노출 함수 정의 ------------------------- #
 __all__ = [                                                 # 패키지에서 외부로 노출할 함수들
@@ -43,5 +43,5 @@ __all__ = [                                                 # 패키지에서 �
     'set_seed',                                             # 랜덤 시드 고정
     
     # GPU 관련
-    'check_gpu_compatibility',                              # GPU 호환성 체크
+    'check_gpu_tier',                              # GPU tier 체크
 ]
