@@ -167,7 +167,7 @@ logging:
   save_to_file: true
   log_every_n_steps: 50
   use_notebook_logger: true
-  notebook_logger_path: "../../../../src/logging/notebook_logger.py"
+  notebook_logger_path: "../../../src/logging/notebook_logger.py"
 
   # Fold별 로그 파일
   separate_fold_logs: true
@@ -180,7 +180,7 @@ gpu:
   memory_fraction: 0.95
   empty_cache_between_folds: true  # fold 간 GPU 메모리 정리
   use_gpu_optimization: true
-  gpu_check_path: "../../../../src/utils/gpu_optimization/team_gpu_check.py"
+  gpu_check_path: "../../../src/utils/gpu_optimization/team_gpu_check.py"
 
 # 실험 추적
 experiment:
