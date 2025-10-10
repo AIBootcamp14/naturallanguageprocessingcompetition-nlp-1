@@ -1,0 +1,138 @@
+# 베이스라인 구현 설정 파일
+# KoBART 기반 기본 모델 학습
+
+# 경로 설정
+paths:
+  data_dir: "../../../data/raw"  # 원본 데이터 경로
+  train_file: "../../../data/raw/train.csv"
+  dev_file: "../../../data/raw/dev.csv"
+  test_file: "../../../data/raw/test.csv"
+  output_dir: "./models/baseline"
+  log_dir: "./logs/baseline"
+  submission_dir: "./submissions/baseline"
+  visualization_dir: "./logs/baseline/visualizations"
+
+# 모델 설정
+model:
+  name: "digit82/kobart-summarization"
+  model_type: "bart"
+  max_input_length: 512
+  max_target_length: 100
+  use_cache: true
+
+# 토크나이저 설정
+tokenizer:
+  name: "digit82/kobart-summarization"
+  max_length: 512
+  padding: "max_length"
+  truncation: true
+  special_tokens:
+    - "#Person1#"
+    - "#Person2#"
+    - "#Person3#"
+    - "#Person4#"
+    - "#Person5#"
+    - "#Person6#"
+    - "#Person7#"
+    - "#PhoneNumber#"
+    - "#Address#"
+    - "#PassportNumber#"
+    - "#SSN#"
+    - "#CreditCard#"
+    - "#CarNumber#"
+    - "#Email#"
+
+# 학습 설정
+training:
+  seed: 42
+  num_epochs: 10
+  batch_size: 16
+  gradient_accumulation_steps: 2
+  learning_rate: 5e-5
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_grad_norm: 1.0
+
+  # 옵티마이저
+  optimizer: "adamw"
+  adam_epsilon: 1e-8
+
+  # 스케줄러
+  scheduler_type: "linear"
+
+  # 조기 종료
+  early_stopping_patience: 3
+  early_stopping_threshold: 0.001
+
+  # 체크포인트
+  save_strategy: "epoch"
+  evaluation_strategy: "epoch"
+  save_total_limit: 3
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_rouge_l"
+
+  # Mixed Precision
+  fp16: true
+  fp16_opt_level: "O1"
+
+# 평가 설정
+evaluation:
+  metrics:
+    - "rouge"
+  rouge_types:
+    - "rouge-1"
+    - "rouge-2"
+    - "rouge-l"
+  num_beams: 4
+  no_repeat_ngram_size: 2
+  length_penalty: 1.0
+
+# 추론 설정
+inference:
+  batch_size: 32
+  num_beams: 4
+  max_length: 100
+  min_length: 10
+  no_repeat_ngram_size: 2
+  length_penalty: 1.0
+  early_stopping: true
+  temperature: 1.0
+  top_k: 50
+  top_p: 0.95
+
+# WandB 설정
+wandb:
+  project: "nlp-competition"
+  entity: "ieyeppo"
+  name: "baseline-kobart"
+  tags:
+    - "baseline"
+    - "kobart"
+  notes: "KoBART 베이스라인 실험"
+  mode: "online"  # online, offline, disabled
+
+# API 키
+api_keys:
+  upstage_api_key: "up_rMJWNzzBi6YsD47RhwXPWZrZ0JKsT"
+  huggingface_token: ""  # 필요시 추가
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  save_to_file: true
+  log_every_n_steps: 100
+
+# GPU 설정
+gpu:
+  device: "cuda"
+  cuda_device: 0
+  mixed_precision: true
+  memory_fraction: 0.9
+
+# 실험 추적
+experiment:
+  name: "baseline_kobart_v1"
+  description: "KoBART 기반 베이스라인 모델"
+  version: "1.0.0"
+  timestamp: true

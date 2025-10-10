@@ -1,0 +1,282 @@
+# 다중 모델 앙상블 설정 파일
+# 5개 모델을 활용한 앙상블 전략
+
+# 경로 설정
+paths:
+  data_dir: "../../../data/raw"  # 원본 데이터 경로
+  train_file: "../../../data/raw/train.csv"
+  dev_file: "../../../data/raw/dev.csv"
+  test_file: "../../../data/raw/test.csv"
+  output_dir: "./models/multi_model"
+  log_dir: "./logs/multi_model"
+  submission_dir: "./submissions/multi_model"
+  visualization_dir: "./logs/multi_model/visualizations"
+  cache_dir: "./cache/multi_model"
+
+# 앙상블 모델 구성
+ensemble_models:
+  # 모델 1: SOLAR (최고 성능)
+  solar:
+    name: "upstage/SOLAR-10.7B-Instruct-v1.0"
+    weight: 0.30  # 앙상블 가중치
+    enabled: true
+    use_lora: true
+    lora_config:
+      r: 16
+      alpha: 32
+      dropout: 0.1
+    load_in_8bit: true
+    max_length: 1024
+
+  # 모델 2: Polyglot-Ko
+  polyglot:
+    name: "EleutherAI/polyglot-ko-12.8b"
+    weight: 0.25
+    enabled: true
+    use_lora: true
+    lora_config:
+      r: 8
+      alpha: 16
+      dropout: 0.05
+    load_in_8bit: true
+    max_length: 1024
+
+  # 모델 3: KULLM-v2
+  kullm:
+    name: "nlpai-lab/kullm-v2"
+    weight: 0.20
+    enabled: true
+    use_lora: true
+    lora_config:
+      r: 8
+      alpha: 16
+      dropout: 0.1
+    load_in_4bit: true
+    max_length: 768
+
+  # 모델 4: KoBART
+  kobart:
+    name: "digit82/kobart-summarization"
+    weight: 0.15
+    enabled: true
+    use_lora: false  # BART는 LoRA 미사용
+    model_type: "seq2seq"
+    max_length: 512
+
+  # 모델 5: KoAlpaca
+  koalpaca:
+    name: "beomi/KoAlpaca-Polyglot-12.8B"
+    weight: 0.10
+    enabled: true
+    use_lora: true
+    lora_config:
+      r: 8
+      alpha: 16
+      dropout: 0.1
+    load_in_8bit: true
+    max_length: 768
+
+# 앙상블 전략
+ensemble_strategy:
+  # 기본 방법
+  method: "weighted_average"  # weighted_average, voting, stacking, blending
+
+  # Weighted Average 설정
+  weighted_average:
+    normalize_weights: true
+    optimization_metric: "rouge_l"  # 가중치 최적화 메트릭
+
+  # Voting 설정
+  voting:
+    type: "soft"  # soft, hard
+    threshold: 0.5
+
+  # Stacking 설정
+  stacking:
+    meta_model: "ridge"  # ridge, lgbm, neural_network
+    cv_folds: 3
+    use_probabilities: true
+
+  # Blending 설정
+  blending:
+    validation_ratio: 0.2
+    blend_features: ["rouge_scores", "confidence", "length_ratio"]
+
+# TTA (Text Test Augmentation) 설정
+tta:
+  enabled: true
+  num_augmentations: 3
+
+  techniques:
+    paraphrase:
+      enabled: true
+      model: "lcw99/t5-base-korean-paraphrase"
+      num_variants: 2
+
+    reorder:
+      enabled: true
+      preserve_meaning: true
+      max_permutations: 2
+
+    synonym:
+      enabled: false  # 한국어 동의어 사전 필요
+      similarity_threshold: 0.8
+
+  aggregation: "mean"  # mean, median, max
+
+# 학습 설정 (각 모델별)
+training:
+  seed: 42
+  num_epochs: 3
+  batch_size: 4
+  gradient_accumulation_steps: 8
+  learning_rate: 2e-5
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+
+  # 병렬 학습
+  parallel_training: false  # true면 모든 모델 동시 학습
+  sequential_training: true  # true면 순차적 학습
+
+  # 조기 종료
+  early_stopping_patience: 2
+  early_stopping_threshold: 0.001
+
+  # Mixed Precision
+  fp16: true
+  gradient_checkpointing: true
+
+# 추론 설정
+inference:
+  batch_size: 8
+
+  # 각 모델별 생성 설정
+  generation_config:
+    max_new_tokens: 150
+    min_length: 20
+    num_beams: 4
+    no_repeat_ngram_size: 3
+    temperature: 0.7
+    top_p: 0.9
+    do_sample: true
+
+  # 앙상블 추론
+  ensemble_inference:
+    run_parallel: true  # 병렬 추론
+    timeout: 60  # 모델당 최대 추론 시간 (초)
+    fallback_on_error: true  # 실패한 모델 제외하고 계속
+
+# 평가 설정
+evaluation:
+  metrics:
+    - "rouge"
+    - "bleu"
+    - "meteor"
+
+  # 개별 모델 평가
+  evaluate_individual: true
+  # 앙상블 평가
+  evaluate_ensemble: true
+
+  # 모델 선택 기준
+  model_selection:
+    metric: "rouge_l"
+    select_top_k: 3  # 상위 3개 모델만 최종 앙상블에 사용
+
+# Solar API 비교
+solar_api_comparison:
+  enabled: true
+  api_key: "up_rMJWNzzBi6YsD47RhwXPWZrZ0JKsT"
+  model: "solar-1-mini-chat"
+  use_as_baseline: true
+  include_in_ensemble: false  # API를 앙상블에 포함할지
+
+# WandB 설정
+wandb:
+  project: "nlp-competition"
+  entity: "ieyeppo"
+  name: "multi-model-ensemble"
+  tags:
+    - "ensemble"
+    - "multi_model"
+    - "tta"
+  notes: "5개 모델 앙상블 + TTA"
+  mode: "online"
+
+  # 각 모델별 로깅
+  log_individual_models: true
+  group: "ensemble_experiment"
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  format: "%(asctime)s - [%(model)s] - %(name)s - %(levelname)s - %(message)s"
+  save_to_file: true
+  log_every_n_steps: 50
+  use_notebook_logger: true
+  notebook_logger_path: "../../../../src/logging/notebook_logger.py"
+
+  # 모델별 로그 분리
+  separate_model_logs: true
+
+# GPU 설정
+gpu:
+  device: "cuda"
+  cuda_device: 0
+  mixed_precision: true
+  memory_fraction: 0.95
+
+  # 멀티 GPU 설정 (사용 가능한 경우)
+  multi_gpu:
+    enabled: false
+    device_ids: [0, 1]
+    strategy: "dp"  # dp, ddp
+
+  # 메모리 관리
+  empty_cache_between_models: true
+  use_gpu_optimization: true
+  gpu_check_path: "../../../../src/utils/gpu_optimization/team_gpu_check.py"
+
+# 실험 추적
+experiment:
+  name: "ensemble_5models_tta"
+  description: "5개 모델 앙상블 + TTA 전략"
+  version: "1.0.0"
+  timestamp: true
+
+  # 결과 저장
+  save_individual_predictions: true
+  save_ensemble_predictions: true
+  save_voting_details: true
+
+# 분석 및 시각화
+analysis:
+  # 모델 간 상관관계 분석
+  correlation_analysis: true
+  # 모델별 기여도 분석
+  contribution_analysis: true
+  # 어려운 샘플 분석
+  difficult_samples_analysis: true
+
+  # 시각화
+  visualizations:
+    - "model_performance_comparison"
+    - "ensemble_weight_distribution"
+    - "correlation_heatmap"
+    - "tta_effect_analysis"
+    - "error_analysis"
+
+# Optuna 최적화 (앙상블 가중치)
+optuna:
+  enabled: true
+  n_trials: 50
+  study_name: "ensemble_weight_optimization"
+  storage: "sqlite:///optuna_ensemble.db"
+  direction: "maximize"
+  metric: "rouge_l"
+
+  # 최적화할 파라미터
+  optimize:
+    - "model_weights"
+    - "generation_params"
+    - "tta_num_augmentations"

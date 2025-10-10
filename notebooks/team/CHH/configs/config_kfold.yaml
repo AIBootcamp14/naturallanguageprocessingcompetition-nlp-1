@@ -1,0 +1,208 @@
+# K-Fold 교차 검증 설정 파일
+# 5-Fold Cross Validation으로 모델 안정성 검증
+
+# 경로 설정
+paths:
+  data_dir: "../../../data/raw"  # 원본 데이터 경로
+  train_file: "../../../data/raw/train.csv"
+  dev_file: "../../../data/raw/dev.csv"
+  test_file: "../../../data/raw/test.csv"
+  output_dir: "./models/kfold"
+  log_dir: "./logs/kfold"
+  submission_dir: "./submissions/kfold"
+  visualization_dir: "./logs/kfold/visualizations"
+  cache_dir: "./cache/kfold"
+
+# K-Fold 설정
+kfold:
+  n_splits: 5
+  shuffle: true
+  random_state: 42
+  stratify: false  # 대화 요약은 회귀 태스크이므로 stratify 불필요
+
+  # Fold별 모델 저장
+  save_each_fold: true
+  save_best_fold_only: false
+
+  # 앙상블 설정
+  ensemble_method: "weighted_average"  # average, weighted_average, voting
+  fold_weights: "auto"  # auto 또는 수동 지정 [0.2, 0.2, 0.2, 0.2, 0.2]
+
+# 모델 설정 (K-Fold에 사용할 모델)
+model:
+  name: "upstage/SOLAR-10.7B-Instruct-v1.0"
+  model_type: "llm"
+  use_lora: true
+  lora_config:
+    r: 16
+    alpha: 32
+    dropout: 0.1
+    target_modules:
+      - "q_proj"
+      - "v_proj"
+      - "k_proj"
+      - "o_proj"
+  load_in_8bit: true
+  max_input_length: 1024
+  max_target_length: 150
+
+# 학습 설정
+training:
+  seed: 42
+  num_epochs_per_fold: 3  # 각 fold당 에폭 수
+  batch_size: 4
+  gradient_accumulation_steps: 8
+  learning_rate: 2e-5
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_grad_norm: 0.3
+
+  # 옵티마이저
+  optimizer: "paged_adamw_8bit"
+  adam_epsilon: 1e-8
+
+  # 스케줄러
+  scheduler_type: "cosine"
+
+  # 조기 종료 (각 fold별)
+  early_stopping_patience: 2
+  early_stopping_threshold: 0.001
+
+  # 체크포인트
+  save_strategy: "epoch"
+  evaluation_strategy: "epoch"
+  save_total_limit: 2  # fold당 2개씩만 저장
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_rouge_l"
+
+  # Gradient Checkpointing
+  gradient_checkpointing: true
+
+  # Mixed Precision
+  fp16: true
+  fp16_opt_level: "O2"
+
+# Prompt 설정
+prompt_template:
+  system_prompt: "당신은 대화 요약 전문가입니다."
+
+  instruction_format: |
+    ### 지시사항:
+    아래 대화를 읽고 핵심 내용을 3-5문장으로 요약하세요.
+
+    ### 대화:
+    {dialogue}
+
+    ### 요약:
+    {summary}
+
+# 평가 설정
+evaluation:
+  metrics:
+    - "rouge"
+  rouge_types:
+    - "rouge-1"
+    - "rouge-2"
+    - "rouge-l"
+
+  # Fold별 평가
+  evaluate_each_fold: true
+  aggregate_metrics: true  # 전체 fold의 평균 메트릭 계산
+
+  generation_config:
+    max_new_tokens: 150
+    num_beams: 4
+    no_repeat_ngram_size: 3
+    temperature: 0.7
+    top_p: 0.9
+
+# 추론 설정
+inference:
+  batch_size: 8
+
+  # 앙상블 추론
+  ensemble_strategy: "weighted_voting"
+  use_all_folds: true  # 모든 fold 모델 사용
+
+  generation_config:
+    max_new_tokens: 150
+    min_length: 20
+    num_beams: 4
+    no_repeat_ngram_size: 3
+    temperature: 0.7
+    top_p: 0.9
+    do_sample: true
+
+# Cross-Validation 분석
+cv_analysis:
+  # Fold별 성능 분석
+  analyze_variance: true  # fold 간 성능 분산 분석
+  identify_difficult_samples: true  # 어려운 샘플 식별
+
+  # 시각화
+  plot_fold_performance: true
+  plot_sample_difficulty: true
+  save_cv_report: true
+
+# WandB 설정
+wandb:
+  project: "nlp-competition"
+  entity: "ieyeppo"
+  name: "kfold-cv-{n_splits}fold"
+  tags:
+    - "kfold"
+    - "cross_validation"
+    - "solar"
+  notes: "K-Fold 교차 검증 실험"
+  mode: "online"
+
+  # Fold별 로깅
+  log_each_fold: true
+  group: "kfold_cv"
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  format: "%(asctime)s - [Fold %(fold)d] - %(name)s - %(levelname)s - %(message)s"
+  save_to_file: true
+  log_every_n_steps: 50
+  use_notebook_logger: true
+  notebook_logger_path: "../../../../src/logging/notebook_logger.py"
+
+  # Fold별 로그 파일
+  separate_fold_logs: true
+
+# GPU 설정
+gpu:
+  device: "cuda"
+  cuda_device: 0
+  mixed_precision: true
+  memory_fraction: 0.95
+  empty_cache_between_folds: true  # fold 간 GPU 메모리 정리
+  use_gpu_optimization: true
+  gpu_check_path: "../../../../src/utils/gpu_optimization/team_gpu_check.py"
+
+# 실험 추적
+experiment:
+  name: "kfold_cv_{n_splits}fold"
+  description: "K-Fold 교차 검증으로 모델 안정성 평가"
+  version: "1.0.0"
+  timestamp: true
+
+  # Fold별 결과 저장
+  save_fold_results: true
+  results_format: "json"  # json, csv, pickle
+
+# 재현성
+reproducibility:
+  seed: 42
+  deterministic: true
+  benchmark: false
+
+# 데이터 증강 (선택적)
+data_augmentation:
+  enabled: false
+  techniques:
+    - "paraphrase"
+    - "back_translation"
+  augmentation_ratio: 0.2  # 20% 증강

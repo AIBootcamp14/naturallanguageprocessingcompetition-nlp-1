@@ -1,110 +1,193 @@
-#!/usr/bin/env python3                              # Python3 실행 환경 지정
-# -*- coding: utf-8 -*-                             # UTF-8 인코딩 지정
 """
-GPU 호환성 빠른 체크 도구
-Quick GPU compatibility check for team members
+GPU 체크 및 최적화 유틸리티
+대화 요약 대회를 위한 GPU 설정 확인
 """
 
-# ------------------------- 라이브러리 Import ------------------------- #
-import torch                                        # PyTorch GPU 관련 함수
-import sys                                          # 시스템 종료 함수
+import torch
+import subprocess
+import os
+from typing import Dict, Optional, Tuple
 
-# ---------------------- GPU 호환성 체크 함수 ---------------------- #
-def check_gpu_compatibility():
-    print("🔍 팀 GPU 호환성 체크")                  # 체크 시작 메시지
-    print("=" * 40)                                # 구분선 출력
-    
-    # CUDA 사용 가능 여부 확인
-    if not torch.cuda.is_available():             # CUDA 사용 불가능한 경우
-        print("❌ CUDA가 사용 불가능합니다")        # 오류 메시지 출력
-        print("💡 해결책:")                       # 해결 방법 제목
-        print("   - NVIDIA 드라이버 설치 확인")     # 드라이버 체크 안내
-        print("   - CUDA 설치 확인")               # CUDA 설치 체크 안내
-        print("   - PyTorch CUDA 버전 확인")       # PyTorch 버전 체크 안내
-        return False                              # False 반환하고 종료
-    
-    # GPU 정보 수집 및 출력
-    device_count = torch.cuda.device_count()     # 사용 가능한 GPU 개수
-    print(f"✅ CUDA 사용 가능")                   # CUDA 사용 가능 메시지
-    print(f"🔧 GPU 개수: {device_count}")        # GPU 개수 출력
-    
-    #---------------- 각 GPU별 상세 정보 출력 ----------------#
-    # GPU 개수만큼 반복
-    for i in range(device_count):
-        device_name = torch.cuda.get_device_name(i)                                 # GPU 이름 가져오기
-        memory_gb = torch.cuda.get_device_properties(i).total_memory / (1024**3)    # 메모리 GB 계산
-        
-        print(f"\n📊 GPU {i}: {device_name}")       # GPU 번호와 이름 출력
-        print(f"💾 메모리: {memory_gb:.1f} GB")      # 메모리 크기 출력
-        
-        # GPU 성능 등급 분류 및 권장사항 제공
-        # 고급 GPU
-        if any(gpu in device_name for gpu in ['RTX 4090', 'RTX 4080', 'RTX 3090', 'A100', 'V100']):
-            tier = "🏆 HIGH-END"                                                        # 고급 등급 설정
-            batch_rec = "96-256 (224px), 80-128 (384px)"                                # 배치 크기 권장사항 (최적화됨)
-            note = "최고 성능! Multi-GPU 훈련 가능, 95% 안전 계수 적용"                     # 성능 메모
-        # 중급 GPU
-        elif any(gpu in device_name for gpu in ['RTX 3080', 'RTX 3070', 'RTX 4070']):
-            tier = "🥈 MID-RANGE"                                                       # 중급 등급 설정
-            batch_rec = "64-128 (224px), 32-64 (384px)"                                 # 배치 크기 권장사항 (최적화됨)
-            note = "우수한 성능! gradient_accumulation_steps=2 권장, 90% 안전 계수"        # 성능 메모
-        # 보급형 GPU
-        elif any(gpu in device_name for gpu in ['RTX 3060', 'RTX 2070', 'RTX 2080']):
-            tier = "🥉 BUDGET"                                                          # 보급형 등급 설정
-            batch_rec = "32-64 (224px), 16-32 (384px)"                                  # 배치 크기 권장사항 (최적화됨)
-            note = "적절한 성능! gradient_accumulation_steps=3-4 권장, 90% 안전 계수"       # 성능 메모
-        # 기타 GPU (저사양)
-        else:
-            tier = "⚠️ LOW-END"                                                         # 저사양 등급 설정
-            batch_rec = "16-32 (224px), 8-16 (384px)"                                   # 배치 크기 권장사항 (최적화됨)
-            note = "주의! mixed precision 비활성화, gradient_accumulation_steps=6-8 권장"  # 성능 메모
-        
-        print(f"🏷️ 등급: {tier}")               # GPU 등급 출력
-        print(f"📏 권장 배치: {batch_rec}")      # 권장 배치 크기 출력
-        print(f"💡 팁: {note}")                 # 사용 팁 출력
-    
-    # 사용자를 위한 권장 명령어 안내
-    print(f"\n🚀 다음 단계:")
-    print(f"   1. 자동 배치 크기 최적화:")                                                          # 1단계 안내
-    print(f"      python src/utils/gpu_optimization/auto_batch_size.py --config configs/train.yaml --test-only")  # 테스트 명령어
-    print(f"   2. 설정 파일 업데이트:")                                                             # 2단계 안내  
-    print(f"      python src/utils/gpu_optimization/auto_batch_size.py --config configs/train.yaml")              # 업데이트 명령어
-    print(f"   3. 훈련 시작:")                                                                     # 3단계 안내
-    print(f"      python src/training/train_main.py --config configs/train_highperf.yaml --mode highperf")  # 훈련 시작 명령어
-    
-    # PyTorch 환경 정보 출력
-    print(f"\n🐍 PyTorch 정보:")                                            # PyTorch 정보 제목
-    print(f"   버전: {torch.__version__}")                                  # PyTorch 버전 출력
-    print(f"   CUDA 지원: {'Yes' if torch.cuda.is_available() else 'No'}")  # CUDA 지원 여부
-    
-    # CUDA 사용 가능한 경우 추가 정보
-    if torch.cuda.is_available():                                           # CUDA 사용 가능하면
-        print(f"   CUDA 장치 개수: {torch.cuda.device_count()}")             # 장치 개수 출력
-    
-    # cuDNN 상태
-    print(f"   cuDNN 사용 가능: {'Yes' if torch.backends.cudnn.enabled else 'No'}")
-    
-    # 성공 시 True 반환
-    return True
 
-# ---------------------- 메인 실행 부분 ---------------------- #
-if __name__ == "__main__":                   # 스크립트 직접 실행 시
-    print("팀 협업용 GPU 호환성 체크 도구")     # 프로그램 제목 (한글)
-    print("Team GPU Compatibility Checker")  # 프로그램 제목 (영문)
-    print()                                  # 빈 줄 출력
-    
-    # 예외 처리 시작
-    try:
-        # GPU 호환성 체크 실행
-        success = check_gpu_compatibility()
-        
-        # 성공한 경우
-        if success:
-            print(f"\n✅ GPU 설정 완료! 팀 협업 준비 완료!")            # 성공 메시지
-        # 실패한 경우
+def check_gpu_tier() -> str:
+    """
+    현재 GPU의 tier를 확인하여 반환
+
+    Returns:
+        str: GPU tier (HIGH/MEDIUM/LOW/CPU)
+    """
+    if not torch.cuda.is_available():
+        return "CPU"
+
+    # GPU 메모리 확인 (GB 단위)
+    gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3
+    gpu_name = torch.cuda.get_device_name(0).lower()
+
+    # GPU tier 분류
+    if gpu_memory >= 40:  # A100, A6000 등
+        return "HIGH"
+    elif gpu_memory >= 24:  # RTX 3090, RTX 4090 등
+        return "MEDIUM"
+    elif gpu_memory >= 10:  # RTX 3060, T4 등
+        return "LOW"
+    else:
+        return "LOW"
+
+
+def get_gpu_info() -> Dict:
+    """
+    GPU 상세 정보를 반환
+
+    Returns:
+        Dict: GPU 정보 딕셔너리
+    """
+    info = {}
+
+    if torch.cuda.is_available():
+        info['available'] = True
+        info['device_count'] = torch.cuda.device_count()
+        info['current_device'] = torch.cuda.current_device()
+
+        for i in range(torch.cuda.device_count()):
+            device_info = {}
+            props = torch.cuda.get_device_properties(i)
+
+            device_info['name'] = props.name
+            device_info['total_memory_gb'] = props.total_memory / 1024**3
+            device_info['major'] = props.major
+            device_info['minor'] = props.minor
+            device_info['multi_processor_count'] = props.multi_processor_count
+
+            # 현재 사용중인 메모리
+            device_info['allocated_memory_gb'] = torch.cuda.memory_allocated(i) / 1024**3
+            device_info['reserved_memory_gb'] = torch.cuda.memory_reserved(i) / 1024**3
+
+            info[f'gpu_{i}'] = device_info
+    else:
+        info['available'] = False
+        info['device_count'] = 0
+
+    return info
+
+
+def get_optimal_batch_size(model_type: str = "kobart", gpu_tier: Optional[str] = None) -> int:
+    """
+    모델 타입과 GPU tier에 따른 최적 배치 크기 반환
+
+    Args:
+        model_type: 모델 종류 (kobart, solar, polyglot, kullm)
+        gpu_tier: GPU tier (None인 경우 자동 감지)
+
+    Returns:
+        int: 추천 배치 크기
+    """
+    if gpu_tier is None:
+        gpu_tier = check_gpu_tier()
+
+    # 모델별 GPU tier별 추천 배치 크기
+    batch_size_map = {
+        "kobart": {
+            "HIGH": 32,
+            "MEDIUM": 16,
+            "LOW": 8,
+            "CPU": 2
+        },
+        "solar": {
+            "HIGH": 8,
+            "MEDIUM": 4,
+            "LOW": 2,
+            "CPU": 1
+        },
+        "polyglot": {
+            "HIGH": 8,
+            "MEDIUM": 4,
+            "LOW": 2,
+            "CPU": 1
+        },
+        "kullm": {
+            "HIGH": 8,
+            "MEDIUM": 4,
+            "LOW": 2,
+            "CPU": 1
+        }
+    }
+
+    model_type = model_type.lower()
+    if model_type not in batch_size_map:
+        model_type = "kobart"  # 기본값
+
+    return batch_size_map[model_type].get(gpu_tier, 2)
+
+
+def setup_mixed_precision(gpu_tier: Optional[str] = None) -> Tuple[bool, str]:
+    """
+    GPU tier에 따른 mixed precision 설정 추천
+
+    Args:
+        gpu_tier: GPU tier (None인 경우 자동 감지)
+
+    Returns:
+        Tuple[bool, str]: (mixed precision 사용 여부, precision type)
+    """
+    if gpu_tier is None:
+        gpu_tier = check_gpu_tier()
+
+    if gpu_tier == "HIGH":
+        return True, "bf16"  # A100 등은 bf16 지원
+    elif gpu_tier in ["MEDIUM", "LOW"]:
+        return True, "fp16"  # 일반 GPU는 fp16 사용
+    else:
+        return False, "fp32"  # CPU는 fp32 사용
+
+
+def clear_gpu_cache():
+    """GPU 캐시 클리어"""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+
+
+def get_memory_usage() -> Dict:
+    """
+    현재 GPU 메모리 사용량 반환
+
+    Returns:
+        Dict: 메모리 사용량 정보
+    """
+    if not torch.cuda.is_available():
+        return {"available": False}
+
+    memory_info = {
+        "available": True,
+        "allocated": torch.cuda.memory_allocated() / 1024**3,  # GB
+        "reserved": torch.cuda.memory_reserved() / 1024**3,    # GB
+        "free": (torch.cuda.get_device_properties(0).total_memory -
+                torch.cuda.memory_reserved()) / 1024**3        # GB
+    }
+
+    return memory_info
+
+
+def check_multi_gpu() -> bool:
+    """멀티 GPU 사용 가능 여부 확인"""
+    return torch.cuda.is_available() and torch.cuda.device_count() > 1
+
+
+def get_device(gpu_id: int = 0) -> torch.device:
+    """
+    사용할 device 반환
+
+    Args:
+        gpu_id: 사용할 GPU ID
+
+    Returns:
+        torch.device: 사용할 device
+    """
+    if torch.cuda.is_available():
+        if gpu_id < torch.cuda.device_count():
+            return torch.device(f'cuda:{gpu_id}')
         else:
-            print(f"\n❌ GPU 설정 문제 발견. 위의 해결책을 참고하세요.")  # 실패 메시지
-    # 예외 발생 시
-    except Exception as e:
-        print(f"\n💥 오류 발생: {e}")                                # 오류 메시지 출력
-        print(f"💡 Python 환경과 패키지 설치를 확인하세요.")            # 해결 방법 안내
+            print(f"Warning: GPU {gpu_id} not available. Using cuda:0")
+            return torch.device('cuda:0')
+    else:
+        return torch.device('cpu')

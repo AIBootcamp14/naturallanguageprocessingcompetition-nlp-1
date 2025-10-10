@@ -1,0 +1,29 @@
+[2025-10-10 09:27:01] ==================================================
+[2025-10-10 09:27:01] FULL PIPELINE EXECUTION STARTED
+[2025-10-10 09:27:01] Timestamp: 20251010_092701
+[2025-10-10 09:27:01] Config: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/configs/config_full_pipeline.yaml
+[2025-10-10 09:27:01] ==================================================
+[2025-10-10 09:27:01] GPU Tier: LOW
+[2025-10-10 09:27:01] Auto-optimization enabled
+[2025-10-10 09:27:01] Finding optimal batch size...
+[2025-10-10 09:27:01] [data_quality_check] Status: running
+[2025-10-10 09:27:01] 
+=== Data Quality Check ===
+[2025-10-10 09:27:01] Loaded 12457 training samples
+[2025-10-10 09:27:01] Null values: 0
+[2025-10-10 09:27:01] [data_quality_check] Status: completed
+[2025-10-10 09:27:01] [data_quality_check] Status: running
+[2025-10-10 09:27:01] 
+=== Data Quality Check ===
+[2025-10-10 09:27:01] Loading data from config paths:
+  - Train: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/train.csv
+  - Dev: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/dev.csv
+  - Test: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/test.csv
+[2025-10-10 09:27:01] Loaded 12457 training samples
+Loaded 499 dev samples
+Loaded 499 test samples
+[2025-10-10 09:27:01] Null values: 0
+[2025-10-10 09:27:01] Duplicate rows: 0
+[2025-10-10 09:27:01] [data_quality_check] Status: completed
+[2025-10-10 09:27:01] Visualizations will be saved to: ../logs/full_pipeline/visualizations
+[2025-10-10 09:27:03] WandB initialized for full pipeline tracking

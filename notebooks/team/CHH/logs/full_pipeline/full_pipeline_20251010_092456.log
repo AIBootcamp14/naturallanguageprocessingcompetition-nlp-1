@@ -1,0 +1,27 @@
+[2025-10-10 09:24:56] ==================================================
+[2025-10-10 09:24:56] FULL PIPELINE EXECUTION STARTED
+[2025-10-10 09:24:56] Timestamp: 20251010_092456
+[2025-10-10 09:24:56] Config: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/configs/config_full_pipeline.yaml
+[2025-10-10 09:24:56] ==================================================
+[2025-10-10 09:24:56] GPU Tier: LOW
+[2025-10-10 09:24:56] Auto-optimization enabled
+[2025-10-10 09:24:56] Finding optimal batch size...
+[2025-10-10 09:24:56] [data_quality_check] Status: running
+[2025-10-10 09:24:56] 
+=== Data Quality Check ===
+[2025-10-10 09:24:56] Loaded 12457 training samples
+[2025-10-10 09:24:56] Null values: 0
+[2025-10-10 09:24:56] [data_quality_check] Status: completed
+[2025-10-10 09:24:56] [data_quality_check] Status: running
+[2025-10-10 09:24:56] 
+=== Data Quality Check ===
+[2025-10-10 09:24:56] Loading data from config paths:
+  - Train: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/train.csv
+  - Dev: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/dev.csv
+  - Test: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/test.csv
+[2025-10-10 09:24:56] Loaded 12457 training samples
+Loaded 499 dev samples
+Loaded 499 test samples
+[2025-10-10 09:24:56] Null values: 0
+[2025-10-10 09:24:56] Duplicate rows: 0
+[2025-10-10 09:24:56] [data_quality_check] Status: completed

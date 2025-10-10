@@ -1,0 +1,458 @@
+# 전체 파이프라인 통합 설정 파일
+# 모든 기법을 통합한 최종 파이프라인
+
+# 경로 설정
+paths:
+  data_dir: "../../../data/raw"  # 원본 데이터 경로
+  train_file: "../../../data/raw/train.csv"
+  dev_file: "../../../data/raw/dev.csv"
+  test_file: "../../../data/raw/test.csv"
+  output_dir: "./models/full_pipeline"
+  log_dir: "./logs/full_pipeline"
+  submission_dir: "./submissions/full_pipeline"
+  visualization_dir: "./logs/full_pipeline/visualizations"
+  cache_dir: "./cache/full_pipeline"
+  preprocessed_data_dir: "./data/preprocessed"
+  augmented_data_dir: "./data/augmented"
+
+# 파이프라인 구성
+pipeline:
+  # 실행할 단계들
+  stages:
+    - "data_quality_check"
+    - "data_preprocessing"
+    - "data_augmentation"
+    - "model_training"
+    - "cross_validation"
+    - "ensemble"
+    - "hyperparameter_optimization"
+    - "inference_optimization"
+    - "final_prediction"
+
+  # 병렬 실행 가능한 단계
+  parallel_stages:
+    - ["model_training", "prompt_optimization"]
+    - ["cross_validation", "tta_preparation"]
+
+# 데이터 품질 검증
+data_quality:
+  enabled: true
+
+  # 검증 항목
+  checks:
+    structural:
+      check_nulls: true
+      check_duplicates: true
+      check_encoding: true
+
+    semantic:
+      min_compression_ratio: 0.1
+      max_compression_ratio: 0.5
+      check_information_loss: true
+
+    statistical:
+      outlier_detection: true
+      outlier_method: "isolation_forest"
+      outlier_threshold: 0.05
+
+  # 문제 데이터 처리
+  handle_issues:
+    remove_outliers: true
+    fix_encoding: true
+    remove_duplicates: true
+
+# 데이터 전처리
+preprocessing:
+  # 노이즈 제거
+  noise_removal:
+    remove_html_tags: true
+    fix_escaped_chars: true
+    normalize_whitespace: true
+    remove_special_tokens: false
+
+  # 토큰 정규화
+  token_normalization:
+    person_tokens:
+      standardize: true
+      format: "#Person{id}#"
+
+    masking_tokens:
+      preserve: true
+      tokens: ["#PhoneNumber#", "#Address#", "#SSN#", "#Email#"]
+
+  # 데이터 분할
+  data_split:
+    validation_ratio: 0.1
+    stratify: false
+    seed: 42
+
+# 데이터 증강
+augmentation:
+  enabled: true
+  target_ratio: 1.5  # 원본 대비 1.5배
+
+  techniques:
+    paraphrase:
+      enabled: true
+      model: "lcw99/t5-base-korean-paraphrase"
+      num_variants: 2
+      quality_threshold: 0.7
+
+    back_translation:
+      enabled: true
+      languages: ["en", "ja"]
+      translation_model: "Helsinki-NLP/opus-mt"
+
+    token_replacement:
+      enabled: true
+      replacement_ratio: 0.15
+      preserve_entities: true
+
+    dialogue_reordering:
+      enabled: false  # 대화 순서는 중요하므로 비활성화
+
+# 모델 설정
+models:
+  # 주요 모델들
+  primary_models:
+    - name: "upstage/SOLAR-10.7B-Instruct-v1.0"
+      weight: 0.35
+      use_lora: true
+      lora_r: 16
+      lora_alpha: 32
+
+    - name: "EleutherAI/polyglot-ko-12.8b"
+      weight: 0.30
+      use_lora: true
+      lora_r: 8
+      lora_alpha: 16
+
+    - name: "nlpai-lab/kullm-v2"
+      weight: 0.20
+      use_lora: true
+      lora_r: 8
+      lora_alpha: 16
+
+  # 보조 모델들
+  auxiliary_models:
+    - name: "digit82/kobart-summarization"
+      weight: 0.10
+      model_type: "seq2seq"
+
+    - name: "gogamza/kobart-summarization"
+      weight: 0.05
+      model_type: "seq2seq"
+
+# 프롬프트 엔지니어링
+prompt_engineering:
+  enabled: true
+
+  # 프롬프트 템플릿
+  templates:
+    zero_shot:
+      enabled: true
+      template: |
+        다음 대화를 3-5문장으로 요약하세요:
+        {dialogue}
+
+        요약:
+
+    few_shot:
+      enabled: true
+      num_examples: 3
+      example_selection: "random"  # random, similar, diverse
+
+    chain_of_thought:
+      enabled: true
+      template: |
+        다음 대화를 단계적으로 분석하여 요약하세요.
+
+        1단계: 주요 주제 파악
+        2단계: 핵심 정보 추출
+        3단계: 간결한 요약 작성
+
+        대화: {dialogue}
+
+        분석 및 요약:
+
+  # A/B 테스팅
+  ab_testing:
+    enabled: true
+    num_variants: 5
+    selection_metric: "rouge_l"
+
+# 학습 설정
+training:
+  # 기본 설정
+  seed: 42
+  num_epochs: 5
+  batch_size: 4
+  gradient_accumulation_steps: 8
+  learning_rate: 2e-5
+
+  # 고급 설정
+  warmup_ratio: 0.1
+  weight_decay: 0.01
+  max_grad_norm: 0.3
+  gradient_checkpointing: true
+  fp16: true
+
+  # 스케줄러
+  scheduler: "cosine"
+
+  # 조기 종료
+  early_stopping:
+    patience: 3
+    threshold: 0.001
+    metric: "eval_rouge_l"
+
+# K-Fold 교차 검증
+cross_validation:
+  enabled: true
+  n_splits: 5
+  shuffle: true
+  random_state: 42
+
+  # Fold별 설정
+  train_all_folds: true
+  save_all_folds: true
+  ensemble_folds: true
+
+# Optuna 하이퍼파라미터 최적화
+hyperparameter_optimization:
+  enabled: true
+  n_trials: 100
+
+  # 최적화할 파라미터
+  search_space:
+    learning_rate:
+      type: "float"
+      low: 1e-6
+      high: 1e-4
+      log: true
+
+    lora_r:
+      type: "int"
+      low: 4
+      high: 64
+      step: 4
+
+    lora_alpha:
+      type: "int"
+      low: 8
+      high: 128
+      step: 8
+
+    batch_size:
+      type: "categorical"
+      choices: [4, 8, 16]
+
+    num_beams:
+      type: "int"
+      low: 2
+      high: 8
+
+    temperature:
+      type: "float"
+      low: 0.1
+      high: 1.0
+
+  # 최적화 전략
+  pruner: "MedianPruner"
+  sampler: "TPESampler"
+  direction: "maximize"
+  metric: "rouge_l"
+
+# 추론 최적화
+inference_optimization:
+  # ONNX 변환
+  onnx_conversion:
+    enabled: true
+    optimize: true
+    quantization: "dynamic"  # dynamic, static
+
+  # TensorRT (NVIDIA GPU)
+  tensorrt:
+    enabled: false
+    precision: "fp16"  # fp32, fp16, int8
+
+  # 배치 추론
+  batch_inference:
+    enabled: true
+    optimal_batch_size: "auto"
+    dynamic_batching: true
+
+# 앙상블 전략
+ensemble:
+  # 기본 앙상블
+  base_method: "weighted_average"
+
+  # 고급 앙상블
+  advanced:
+    stacking:
+      enabled: true
+      meta_learner: "lgbm"
+      cv_folds: 3
+
+    blending:
+      enabled: false
+      validation_size: 0.2
+
+  # TTA
+  test_time_augmentation:
+    enabled: true
+    num_augmentations: 5
+    aggregation: "mean"
+
+# 최종 후처리
+post_processing:
+  # 문법 교정
+  grammar_correction:
+    enabled: true
+    tool: "py-hanspell"
+
+  # 길이 조절
+  length_adjustment:
+    min_length: 30
+    max_length: 150
+    target_length: 80
+
+  # 품질 검증
+  quality_check:
+    min_rouge_score: 0.3
+    check_coherence: true
+    check_completeness: true
+
+# Solar API 통합
+solar_api:
+  enabled: true
+  api_key: "up_rMJWNzzBi6YsD47RhwXPWZrZ0JKsT"
+
+  # 하이브리드 접근
+  hybrid_approach:
+    use_for_validation: true
+    use_for_difficult_samples: true
+    confidence_threshold: 0.7
+
+  # API 최적화
+  optimization:
+    batch_size: 10
+    cache_responses: true
+    token_budget: 100000
+
+# WandB 설정
+wandb:
+  project: "nlp-competition"
+  entity: "ieyeppo"
+  name: "full-pipeline-integrated"
+  tags:
+    - "full_pipeline"
+    - "production"
+    - "all_techniques"
+  notes: "모든 기법이 통합된 최종 파이프라인"
+  mode: "online"
+
+  # 상세 로깅
+  log_artifacts: true
+  log_models: true
+  log_datasets: true
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  format: "%(asctime)s - [%(pipeline_stage)s] - %(name)s - %(levelname)s - %(message)s"
+  save_to_file: true
+
+  # 다중 로거
+  loggers:
+    - "pipeline"
+    - "training"
+    - "evaluation"
+    - "inference"
+
+  use_notebook_logger: true
+  notebook_logger_path: "../../../../src/logging/notebook_logger.py"
+
+# GPU 설정
+gpu:
+  device: "cuda"
+  cuda_device: 0
+  mixed_precision: true
+  memory_fraction: 0.95
+
+  # 자동 최적화
+  auto_optimization:
+    enabled: true
+    find_optimal_batch_size: true
+    gradient_accumulation_auto: true
+
+  use_gpu_optimization: true
+  gpu_check_path: "../../../../src/utils/gpu_optimization/team_gpu_check.py"
+
+# 시각화 설정
+visualization:
+  enabled: true
+  save_path: "../logs/full_pipeline/visualizations"
+
+  # 생성할 시각화
+  plots:
+    - "training_curves"
+    - "model_comparison"
+    - "confusion_matrix"
+    - "rouge_distribution"
+    - "sample_difficulty_heatmap"
+    - "ensemble_weights"
+    - "hyperparameter_importance"
+
+  use_training_viz: true
+  training_viz_path: "../../../../src/utils/visualizations/training_viz.py"
+
+# 실험 추적
+experiment:
+  name: "full_pipeline_v1"
+  description: "모든 최적화 기법이 적용된 최종 파이프라인"
+  version: "1.0.0"
+  timestamp: true
+
+  # 체크포인트
+  checkpointing:
+    save_every_n_epochs: 1
+    save_best_only: false
+    keep_last_n: 3
+
+  # 결과 저장
+  save_all_results: true
+  results_format: ["json", "csv", "pickle"]
+
+# 재현성
+reproducibility:
+  seed: 42
+  deterministic: true
+  benchmark: false
+  worker_init_fn: true
+
+# 성능 목표
+performance_targets:
+  rouge_1: 0.45
+  rouge_2: 0.30
+  rouge_l: 0.40
+  overall: 0.85  # 전체 목표 점수
+
+# 배포 설정
+deployment:
+  # 모델 서빙
+  serving:
+    framework: "fastapi"
+    port: 8000
+    workers: 4
+
+  # 모델 버전 관리
+  versioning:
+    enabled: true
+    registry: "local"  # local, mlflow, s3
+
+  # 모니터링
+  monitoring:
+    enabled: true
+    metrics_port: 9090
+    health_check_interval: 60
