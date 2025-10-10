@@ -371,7 +371,7 @@ logging:
     - "inference"
 
   use_notebook_logger: true
-  notebook_logger_path: "../../../../src/logging/notebook_logger.py"
+  notebook_logger_path: "../../../src/logging/notebook_logger.py"
 
 # GPU 설정
 gpu:
@@ -387,7 +387,7 @@ gpu:
     gradient_accumulation_auto: true
 
   use_gpu_optimization: true
-  gpu_check_path: "../../../../src/utils/gpu_optimization/team_gpu_check.py"
+  gpu_check_path: "../../../src/utils/gpu_optimization/team_gpu_check.py"
 
 # 시각화 설정
 visualization:
@@ -405,7 +405,7 @@ visualization:
     - "hyperparameter_importance"
 
   use_training_viz: true
-  training_viz_path: "../../../../src/utils/visualizations/training_viz.py"
+  training_viz_path: "../../../src/utils/visualizations/training_viz.py"
 
 # 실험 추적
 experiment:
