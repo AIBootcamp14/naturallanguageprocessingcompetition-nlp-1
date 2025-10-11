@@ -1,0 +1,22 @@
+# ==================== KoBART 모델 설정 ==================== #
+# digit82/kobart-summarization 모델 전용 설정
+# 대회 베이스라인 검증된 파라미터
+
+# ---------------------- 모델 설정 ---------------------- #
+model:
+  name: "kobart"                                        # 모델 이름
+  checkpoint: "digit82/kobart-summarization"            # HuggingFace 모델 체크포인트
+  type: "encoder_decoder"                               # 모델 타입
+  architecture: "bart"                                  # 모델 아키텍처
+
+
+# ---------------------- 학습 설정 (베이스라인 검증값) ---------------------- #
+training:
+  # 베이스라인 핵심 파라미터
+  per_device_train_batch_size: 50                       # 베이스라인: 큰 배치 크기가 핵심
+  learning_rate: 1.0e-05                                # 베이스라인: 1e-5가 최적
+
+
+# ---------------------- 추론 설정 (베이스라인 검증값) ---------------------- #
+inference:
+  no_repeat_ngram_size: 2                               # 베이스라인: 2가 최적값
