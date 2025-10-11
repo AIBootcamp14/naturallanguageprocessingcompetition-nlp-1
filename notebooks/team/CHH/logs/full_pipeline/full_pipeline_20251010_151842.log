@@ -1,0 +1,368 @@
+[2025-10-10 15:18:42] ==================================================
+[2025-10-10 15:18:42] FULL PIPELINE EXECUTION STARTED
+[2025-10-10 15:18:42] Timestamp: 20251010_151842
+[2025-10-10 15:18:42] Config: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/configs/config_full_pipeline.yaml
+[2025-10-10 15:18:42] ==================================================
+[2025-10-10 15:18:42] GPU Tier: LOW
+[2025-10-10 15:18:42] Auto-optimization enabled
+[2025-10-10 15:18:42] Finding optimal batch size...
+[2025-10-10 15:18:42] [data_quality_check] Status: running
+[2025-10-10 15:18:42] 
+=== Data Quality Check ===
+[2025-10-10 15:18:42] Loading data from config paths:
+[2025-10-10 15:18:42]   - Train: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/train.csv
+[2025-10-10 15:18:42]   - Dev: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/dev.csv
+[2025-10-10 15:18:42]   - Test: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/../../../data/raw/test.csv
+[2025-10-10 15:18:42] ✅ Loaded 12457 training samples
+[2025-10-10 15:18:42] ✅ Loaded 499 dev samples
+[2025-10-10 15:18:42] ✅ Loaded 499 test samples
+[2025-10-10 15:18:42] Null values - Train: 0, Dev: 0, Test: 0
+[2025-10-10 15:18:42] Duplicate rows in training data: 0
+[2025-10-10 15:18:42] ✅ Data loading completed successfully!
+[2025-10-10 15:18:42] [data_quality_check] Status: completed
+[2025-10-10 15:18:43] 
+=== Comprehensive Data Quality Validation ===
+[2025-10-10 15:18:43] 
+📊 Data Quality Report:
+[2025-10-10 15:18:43] 
+Structural Validation:
+[2025-10-10 15:18:43]   - Train shape: (12457, 4)
+[2025-10-10 15:18:43]   - Dev shape: (499, 4)
+[2025-10-10 15:18:43]   - Test shape: (499, 2)
+[2025-10-10 15:18:43]   - Column match: True
+[2025-10-10 15:18:43] 
+Text Quality:
+[2025-10-10 15:18:43]   - Avg dialogue length: 406.1
+[2025-10-10 15:18:43]   - Compression ratio: 23.23%
+[2025-10-10 15:18:43]   - Encoding issues: 0
+[2025-10-10 15:18:43]   - Special chars: 12455
+[2025-10-10 15:18:43] 
+Label Distribution:
+[2025-10-10 15:18:43]   - Unique topics: 9235
+[2025-10-10 15:18:43]   - Imbalance ratio: 130.00
+[2025-10-10 15:18:43] 
+Outlier Detection:
+[2025-10-10 15:18:43]   - Outlier count: 355
+[2025-10-10 15:18:43]   - Outlier ratio: 2.85%
+[2025-10-10 15:18:43] 
+📋 Recommendations:
+[2025-10-10 15:18:43]   ✓ Clean special characters from text
+[2025-10-10 15:18:43]   ✓ Consider data augmentation for underrepresented topics
+[2025-10-10 15:18:43] ⚠️ Error during data validation: You must call wandb.init() before wandb.log()
+[2025-10-10 15:18:43]    Skipping detailed validation. Please check data loading in cell 7.
+[2025-10-10 15:18:43] Visualizations will be saved to: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/logs/full_pipeline/visualizations
+[2025-10-10 15:18:45] WandB initialized for full pipeline tracking
+[2025-10-10 15:18:45] [data_preprocessing] Status: running
+[2025-10-10 15:18:45] 
+=== Data Preprocessing ===
+[2025-10-10 15:18:45] Preprocessed 12457 training samples
+[2025-10-10 15:18:45] Preprocessed 499 dev samples
+[2025-10-10 15:18:45] Preprocessed 499 test samples
+[2025-10-10 15:18:45] 
+Text Length Statistics:
+[2025-10-10 15:18:45]   Dialogue - Mean: 347.3, Max: 1952
+[2025-10-10 15:18:45]   Summary - Mean: 85.8, Max: 376
+[2025-10-10 15:18:45] [data_preprocessing] Status: completed
+[2025-10-10 15:18:45] [hyperparameter_optimization] Status: running
+[2025-10-10 15:18:45] 
+======================================================================
+[2025-10-10 15:18:45] 🎯 HYPERPARAMETER OPTIMIZATION STAGE
+[2025-10-10 15:18:45] ======================================================================
+[2025-10-10 15:18:45] ✅ Optimization ENABLED with 100 trials
+[2025-10-10 15:18:45] 
+============================================================
+[2025-10-10 15:18:45] 🎯 OPTUNA HYPERPARAMETER OPTIMIZATION STARTING
+[2025-10-10 15:18:45] ============================================================
+[2025-10-10 15:18:45] Number of trials: 100
+[2025-10-10 15:18:45] Optimization metric: rouge_l
+[2025-10-10 15:18:45] 
+🚀 Starting optimization...
+[2025-10-10 15:18:45] 
+Trial 0: {'learning_rate': 5.6115164153345e-05, 'batch_size': 4, 'lora_r': 12, 'lora_alpha': 24, 'num_beams': 2, 'temperature': 0.8795585311974417, 'warmup_ratio': 0.12022300234864176, 'weight_decay': 0.07080725777960455, 'top_p': 0.8041168988591605}
+[2025-10-10 15:18:45] 
+Trial 1: {'learning_rate': 0.0008706020878304854, 'batch_size': 4, 'lora_r': 12, 'lora_alpha': 40, 'num_beams': 5, 'temperature': 0.48875051677790415, 'warmup_ratio': 0.058245828039608386, 'weight_decay': 0.06118528947223795, 'top_p': 0.8278987721304084}
+[2025-10-10 15:18:45] 
+Trial 2: {'learning_rate': 3.8396292998041685e-05, 'batch_size': 16, 'lora_r': 16, 'lora_alpha': 72, 'num_beams': 6, 'temperature': 0.14180537144799796, 'warmup_ratio': 0.12150897038028768, 'weight_decay': 0.017052412368729154, 'top_p': 0.813010318597056}
+[2025-10-10 15:18:45] 
+Trial 3: {'learning_rate': 0.000790261954970823, 'batch_size': 4, 'lora_r': 8, 'lora_alpha': 88, 'num_beams': 5, 'temperature': 0.20983441136030095, 'warmup_ratio': 0.09903538202225404, 'weight_decay': 0.0034388521115218396, 'top_p': 0.9818640804157565}
+[2025-10-10 15:18:45] 
+Trial 4: {'learning_rate': 3.292759134423613e-05, 'batch_size': 4, 'lora_r': 36, 'lora_alpha': 24, 'num_beams': 8, 'temperature': 0.7976195410250031, 'warmup_ratio': 0.18789978831283782, 'weight_decay': 0.08948273504276488, 'top_p': 0.919579995762217}
+[2025-10-10 15:18:45] 
+Trial 5: {'learning_rate': 0.0006978281265126031, 'batch_size': 8, 'lora_r': 24, 'lora_alpha': 56, 'num_beams': 3, 'temperature': 0.8458637582367364, 'warmup_ratio': 0.07135066533871785, 'weight_decay': 0.02809345096873808, 'top_p': 0.9085392166316497}
+[2025-10-10 15:18:45] 
+Trial 6: {'learning_rate': 1.913588048769229e-05, 'batch_size': 16, 'lora_r': 52, 'lora_alpha': 32, 'num_beams': 2, 'temperature': 0.8339152856093507, 'warmup_ratio': 0.14137146876952342, 'weight_decay': 0.07290071680409874, 'top_p': 0.9542540693371891}
+[2025-10-10 15:18:45] 
+Trial 7: {'learning_rate': 1.4063366777718176e-05, 'batch_size': 16, 'lora_r': 40, 'lora_alpha': 48, 'num_beams': 2, 'temperature': 0.379884089544096, 'warmup_ratio': 0.06503666440534941, 'weight_decay': 0.0729606178338064, 'top_p': 0.9275114942710426}
+[2025-10-10 15:18:45] 
+Trial 8: {'learning_rate': 0.000594874681321977, 'batch_size': 16, 'lora_r': 52, 'lora_alpha': 72, 'num_beams': 7, 'temperature': 0.5444160367279517, 'warmup_ratio': 0.10454656587639882, 'weight_decay': 0.042754101835854964, 'top_p': 0.8050838253488191}
+[2025-10-10 15:18:45] 
+Trial 9: {'learning_rate': 1.6435497475111308e-05, 'batch_size': 8, 'lora_r': 36, 'lora_alpha': 120, 'num_beams': 3, 'temperature': 0.4693446307320668, 'warmup_ratio': 0.15111022770860974, 'weight_decay': 0.022879816549162248, 'top_p': 0.8153959819657587}
+[2025-10-10 15:18:45] 
+Trial 10: {'learning_rate': 0.0002509538254778771, 'batch_size': 8, 'lora_r': 64, 'lora_alpha': 128, 'num_beams': 4, 'temperature': 0.37050834074441147, 'warmup_ratio': 0.0031189599316912286, 'weight_decay': 0.03924528921026325, 'top_p': 0.8669590352446472}
+[2025-10-10 15:18:45] 
+Trial 11: {'learning_rate': 1.0322960416065201e-05, 'batch_size': 8, 'lora_r': 36, 'lora_alpha': 128, 'num_beams': 3, 'temperature': 0.3360442409320184, 'warmup_ratio': 0.18218996750099392, 'weight_decay': 0.09435438058122501, 'top_p': 0.8647628938861509}
+[2025-10-10 15:18:45] 
+Trial 12: {'learning_rate': 1.0243828225485934e-05, 'batch_size': 16, 'lora_r': 44, 'lora_alpha': 104, 'num_beams': 3, 'temperature': 0.6874130802024829, 'warmup_ratio': 0.02266752745334516, 'weight_decay': 0.055075406902944976, 'top_p': 0.9454903769915536}
+[2025-10-10 15:18:45] 
+Trial 13: {'learning_rate': 0.00011848866809640735, 'batch_size': 8, 'lora_r': 28, 'lora_alpha': 8, 'num_beams': 2, 'temperature': 0.3708702963897309, 'warmup_ratio': 0.15639338641567632, 'weight_decay': 0.024318099177633938, 'top_p': 0.872680144827585}
+[2025-10-10 15:18:45] 
+Trial 14: {'learning_rate': 2.065572053981832e-05, 'batch_size': 16, 'lora_r': 44, 'lora_alpha': 104, 'num_beams': 4, 'temperature': 0.6437158576273299, 'warmup_ratio': 0.06628034510834098, 'weight_decay': 0.0789965688531333, 'top_p': 0.8428732822794097}
+[2025-10-10 15:18:45] 
+Trial 15: {'learning_rate': 9.281619236049486e-05, 'batch_size': 8, 'lora_r': 24, 'lora_alpha': 56, 'num_beams': 4, 'temperature': 0.4305315501670325, 'warmup_ratio': 0.03582702121277989, 'weight_decay': 0.001551038199422719, 'top_p': 0.9395711081881256}
+[2025-10-10 15:18:45] 
+Trial 16: {'learning_rate': 2.0907187081903068e-05, 'batch_size': 16, 'lora_r': 44, 'lora_alpha': 96, 'num_beams': 3, 'temperature': 0.2640826305493916, 'warmup_ratio': 0.16082275969529525, 'weight_decay': 0.04196541056763174, 'top_p': 0.8877138136492564}
+[2025-10-10 15:18:45] 
+Trial 17: {'learning_rate': 8.207153974516262e-05, 'batch_size': 8, 'lora_r': 60, 'lora_alpha': 48, 'num_beams': 2, 'temperature': 0.9784659043095347, 'warmup_ratio': 0.08216335250103747, 'weight_decay': 0.05832153974047549, 'top_p': 0.9985866373283178}
+[2025-10-10 15:18:45] 
+Trial 18: {'learning_rate': 0.00017857376227853008, 'batch_size': 16, 'lora_r': 32, 'lora_alpha': 88, 'num_beams': 4, 'temperature': 0.6299558072159225, 'warmup_ratio': 0.1305917766325822, 'weight_decay': 0.08157298373095428, 'top_p': 0.8456732420844115}
+[2025-10-10 15:18:45] 
+Trial 19: {'learning_rate': 1.4933469999945105e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 112, 'num_beams': 6, 'temperature': 0.5016898076050326, 'warmup_ratio': 0.0421702979243537, 'weight_decay': 0.01695815293877516, 'top_p': 0.925117811866489}
+[2025-10-10 15:18:45] 
+Trial 20: {'learning_rate': 3.389565916417189e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 112, 'num_beams': 6, 'temperature': 0.5212238290613017, 'warmup_ratio': 0.03986770015374146, 'weight_decay': 0.012902755176075385, 'top_p': 0.8892797525640342}
+[2025-10-10 15:18:45] 
+Trial 21: {'learning_rate': 3.1469480060628104e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 112, 'num_beams': 6, 'temperature': 0.5162152115304651, 'warmup_ratio': 0.04057834304500621, 'weight_decay': 0.013138499976019133, 'top_p': 0.893962966855054}
+[2025-10-10 15:18:45] 
+Trial 22: {'learning_rate': 3.336819477227761e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 112, 'num_beams': 6, 'temperature': 0.5425060542657665, 'warmup_ratio': 0.033308056603575546, 'weight_decay': 0.011203013760838404, 'top_p': 0.8995327075398217}
+[2025-10-10 15:18:45] 
+Trial 23: {'learning_rate': 3.6568430960207434e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 88, 'num_beams': 6, 'temperature': 0.5799808938814119, 'warmup_ratio': 0.0007954664880900006, 'weight_decay': 0.008589386377978969, 'top_p': 0.8923399100850327}
+[2025-10-10 15:18:46] 
+Trial 24: {'learning_rate': 5.8076337924896274e-05, 'batch_size': 8, 'lora_r': 60, 'lora_alpha': 88, 'num_beams': 7, 'temperature': 0.5990273919504934, 'warmup_ratio': 0.0020076946752816413, 'weight_decay': 0.011858981073213435, 'top_p': 0.8832898595173146}
+[2025-10-10 15:18:46] 
+Trial 25: {'learning_rate': 4.2214461655365885e-05, 'batch_size': 8, 'lora_r': 60, 'lora_alpha': 80, 'num_beams': 7, 'temperature': 0.7055512061344736, 'warmup_ratio': 0.017465120976643763, 'weight_decay': 0.031441029962100873, 'top_p': 0.9005420641163621}
+[2025-10-10 15:18:46] 
+Trial 26: {'learning_rate': 2.8078782945976262e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 112, 'num_beams': 6, 'temperature': 0.5794930154048173, 'warmup_ratio': 0.02322764115097621, 'weight_decay': 0.007966559934848913, 'top_p': 0.855470460945284}
+[2025-10-10 15:18:46] 
+Trial 27: {'learning_rate': 2.5782037175545758e-05, 'batch_size': 8, 'lora_r': 48, 'lora_alpha': 112, 'num_beams': 8, 'temperature': 0.7631204631254443, 'warmup_ratio': 0.0256155138300674, 'weight_decay': 0.0002227647352840128, 'top_p': 0.8500615233695107}
+[2025-10-10 15:18:46] 
+Trial 28: {'learning_rate': 6.273758008532151e-05, 'batch_size': 8, 'lora_r': 64, 'lora_alpha': 120, 'num_beams': 5, 'temperature': 0.7178401331774492, 'warmup_ratio': 0.050873604098679054, 'weight_decay': 0.03221972656539619, 'top_p': 0.8579648340902375}
+[2025-10-10 15:18:46] 
+Trial 29: {'learning_rate': 4.933532166267658e-05, 'batch_size': 4, 'lora_r': 56, 'lora_alpha': 104, 'num_beams': 7, 'temperature': 0.9306004540295836, 'warmup_ratio': 0.08521125354570133, 'weight_decay': 0.006692711826062816, 'top_p': 0.8776326671192554}
+[2025-10-10 15:18:46] 
+Trial 30: {'learning_rate': 0.00013260540561627567, 'batch_size': 4, 'lora_r': 56, 'lora_alpha': 96, 'num_beams': 7, 'temperature': 0.9930711492609184, 'warmup_ratio': 0.10115382820615548, 'weight_decay': 0.019232415823755192, 'top_p': 0.8327033926353034}
+[2025-10-10 15:18:46] 
+Trial 31: {'learning_rate': 4.666830753689814e-05, 'batch_size': 4, 'lora_r': 48, 'lora_alpha': 104, 'num_beams': 6, 'temperature': 0.9210946584218129, 'warmup_ratio': 0.08216345876678012, 'weight_decay': 0.008299707947999113, 'top_p': 0.8750847990119133}
+[2025-10-10 15:18:46] 
+Trial 32: {'learning_rate': 2.6518737859257054e-05, 'batch_size': 4, 'lora_r': 56, 'lora_alpha': 120, 'num_beams': 5, 'temperature': 0.4572171428240386, 'warmup_ratio': 0.04844664521349881, 'weight_decay': 0.00781540283468374, 'top_p': 0.9085123005329122}
+[2025-10-10 15:18:46] 
+Trial 33: {'learning_rate': 7.159762259745666e-05, 'batch_size': 4, 'lora_r': 48, 'lora_alpha': 128, 'num_beams': 7, 'temperature': 0.5583225092298106, 'warmup_ratio': 0.0316368127679601, 'weight_decay': 0.015805843811929385, 'top_p': 0.8726897464088479}
+[2025-10-10 15:18:46] 
+Trial 34: {'learning_rate': 5.4741253409965554e-05, 'batch_size': 4, 'lora_r': 60, 'lora_alpha': 96, 'num_beams': 5, 'temperature': 0.8991912963727882, 'warmup_ratio': 0.017366406121719358, 'weight_decay': 0.005877565969524045, 'top_p': 0.8289452746035371}
+[2025-10-10 15:18:46] 
+Trial 35: {'learning_rate': 4.758934478266249e-05, 'batch_size': 4, 'lora_r': 4, 'lora_alpha': 112, 'num_beams': 6, 'temperature': 0.2713826357937634, 'warmup_ratio': 0.08088783553445902, 'weight_decay': 0.02456899857221905, 'top_p': 0.9087963743336677}
+[2025-10-10 15:18:46] 
+Trial 36: {'learning_rate': 3.141887904875803e-05, 'batch_size': 8, 'lora_r': 64, 'lora_alpha': 104, 'num_beams': 8, 'temperature': 0.15149894820208998, 'warmup_ratio': 0.05700009392928586, 'weight_decay': 0.035691952965100956, 'top_p': 0.8819959988030882}
+[2025-10-10 15:18:46] 
+Trial 37: {'learning_rate': 2.605334125981645e-05, 'batch_size': 4, 'lora_r': 64, 'lora_alpha': 80, 'num_beams': 8, 'temperature': 0.18692714922583253, 'warmup_ratio': 0.05647328365716381, 'weight_decay': 0.03630020385814297, 'top_p': 0.8533362427075777}
+[2025-10-10 15:18:46] 
+Trial 38: {'learning_rate': 2.6762003205584428e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 104, 'num_beams': 8, 'temperature': 0.16396547086177826, 'warmup_ratio': 0.11404992136340833, 'weight_decay': 0.021129430170219482, 'top_p': 0.8815485896798718}
+[2025-10-10 15:18:46] 
+Trial 39: {'learning_rate': 4.2642720664416404e-05, 'batch_size': 8, 'lora_r': 16, 'lora_alpha': 64, 'num_beams': 8, 'temperature': 0.10447394895140316, 'warmup_ratio': 0.0930652292102061, 'weight_decay': 0.04655041426219248, 'top_p': 0.8396087073621342}
+[2025-10-10 15:18:46] 
+Trial 40: {'learning_rate': 7.297105559329222e-05, 'batch_size': 4, 'lora_r': 64, 'lora_alpha': 80, 'num_beams': 7, 'temperature': 0.24014981017285564, 'warmup_ratio': 0.06967671385855226, 'weight_decay': 0.05094955358399846, 'top_p': 0.9127704887638287}
+[2025-10-10 15:18:46] 
+Trial 41: {'learning_rate': 2.9215958732204537e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 120, 'num_beams': 6, 'temperature': 0.8006763161515162, 'warmup_ratio': 0.058547992845664754, 'weight_decay': 0.014105953880987038, 'top_p': 0.8593776565656417}
+[2025-10-10 15:18:46] 
+Trial 42: {'learning_rate': 3.5565468197453195e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 96, 'num_beams': 7, 'temperature': 0.3176065729337836, 'warmup_ratio': 0.03041364533260583, 'weight_decay': 0.003212791245379534, 'top_p': 0.8972687905612967}
+[2025-10-10 15:18:46] 
+Trial 43: {'learning_rate': 1.8441590870240484e-05, 'batch_size': 8, 'lora_r': 40, 'lora_alpha': 112, 'num_beams': 6, 'temperature': 0.4179959018352637, 'warmup_ratio': 0.011902668676854553, 'weight_decay': 0.06335496525695677, 'top_p': 0.8815483784269712}
+[2025-10-10 15:18:46] 
+Trial 44: {'learning_rate': 2.1701330847674694e-05, 'batch_size': 8, 'lora_r': 60, 'lora_alpha': 128, 'num_beams': 7, 'temperature': 0.753249656365978, 'warmup_ratio': 0.044124673104113776, 'weight_decay': 0.02822904813011546, 'top_p': 0.9027220213747438}
+[2025-10-10 15:18:46] 
+Trial 45: {'learning_rate': 1.2810194057099406e-05, 'batch_size': 8, 'lora_r': 48, 'lora_alpha': 104, 'num_beams': 8, 'temperature': 0.6563549446464534, 'warmup_ratio': 0.0539929667078606, 'weight_decay': 0.010201108460745675, 'top_p': 0.9190212445545584}
+[2025-10-10 15:18:46] 
+Trial 46: {'learning_rate': 3.402867632126268e-05, 'batch_size': 8, 'lora_r': 64, 'lora_alpha': 120, 'num_beams': 6, 'temperature': 0.9502476900626883, 'warmup_ratio': 0.08983822330101714, 'weight_decay': 0.00487365091644628, 'top_p': 0.8685324485690042}
+[2025-10-10 15:18:46] 
+Trial 47: {'learning_rate': 5.1822601495371915e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 120, 'num_beams': 7, 'temperature': 0.8583860433114141, 'warmup_ratio': 0.07347435444951687, 'weight_decay': 0.025255501019674328, 'top_p': 0.9361655262288381}
+[2025-10-10 15:18:46] 
+Trial 48: {'learning_rate': 1.2596202477777755e-05, 'batch_size': 8, 'lora_r': 40, 'lora_alpha': 96, 'num_beams': 5, 'temperature': 0.5287837039440612, 'warmup_ratio': 0.011284677066551882, 'weight_decay': 0.018710923929850385, 'top_p': 0.8628622801235112}
+[2025-10-10 15:18:46] 
+Trial 49: {'learning_rate': 0.0001097287977728259, 'batch_size': 4, 'lora_r': 56, 'lora_alpha': 104, 'num_beams': 6, 'temperature': 0.31028297142871214, 'warmup_ratio': 0.06413170123645666, 'weight_decay': 0.03624603049391814, 'top_p': 0.8887675156136732}
+[2025-10-10 15:18:46] 
+Trial 50: {'learning_rate': 1.6812566120253585e-05, 'batch_size': 16, 'lora_r': 44, 'lora_alpha': 16, 'num_beams': 8, 'temperature': 0.42764822749963965, 'warmup_ratio': 0.03727472197904945, 'weight_decay': 0.013185450670937977, 'top_p': 0.8213883356926795}
+[2025-10-10 15:18:46] 
+Trial 51: {'learning_rate': 2.2769319569612714e-05, 'batch_size': 4, 'lora_r': 56, 'lora_alpha': 112, 'num_beams': 5, 'temperature': 0.4586779382513086, 'warmup_ratio': 0.04918376178151927, 'weight_decay': 0.00904891876070058, 'top_p': 0.9060488411783616}
+[2025-10-10 15:18:46] 
+Trial 52: {'learning_rate': 3.671639113701039e-05, 'batch_size': 4, 'lora_r': 60, 'lora_alpha': 120, 'num_beams': 5, 'temperature': 0.47699155207294663, 'warmup_ratio': 0.02695800552428816, 'weight_decay': 0.005433657149687963, 'top_p': 0.9625516854368669}
+[2025-10-10 15:18:46] 
+Trial 53: {'learning_rate': 2.947629450930968e-05, 'batch_size': 4, 'lora_r': 52, 'lora_alpha': 112, 'num_beams': 4, 'temperature': 0.6156150522599804, 'warmup_ratio': 0.0462794130065051, 'weight_decay': 0.0009250085018189177, 'top_p': 0.918909783123445}
+[2025-10-10 15:18:46] 
+Trial 54: {'learning_rate': 0.00030597461877387175, 'batch_size': 4, 'lora_r': 60, 'lora_alpha': 128, 'num_beams': 7, 'temperature': 0.5602532656485392, 'warmup_ratio': 0.0617490463991414, 'weight_decay': 0.018836313128920555, 'top_p': 0.8750306987242031}
+[2025-10-10 15:18:46] 
+Trial 55: {'learning_rate': 2.3093888008317375e-05, 'batch_size': 8, 'lora_r': 48, 'lora_alpha': 104, 'num_beams': 5, 'temperature': 0.3807005895851302, 'warmup_ratio': 0.03711754922204044, 'weight_decay': 0.007208450633375869, 'top_p': 0.9130017331304124}
+[2025-10-10 15:18:46] 
+Trial 56: {'learning_rate': 6.547560902819693e-05, 'batch_size': 4, 'lora_r': 56, 'lora_alpha': 120, 'num_beams': 6, 'temperature': 0.6769549801991903, 'warmup_ratio': 0.07534256703677669, 'weight_decay': 0.015111939323579715, 'top_p': 0.9270586133171772}
+[2025-10-10 15:18:46] 
+Trial 57: {'learning_rate': 4.214511583757075e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 128, 'num_beams': 6, 'temperature': 0.49920985776867877, 'warmup_ratio': 0.009179377932612958, 'weight_decay': 0.011777958810308487, 'top_p': 0.8883038130309648}
+[2025-10-10 15:18:46] 
+Trial 58: {'learning_rate': 1.8633848172347707e-05, 'batch_size': 16, 'lora_r': 64, 'lora_alpha': 88, 'num_beams': 4, 'temperature': 0.4031709985848277, 'warmup_ratio': 0.032901857136195145, 'weight_decay': 0.028899126641759806, 'top_p': 0.8815932481214366}
+[2025-10-10 15:18:46] 
+Trial 59: {'learning_rate': 8.881354840979176e-05, 'batch_size': 8, 'lora_r': 60, 'lora_alpha': 32, 'num_beams': 5, 'temperature': 0.580639519133781, 'warmup_ratio': 0.019067614774178537, 'weight_decay': 0.020862631256097955, 'top_p': 0.89881448016185}
+[2025-10-10 15:18:46] 
+Trial 60: {'learning_rate': 2.4590158853262508e-05, 'batch_size': 8, 'lora_r': 24, 'lora_alpha': 112, 'num_beams': 5, 'temperature': 0.4481620112487383, 'warmup_ratio': 0.04824020740964849, 'weight_decay': 0.0638260943722366, 'top_p': 0.8686248406328191}
+[2025-10-10 15:18:46] 
+Trial 61: {'learning_rate': 3.607479597791511e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 88, 'num_beams': 6, 'temperature': 0.5830145888830528, 'warmup_ratio': 0.004961599969908678, 'weight_decay': 0.0036516996623782248, 'top_p': 0.8918235123988265}
+[2025-10-10 15:18:46] 
+Trial 62: {'learning_rate': 3.037163286454145e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 96, 'num_beams': 7, 'temperature': 0.5331794853738137, 'warmup_ratio': 0.0002621293523123962, 'weight_decay': 0.009421462505436016, 'top_p': 0.8979288791979552}
+[2025-10-10 15:18:46] 
+Trial 63: {'learning_rate': 4.1576341559761495e-05, 'batch_size': 8, 'lora_r': 44, 'lora_alpha': 104, 'num_beams': 6, 'temperature': 0.6171420076106352, 'warmup_ratio': 0.02092153162587366, 'weight_decay': 0.0006378960802544756, 'top_p': 0.8768069964045135}
+[2025-10-10 15:18:46] 
+Trial 64: {'learning_rate': 0.0009841670344314273, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 112, 'num_beams': 6, 'temperature': 0.7293502255732606, 'warmup_ratio': 0.02548319383637527, 'weight_decay': 0.007031494116258572, 'top_p': 0.8929276301330668}
+[2025-10-10 15:18:46] 
+Trial 65: {'learning_rate': 4.938904763889931e-05, 'batch_size': 8, 'lora_r': 48, 'lora_alpha': 104, 'num_beams': 7, 'temperature': 0.48687022565957316, 'warmup_ratio': 0.11406643870884478, 'weight_decay': 0.01626265200296073, 'top_p': 0.9097474802118988}
+[2025-10-10 15:18:46] 
+Trial 66: {'learning_rate': 3.260843907272304e-05, 'batch_size': 4, 'lora_r': 60, 'lora_alpha': 120, 'num_beams': 6, 'temperature': 0.657922826647431, 'warmup_ratio': 0.01331834786986669, 'weight_decay': 0.011188087113933482, 'top_p': 0.8531909228351767}
+[2025-10-10 15:18:46] 
+Trial 67: {'learning_rate': 1.5262992448246723e-05, 'batch_size': 4, 'lora_r': 60, 'lora_alpha': 120, 'num_beams': 7, 'temperature': 0.8112575781570758, 'warmup_ratio': 0.016150088158978535, 'weight_decay': 0.011283231956601586, 'top_p': 0.8517170363173339}
+[2025-10-10 15:18:46] 
+Trial 68: {'learning_rate': 3.145349693605607e-05, 'batch_size': 4, 'lora_r': 64, 'lora_alpha': 128, 'num_beams': 6, 'temperature': 0.66673902289775, 'warmup_ratio': 0.19691581655445523, 'weight_decay': 0.022987693036422736, 'top_p': 0.8375344524580363}
+[2025-10-10 15:18:46] 
+Trial 69: {'learning_rate': 2.7762798008956752e-05, 'batch_size': 4, 'lora_r': 32, 'lora_alpha': 120, 'num_beams': 8, 'temperature': 0.5463740095373923, 'warmup_ratio': 0.04082380903176962, 'weight_decay': 0.003730305219947449, 'top_p': 0.8468820029445613}
+[2025-10-10 15:18:46] 
+Trial 70: {'learning_rate': 5.7757749436563544e-05, 'batch_size': 4, 'lora_r': 60, 'lora_alpha': 112, 'num_beams': 5, 'temperature': 0.6413963370708314, 'warmup_ratio': 0.054752027860161756, 'weight_decay': 0.01455620673700228, 'top_p': 0.8573451388713965}
+[2025-10-10 15:18:46] 
+Trial 71: {'learning_rate': 3.87338068423378e-05, 'batch_size': 4, 'lora_r': 56, 'lora_alpha': 96, 'num_beams': 6, 'temperature': 0.5848686945083318, 'warmup_ratio': 0.005401844632382477, 'weight_decay': 0.007452728834963022, 'top_p': 0.8820937840918143}
+[2025-10-10 15:18:46] 
+Trial 72: {'learning_rate': 3.3300797061697375e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 72, 'num_beams': 6, 'temperature': 0.5127852499026321, 'warmup_ratio': 0.028900413260403737, 'weight_decay': 0.01056713811544223, 'top_p': 0.8024525133163456}
+[2025-10-10 15:18:46] 
+Trial 73: {'learning_rate': 2.006533000166664e-05, 'batch_size': 16, 'lora_r': 64, 'lora_alpha': 120, 'num_beams': 6, 'temperature': 0.5679157049727246, 'warmup_ratio': 0.014401351063290638, 'weight_decay': 0.016718866674628477, 'top_p': 0.9032069235940495}
+[2025-10-10 15:18:46] 
+Trial 74: {'learning_rate': 4.463247485930217e-05, 'batch_size': 4, 'lora_r': 60, 'lora_alpha': 104, 'num_beams': 5, 'temperature': 0.618882026072843, 'warmup_ratio': 0.022266343376935605, 'weight_decay': 0.0038695095579062383, 'top_p': 0.862744737777315}
+[2025-10-10 15:18:46] 
+Trial 75: {'learning_rate': 2.4660013132841712e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 64, 'num_beams': 5, 'temperature': 0.1158524952812231, 'warmup_ratio': 0.03435095019024315, 'weight_decay': 0.012829754237861975, 'top_p': 0.8865274630946591}
+[2025-10-10 15:18:46] 
+Trial 76: {'learning_rate': 2.4271001792809935e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 64, 'num_beams': 4, 'temperature': 0.1488849915464856, 'warmup_ratio': 0.03469853930755769, 'weight_decay': 0.021366628945216688, 'top_p': 0.8699970418941532}
+[2025-10-10 15:18:46] 
+Trial 77: {'learning_rate': 1.7223360606912824e-05, 'batch_size': 8, 'lora_r': 44, 'lora_alpha': 56, 'num_beams': 5, 'temperature': 0.10728992792954482, 'warmup_ratio': 0.04329048759684258, 'weight_decay': 0.013037044678794952, 'top_p': 0.8860368022653105}
+[2025-10-10 15:18:46] 
+Trial 78: {'learning_rate': 2.739388775323521e-05, 'batch_size': 4, 'lora_r': 52, 'lora_alpha': 48, 'num_beams': 5, 'temperature': 0.21207077759020262, 'warmup_ratio': 0.13362303509835038, 'weight_decay': 0.03169878981565581, 'top_p': 0.9147561250570047}
+[2025-10-10 15:18:46] 
+Trial 79: {'learning_rate': 2.120012773052626e-05, 'batch_size': 8, 'lora_r': 48, 'lora_alpha': 72, 'num_beams': 5, 'temperature': 0.21563628521488248, 'warmup_ratio': 0.06790493107711203, 'weight_decay': 0.02691617589689402, 'top_p': 0.8556699419018908}
+[2025-10-10 15:18:46] 
+Trial 80: {'learning_rate': 0.000536232243793206, 'batch_size': 4, 'lora_r': 12, 'lora_alpha': 112, 'num_beams': 7, 'temperature': 0.1399921950196447, 'warmup_ratio': 0.06051450367293727, 'weight_decay': 0.042802077827665534, 'top_p': 0.876998488456511}
+[2025-10-10 15:18:46] 
+Trial 81: {'learning_rate': 3.885584984918083e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 64, 'num_beams': 6, 'temperature': 0.7012245000629443, 'warmup_ratio': 0.024007801171355404, 'weight_decay': 0.09919262221810111, 'top_p': 0.8892205601271582}
+[2025-10-10 15:18:46] 
+Trial 82: {'learning_rate': 3.4065254906910636e-05, 'batch_size': 8, 'lora_r': 60, 'lora_alpha': 56, 'num_beams': 6, 'temperature': 0.7665701410982698, 'warmup_ratio': 0.009971782766799091, 'weight_decay': 0.008723465943016668, 'top_p': 0.8954327719969939}
+[2025-10-10 15:18:46] 
+Trial 83: {'learning_rate': 3.0137308797775063e-05, 'batch_size': 8, 'lora_r': 52, 'lora_alpha': 80, 'num_beams': 6, 'temperature': 0.28003344358577875, 'warmup_ratio': 0.051788599469939633, 'weight_decay': 0.01842497043248143, 'top_p': 0.9053762139465887}
+[2025-10-10 15:18:46] 
+Trial 84: {'learning_rate': 5.056477204610397e-05, 'batch_size': 8, 'lora_r': 56, 'lora_alpha': 88, 'num_beams': 7, 'temperature': 0.6034230319196011, 'warmup_ratio': 0.03272393602554316, 'weight_decay': 0.005493445379003357, 'top_p': 0.8648070731896705}
+[2025-10-10 15:18:46] 
+Trial 85: {'learning_rate': 2.444769419730258e-05, 'batch_size': 8, 'lora_r': 48, 'lora_alpha': 104, 'num_beams': 6, 'temperature': 0.5157565475986586, 'warmup_ratio': 0.09029192891398469, 'weight_decay': 0.012317934129553579, 'top_p': 0.9334088994132286}
+[2025-10-10 15:18:46] 
+Trial 86: {'learning_rate': 2.7851861888915166e-05, 'batch_size': 8, 'lora_r': 64, 'lora_alpha': 112, 'num_beams': 8, 'temperature': 0.34535702691666675, 'warmup_ratio': 0.03740887895292189, 'weight_decay': 0.0021783661493023597, 'top_p': 0.9227293083978345}
+[2025-10-10 15:18:46] 
+Trial 87: {'learning_rate': 2.7617602285796835e-05, 'batch_size': 8, 'lora_r': 64, 'lora_alpha': 112, 'num_beams': 8, 'temperature': 0.17285961124262444, 'warmup_ratio': 0.039593515590220583, 'weight_decay': 9.29193973919721e-05, 'top_p': 0.9528469170014318}
+[2025-10-10 15:18:46] 
+Trial 88: {'learning_rate': 1.3615969178871671e-05, 'batch_size': 16, 'lora_r': 64, 'lora_alpha': 120, 'num_beams': 8, 'temperature': 0.44831396987522465, 'warmup_ratio': 0.16717947876945738, 'weight_decay': 0.0031204457257453452, 'top_p': 0.9225349908942511}
+[2025-10-10 15:18:46] 
+Trial 89: {'learning_rate': 2.0119980740171405e-05, 'batch_size': 4, 'lora_r': 60, 'lora_alpha': 128, 'num_beams': 8, 'temperature': 0.3509082894087789, 'warmup_ratio': 0.04518982867081165, 'weight_decay': 0.05483018459711066, 'top_p': 0.942892892489865}
+[2025-10-10 15:18:46] 
+Trial 90: {'learning_rate': 3.266158954755587e-05, 'batch_size': 8, 'lora_r': 64, 'lora_alpha': 112, 'num_beams': 8, 'temperature': 0.4018608965151826, 'warmup_ratio': 0.030406850344682736, 'weight_decay': 0.006366980309163007, 'top_p': 0.9290389781764377}
+[2025-10-10 15:18:46] 
+Trial 91: {'learning_rate': 3.886418091511138e-05, 'batch_size': 8, 'lora_r': 60, 'lora_alpha': 120, 'num_beams': 7, 'temperature': 0.5433171597148481, 'warmup_ratio': 0.007052025598828636, 'weight_decay': 0.00969329573568394, 'top_p': 0.8787155063443879}
+[2025-10-10 15:18:46] 
+Trial 92: {'learning_rate': 4.5697881542507896e-05, 'batch_size': 8, 'lora_r': 20, 'lora_alpha': 104, 'num_beams': 5, 'temperature': 0.4885350916366642, 'warmup_ratio': 0.013863002222732852, 'weight_decay': 0.014890526314229262, 'top_p': 0.8855175892137418}
+[2025-10-10 15:18:46] 
+Trial 93: {'learning_rate': 7.170546642690612e-05, 'batch_size': 8, 'lora_r': 28, 'lora_alpha': 104, 'num_beams': 4, 'temperature': 0.12323256293780145, 'warmup_ratio': 0.037101696947297994, 'weight_decay': 0.01450923583281733, 'top_p': 0.901083379872197}
+[2025-10-10 15:18:46] 
+Trial 94: {'learning_rate': 6.115982172057663e-05, 'batch_size': 8, 'lora_r': 12, 'lora_alpha': 112, 'num_beams': 5, 'temperature': 0.47955954566328285, 'warmup_ratio': 0.019782931989182476, 'weight_decay': 0.010757043022719199, 'top_p': 0.8850428759104231}
+[2025-10-10 15:18:46] 
+Trial 95: {'learning_rate': 2.5779082752706453e-05, 'batch_size': 8, 'lora_r': 16, 'lora_alpha': 112, 'num_beams': 5, 'temperature': 0.2488425513045342, 'warmup_ratio': 0.04980356691565395, 'weight_decay': 0.002258899273741807, 'top_p': 0.9078778048581726}
+[2025-10-10 15:18:46] 
+Trial 96: {'learning_rate': 2.2157996325808244e-05, 'batch_size': 8, 'lora_r': 16, 'lora_alpha': 96, 'num_beams': 8, 'temperature': 0.31393784586695794, 'warmup_ratio': 0.07735264683778068, 'weight_decay': 0.00286857655916276, 'top_p': 0.9142293308491413}
+[2025-10-10 15:18:46] 
+Trial 97: {'learning_rate': 4.273912377255258e-05, 'batch_size': 4, 'lora_r': 20, 'lora_alpha': 104, 'num_beams': 4, 'temperature': 0.24983347800200834, 'warmup_ratio': 0.05150476896221196, 'weight_decay': 0.0021678983083803834, 'top_p': 0.9075003878101657}
+[2025-10-10 15:18:46] 
+Trial 98: {'learning_rate': 2.9916467355151008e-05, 'batch_size': 8, 'lora_r': 8, 'lora_alpha': 112, 'num_beams': 5, 'temperature': 0.2900346831661279, 'warmup_ratio': 0.057755568203526814, 'weight_decay': 0.006169402222559401, 'top_p': 0.9195591642089963}
+[2025-10-10 15:18:46] 
+Trial 99: {'learning_rate': 0.00014278302792693854, 'batch_size': 8, 'lora_r': 20, 'lora_alpha': 120, 'num_beams': 7, 'temperature': 0.23806177585359056, 'warmup_ratio': 0.02553798527329438, 'weight_decay': 0.008567984656431627, 'top_p': 0.8723243395529195}
+[2025-10-10 15:18:46] 
+============================================================
+[2025-10-10 15:18:46] ✅ OPTIMIZATION COMPLETED!
+[2025-10-10 15:18:46] ============================================================
+[2025-10-10 15:18:46] Best score: 0.8964
+[2025-10-10 15:18:46] Best parameters:
+[2025-10-10 15:18:46]   - learning_rate: 2.8078782945976262e-05
+[2025-10-10 15:18:46]   - batch_size: 8
+[2025-10-10 15:18:46]   - lora_r: 56
+[2025-10-10 15:18:46]   - lora_alpha: 112
+[2025-10-10 15:18:46]   - num_beams: 6
+[2025-10-10 15:18:46]   - temperature: 0.5794930154048173
+[2025-10-10 15:18:46]   - warmup_ratio: 0.02322764115097621
+[2025-10-10 15:18:46]   - weight_decay: 0.007966559934848913
+[2025-10-10 15:18:46]   - top_p: 0.855470460945284
+[2025-10-10 15:18:46] 
+📊 Top 5 trials:
+[2025-10-10 15:18:46] 1. Score: 0.8964
+[2025-10-10 15:18:46] 
+✅ Config updated with optimal hyperparameters!
+[2025-10-10 15:18:46] 
+📁 Optimization results saved:
+[2025-10-10 15:18:46]   - Study: logs/full_pipeline/optuna/optuna_study_20251010_151842.pkl
+[2025-10-10 15:18:46]   - CSV: logs/full_pipeline/optuna/optuna_results_20251010_151842.csv
+[2025-10-10 15:18:46]   - Best params: logs/full_pipeline/optuna/best_params_20251010_151842.json
+[2025-10-10 15:18:46] 
+✅ Config has been updated with optimal hyperparameters!
+[2025-10-10 15:18:46] [hyperparameter_optimization] Status: completed
+[2025-10-10 15:18:46] ✅ Solar API initialized for cross-validation
+[2025-10-10 15:18:46] [model_training] Status: running
+[2025-10-10 15:18:46] 
+=== Model Training (GPU Optimized) ===
+[2025-10-10 15:18:47] ✅ Mixed Precision (FP16) Training ENABLED - 40% memory reduction
+[2025-10-10 15:18:47] 
+🧹 GPU 메모리 완전 정리 중...
+[2025-10-10 15:18:48] Training primary model: gogamza/kobart-summarization
+[2025-10-10 15:18:49] ✅ Tokenizer loaded
+[2025-10-10 15:18:50] ✅ Model loaded to CPU
+[2025-10-10 15:18:50] ✅ Gradient Checkpointing ENABLED - 50% memory reduction
+[2025-10-10 15:18:50] Model moved to cuda
+[2025-10-10 15:18:50] GPU Memory - Total: 23.99GB, Reserved: 0.52GB, Allocated: 0.46GB
+[2025-10-10 15:18:50] ✅ Gradient Accumulation: 8 steps
+[2025-10-10 15:18:50]    Physical batch size: 8
+[2025-10-10 15:18:50]    Effective batch size: 64
+[2025-10-10 15:18:50] 
+⚙️ Optimizer 초기화 중...
+[2025-10-10 15:18:51] ✅ Optimizer initialized successfully
+[2025-10-10 15:18:51] 
+======================================================================
+[2025-10-10 15:18:51] 🚀 TRAINING START - GPU Optimized
+[2025-10-10 15:18:51] ======================================================================
+[2025-10-10 15:18:51] Epochs: 1
+[2025-10-10 15:18:51] Gradient Accumulation: 8
+[2025-10-10 15:18:51] Mixed Precision (FP16): True
+[2025-10-10 15:18:51] Gradient Checkpointing: True
+[2025-10-10 15:18:51] ======================================================================
+
+[2025-10-10 15:20:07]   Epoch 1: Train Loss = 1.7062
+[2025-10-10 15:20:07]   GPU Memory: Allocated=1.90GB, Reserved=2.85GB
+[2025-10-10 15:20:08]   ✅ Best model saved (loss: 1.7062)
+[2025-10-10 15:20:08] 
+======================================================================
+[2025-10-10 15:20:08] ✅ Training completed successfully!
+[2025-10-10 15:20:08] Best loss: 1.7062
+[2025-10-10 15:20:08] Total training steps: 194
+[2025-10-10 15:20:08] ======================================================================
+
+[2025-10-10 15:20:08] [model_training] Status: completed
+[2025-10-10 15:20:08] [final_prediction] Status: running
+[2025-10-10 15:20:08] 
+=== Final Prediction ===
+[2025-10-10 15:20:08] Generating predictions for test set...
+[2025-10-10 15:21:18] Generated 499 predictions
+[2025-10-10 15:21:18] 
+=== Solar API Cross-Validation ===
+[2025-10-10 15:21:18] 
+=== Solar API Cross-Validation ===
+[2025-10-10 15:21:32] Comparisons completed: 10 samples
+[2025-10-10 15:21:32] Avg model length: 237.5
+[2025-10-10 15:21:32] Avg API length: 183.2
+[2025-10-10 15:21:32] API calls made: 10
+[2025-10-10 15:21:32] Estimated tokens used: 1377
+[2025-10-10 15:21:32] ✅ Solar API cross-validation completed
+[2025-10-10 15:21:32]    Model avg length: 237.5
+[2025-10-10 15:21:32]    API avg length: 183.2
+[2025-10-10 15:21:32]    API calls made: 10
+[2025-10-10 15:21:32] Submission file saved: /home/ieyeppo/AI_Lab/natural-language-processing-competition/notebooks/team/CHH/submissions/full_pipeline/full_pipeline_submission_20251010_151842.csv
+[2025-10-10 15:21:32] Shape: (499, 2)
+[2025-10-10 15:21:32] [final_prediction] Status: completed
