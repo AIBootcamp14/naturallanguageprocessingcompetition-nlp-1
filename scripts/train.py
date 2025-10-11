@@ -225,6 +225,117 @@ def parse_arguments():
         help='시각화 저장'
     )
 
+    # ==================== 데이터 증강 (PRD 04) ====================
+    parser.add_argument(
+        '--use_augmentation',
+        action='store_true',
+        help='데이터 증강 사용'
+    )
+
+    parser.add_argument(
+        '--augmentation_methods',
+        type=str,
+        nargs='+',
+        default=['back_translation', 'paraphrase'],
+        choices=['back_translation', 'paraphrase', 'synonym', 'turn_shuffle'],
+        help='증강 방법'
+    )
+
+    parser.add_argument(
+        '--augmentation_ratio',
+        type=float,
+        default=0.3,
+        help='증강 비율 (0.0~1.0)'
+    )
+
+    # ==================== Solar API (PRD 09) ====================
+    parser.add_argument(
+        '--use_solar_api',
+        action='store_true',
+        help='Solar API 사용'
+    )
+
+    parser.add_argument(
+        '--solar_api_key',
+        type=str,
+        default=None,
+        help='Solar API 키 (환경변수 SOLAR_API_KEY 사용 가능)'
+    )
+
+    parser.add_argument(
+        '--solar_model',
+        type=str,
+        default='solar-1-mini-chat',
+        choices=['solar-1-mini-chat', 'solar-1-chat'],
+        help='Solar 모델 선택'
+    )
+
+    # ==================== 프롬프트 전략 (PRD 15) ====================
+    parser.add_argument(
+        '--prompt_strategy',
+        type=str,
+        default='zero_shot_simple',
+        choices=[
+            'zero_shot_simple',
+            'zero_shot_detailed',
+            'few_shot_standard',
+            'few_shot_diverse',
+            'chain_of_thought',
+            'role_playing',
+            'self_consistency'
+        ],
+        help='프롬프트 전략'
+    )
+
+    # ==================== 데이터 품질 검증 (PRD 16) ====================
+    parser.add_argument(
+        '--validate_data_quality',
+        action='store_true',
+        help='데이터 품질 검증 실행'
+    )
+
+    parser.add_argument(
+        '--quality_threshold',
+        type=float,
+        default=0.7,
+        help='품질 점수 임계값'
+    )
+
+    # ==================== 추론 최적화 (PRD 17) ====================
+    parser.add_argument(
+        '--optimize_inference',
+        action='store_true',
+        help='추론 최적화 적용 (학습 후 자동 실행)'
+    )
+
+    parser.add_argument(
+        '--optimization_method',
+        type=str,
+        default='quantization',
+        choices=['quantization', 'onnx', 'tensorrt', 'pruning'],
+        help='최적화 방법'
+    )
+
+    parser.add_argument(
+        '--quantization_bits',
+        type=int,
+        choices=[4, 8, 16],
+        default=8,
+        help='양자화 비트 수 (4: INT4, 8: INT8, 16: FP16)'
+    )
+
+    parser.add_argument(
+        '--use_onnx',
+        action='store_true',
+        help='ONNX 변환 적용'
+    )
+
+    parser.add_argument(
+        '--use_batch_optimization',
+        action='store_true',
+        help='배치 크기 최적화'
+    )
+
     # ==================== 기타 옵션 ====================
     parser.add_argument(
         '--seed',
@@ -348,6 +459,53 @@ def main():
         # 결과 저장
         trainer.save_results(results)
 
+        # 추론 최적화 (PRD 17) - 옵션
+        if args.optimize_inference:
+            logger.write("\n🔧 추론 최적화 시작 (PRD 17)...")
+            try:
+                from src.inference import create_inference_optimizer
+
+                # 최적화 모듈 생성
+                optimizer = create_inference_optimizer(
+                    optimization_method=args.optimization_method,
+                    quantization_bits=args.quantization_bits,
+                    use_onnx=args.use_onnx,
+                    use_batch_optimization=args.use_batch_optimization,
+                    logger=logger
+                )
+
+                # 모델 경로 가져오기
+                model_path = None
+                if 'model_path' in results:
+                    model_path = results['model_path']
+                elif 'model_results' in results and results['model_results']:
+                    model_path = results['model_results'][0].get('model_path')
+
+                if model_path:
+                    from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
+                    # 모델 로드
+                    model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+                    tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+                    # 최적화 실행
+                    optimization_results = optimizer.optimize(
+                        model=model,
+                        tokenizer=tokenizer,
+                        output_dir=f"{args.output_dir}/optimized",
+                        sample_texts=["샘플 대화입니다."] * 10  # 샘플 데이터
+                    )
+
+                    logger.write(f"  ✅ 추론 최적화 완료!")
+                    logger.write(f"  📁 최적화 모델: {optimization_results.get('model_path', 'N/A')}")
+                else:
+                    logger.write("  ⚠️ 모델 경로를 찾을 수 없어 추론 최적화를 건너뜁니다.")
+
+            except ImportError as e:
+                logger.write(f"  ⚠️ 추론 최적화 모듈 임포트 실패: {e}")
+            except Exception as e:
+                logger.write(f"  ⚠️ 추론 최적화 실패: {e}")
+
         # 시각화 (옵션)
         if args.save_visualizations:
             logger.write("\n📈 시각화 생성 중...")
@@ -366,6 +524,8 @@ def main():
         print("\n" + "=" * 60)
         print("✅ 학습 완료!")
         print(f"📁 결과 저장: {args.output_dir}")
+        if args.optimize_inference:
+            print("🔧 추론 최적화 적용됨")
         print("=" * 60)
 
     except Exception as e:

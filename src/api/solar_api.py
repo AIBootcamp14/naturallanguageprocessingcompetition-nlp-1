@@ -298,7 +298,7 @@ class SolarAPI:
         for i in range(0, len(dialogues), batch_size):
             batch = dialogues[i:i + batch_size]
 
-            self._log(f"\n배치 {i//batch_size + 1}/{(len(dialogues)-1)//batch_size + 1} 처리 중...")
+            # FIXME: Corrupted log message
 
             batch_summaries = []
             for dialogue in batch:

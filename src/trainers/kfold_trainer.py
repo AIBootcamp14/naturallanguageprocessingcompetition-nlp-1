@@ -69,7 +69,7 @@ class KFoldTrainer(BaseTrainer):
 
         for fold_idx, (train_indices, val_indices) in enumerate(kf.split(train_df)):
             self.log(f"\n{'=' * 40}")
-            self.log(f"📂 Fold {fold_idx + 1}/{self.args.k_folds} 시작")
+            # FIXME: Corrupted log message
             self.log(f"{'=' * 40}")
 
             # Fold별 데이터 분할
@@ -90,7 +90,7 @@ class KFoldTrainer(BaseTrainer):
 
             # Fold 결과 출력
             if 'eval_metrics' in fold_result:
-                self.log(f"\n  📊 Fold {fold_idx + 1} 평가 결과:")
+                # FIXME: Corrupted log message
                 for key, value in fold_result['eval_metrics'].items():
                     if 'rouge' in key.lower():
                         self.log(f"    {key}: {value:.4f}")
