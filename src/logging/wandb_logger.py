@@ -64,11 +64,16 @@ class WandbLogger:
 
         # fold가 지정된 경우 run name에 추가
         run_name = self.run_name                 # 기본 실행 이름
-        
+
         # 폴드가 지정된 경우
         if fold is not None:
             run_name = f"fold-{fold}-{run_name}" # 폴드 번호 추가
-        
+
+        # WandB 디렉토리를 프로젝트 루트로 설정
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        wandb_dir = os.path.join(project_root, "wandb")
+        os.environ["WANDB_DIR"] = wandb_dir
+
         # WandB run 초기화
         self.run = wandb.init(
             project=self.project_name,           # 프로젝트 이름
@@ -76,6 +81,7 @@ class WandbLogger:
             name=run_name,                       # 실행 이름
             config=self.config,                  # 설정
             tags=self.tags,                      # 태그
+            dir=wandb_dir,                       # WandB 디렉토리 지정
             reinit=True                          # 재초기화 허용
         )
         
