@@ -163,3 +163,7 @@ nosetests.xml # Test results
 # Large model files (>100MB)
 *.pt
 *.bin
+
+/docs/*.md
+/docs/modify
+/docs/참고
