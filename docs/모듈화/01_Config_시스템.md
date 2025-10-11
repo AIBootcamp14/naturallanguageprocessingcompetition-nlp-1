@@ -528,6 +528,3 @@ config.get('training', {}).get('batch_size', 32)
 - `tests/test_config_loader.py` - Config Loader 테스트
 
 ---
-
-**작성일:** 2025-10-11
-**버전:** 1.0.0
