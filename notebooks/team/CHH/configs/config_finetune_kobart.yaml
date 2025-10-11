@@ -1,0 +1,153 @@
+# ============================================================================
+# KoBART Fine-tuning Configuration
+# ============================================================================
+# 용도: KoBART 모델의 20 Epoch 파인튜닝 전용 설정
+# 기반: 파인튜닝 설정 (ROUGE Sum: 94.51)
+# 최종 수정: 2025-10-10
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# 일반 설정 (General Settings)
+# ----------------------------------------------------------------------------
+general:
+  experiment_name: "kobart_finetune_20ep"  # 실험 이름
+  description: "KoBART fine-tuning with team best practices"  # 실험 설명
+  seed: 42  # 재현성을 위한 랜덤 시드
+
+# ----------------------------------------------------------------------------
+# 경로 설정 (Path Configuration)
+# ----------------------------------------------------------------------------
+paths:
+  data_dir: "../../../data/raw"  # 원본 데이터 디렉토리
+  output_dir: "./checkpoints/kobart_finetune"  # 모델 체크포인트 저장 경로
+  log_dir: "./logs/kobart_finetune"  # 로그 파일 저장 경로
+  submission_dir: "./submissions/kobart_finetune"  # 제출 파일 저장 경로
+
+# ----------------------------------------------------------------------------
+# 모델 설정 (Model Configuration)
+# ----------------------------------------------------------------------------
+model:
+  name: "gogamza/kobart-base-v2"  # 사용할 모델
+  type: "encoder_decoder"  # 모델 타입: Encoder-Decoder 구조
+  use_lora: false  # LoRA 사용 여부 (Encoder-Decoder는 전체 파인튜닝 권장)
+  max_input_length: 1024  # 입력 시퀀스 최대 길이 (토큰 단위) - Prompt 잘림 방지
+  max_target_length: 200  # 출력 시퀀스 최대 길이 (토큰 단위) - 여유 확보
+
+# ----------------------------------------------------------------------------
+# 토크나이저 설정 (Tokenizer Configuration)
+# ----------------------------------------------------------------------------
+tokenizer:
+  # 특수 토큰 목록: 대화 참여자 및 개인정보 마스킹용
+  special_tokens:
+    - "#Person1#"  # 대화 참여자 1
+    - "#Person2#"  # 대화 참여자 2
+    - "#Person3#"  # 대화 참여자 3
+    - "#Person4#"  # 대화 참여자 4
+    - "#Person5#"  # 대화 참여자 5
+    - "#Person6#"  # 대화 참여자 6
+    - "#Person7#"  # 대화 참여자 7
+    - "#PhoneNumber#"  # 전화번호 마스킹
+    - "#Address#"  # 주소 마스킹
+    - "#PassportNumber#"  # 여권번호 마스킹
+    - "#SSN#"  # 주민등록번호 마스킹
+    - "#CardNumber#"  # 카드번호 마스킹
+    - "#CarNumber#"  # 차량번호 마스킹
+    - "#Email#"  # 이메일 마스킹
+    - "#DateOfBirth#"  # 생년월일 마스킹
+
+# ----------------------------------------------------------------------------
+# 학습 설정 (Training Configuration)
+# ----------------------------------------------------------------------------
+training:
+  # ===== 핵심 학습 파라미터 =====
+  num_train_epochs: 20  # 학습 에폭 수 (가장 중요! 1 → 20으로 증가)
+
+  # ===== 배치 크기 설정 =====
+  per_device_train_batch_size: 8  # GPU당 학습 배치 크기
+  per_device_eval_batch_size: 8  # GPU당 평가 배치 크기
+  gradient_accumulation_steps: 1  # 그래디언트 누적 스텝 (실제 배치 = 8 * 1 = 8)
+
+  # ===== 학습률 설정 =====
+  learning_rate: 5.0e-5  # 학습률 (2e-5 → 5e-5로 증가)
+  warmup_ratio: 0.0  # Warmup 비율 (전체 스텝의 0%)
+  lr_scheduler_type: "linear"  # 학습률 스케줄러 타입 (선형 감소)
+
+  # ===== 최적화 파라미터 =====
+  optim: "adamw_torch"  # 옵티마이저: AdamW (PyTorch 구현)
+  adam_beta1: 0.9  # Adam beta1 파라미터 (1차 모멘트 지수 감쇠율)
+  adam_beta2: 0.999  # Adam beta2 파라미터 (2차 모멘트 지수 감쇠율)
+  max_grad_norm: 1.0  # 그래디언트 클리핑 최대값 (그래디언트 폭발 방지)
+  weight_decay: 0.0  # 가중치 감쇠 (L2 정규화) - 0으로 비활성화
+
+  # ===== Mixed Precision 설정 =====
+  fp16: true  # FP16 (16비트 부동소수점) 학습 활성화 - 메모리 절약 & 속도 향상
+  bf16: false  # BF16 (Brain Float 16) 비활성화 - FP16 사용 중이므로
+  gradient_checkpointing: false  # 그래디언트 체크포인팅 비활성화 (KoBART는 작아서 불필요)
+
+  # ===== 평가 및 저장 전략 =====
+  evaluation_strategy: "epoch"  # 평가 전략: 매 에폭마다 평가
+  save_strategy: "epoch"  # 저장 전략: 매 에폭마다 저장
+  save_total_limit: 2  # 최대 저장 체크포인트 수 (디스크 공간 절약)
+  load_best_model_at_end: true  # 학습 종료 시 최고 성능 모델 로드
+  metric_for_best_model: "rouge_sum"  # 최고 모델 선택 기준 (Encoder-Decoder용)
+  greater_is_better: true  # 메트릭이 클수록 좋음 (ROUGE는 높을수록 좋음)
+
+  # ===== Generation 파라미터 (학습 시 평가용) =====
+  predict_with_generate: true  # 평가 시 생성 모드 사용
+  generation_max_length: 100  # 생성 시 최대 길이 (토큰 단위)
+  generation_num_beams: 4  # Beam Search 빔 개수
+  generation_no_repeat_ngram_size: 2  # 반복 방지 n-gram 크기
+
+  # ===== 로깅 설정 =====
+  logging_steps: 50  # N 스텝마다 로그 출력
+  logging_first_step: true  # 첫 스텝 로그 출력
+  report_to: "none"  # 로깅 대상 (none: 로컬만, wandb: WandB 사용)
+
+# ----------------------------------------------------------------------------
+# 추론 설정 (Inference Configuration)
+# ----------------------------------------------------------------------------
+inference:
+  batch_size: 8  # 추론 배치 크기
+
+  # ===== Generation 파라미터 =====
+  max_length: 100  # 생성 최대 길이
+  min_length: 15  # 생성 최소 길이 (너무 짧은 요약 방지)
+  num_beams: 4  # Beam Search 빔 개수 (다양한 후보 탐색)
+  no_repeat_ngram_size: 3  # 반복 방지 n-gram 크기
+  repetition_penalty: 1.1  # 반복 페널티 (1.0 = 없음, >1 = 반복 억제)
+  length_penalty: 1.0  # 길이 페널티 (1.0 = 중립, >1 = 짧게, <1 = 길게)
+  early_stopping: true  # 조기 종료 활성화 (빔 서치 최적화)
+
+  # ===== 후처리 설정 =====
+  remove_special_tokens: true  # 특수 토큰 제거 ([CLS], [SEP] 등)
+
+# ----------------------------------------------------------------------------
+# WandB 설정 (선택 사항)
+# ----------------------------------------------------------------------------
+wandb:
+  enabled: false  # WandB 활성화 여부 (true로 변경 시 WandB 사용)
+  project: "dialogue-summarization-kobart"  # WandB 프로젝트 이름
+  entity: null  # WandB 엔티티 (팀/사용자 이름)
+  name: "kobart-20ep-lr5e-5"  # 실험 이름
+  tags:  # 실험 태그
+    - "kobart"  # 모델 타입
+    - "encoder-decoder"  # 아키텍처
+    - "team-best-practice"
+
+# ----------------------------------------------------------------------------
+# GPU 최적화 설정
+# ----------------------------------------------------------------------------
+gpu:
+  mixed_precision: true  # Mixed Precision 학습 (FP16)
+  auto_optimization:
+    enabled: false  # 자동 최적화 비활성화 (KoBART는 작아서 불필요)
+
+# ----------------------------------------------------------------------------
+# 파이프라인 단계 (Fine-tuning용)
+# ----------------------------------------------------------------------------
+pipeline:
+  stages:  # 실행할 파이프라인 단계
+    - data_quality_check  # 데이터 품질 검증
+    - data_preprocessing  # 데이터 전처리
+    - model_training  # 모델 학습
+    - final_prediction  # 최종 예측
