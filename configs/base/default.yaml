@@ -1,0 +1,61 @@
+# ==================== 기본 설정 (Base Configuration) ==================== #
+# 모든 실험의 기본이 되는 설정
+# 실험별/모델별 설정에서 이 값들을 오버라이드할 수 있음
+
+# ---------------------- 실험 정보 ---------------------- #
+experiment:
+  name: "default"                                       # 실험 이름
+  seed: 42                                              # 랜덤 시드
+  deterministic: true                                   # 결정론적 모드 활성화
+  use_wandb: false                                      # WandB 사용 여부
+  wandb_project: "nlp-competition"                      # WandB 프로젝트 이름
+  wandb_entity: null                                    # WandB 엔티티 (팀/사용자)
+  wandb_tags: []                                        # WandB 태그 리스트
+
+
+# ---------------------- 경로 설정 ---------------------- #
+paths:
+  # 데이터 경로
+  train_data: "data/raw/train.csv"                      # 학습 데이터 경로
+  dev_data: "data/raw/dev.csv"                          # 검증 데이터 경로
+  test_data: "data/raw/test.csv"                        # 테스트 데이터 경로
+
+  # 출력 경로
+  output_dir: "outputs"                                 # 출력 루트 디렉토리
+  model_save_dir: "models"                              # 모델 저장 디렉토리
+  submission_dir: "submissions"                         # 제출 파일 디렉토리
+
+
+# ---------------------- 로깅 설정 ---------------------- #
+logging:
+  log_level: "INFO"                                     # 로그 레벨
+  log_dir: "logs"                                       # 로그 디렉토리
+  save_steps: 100                                       # 로그 저장 주기
+  logging_steps: 10                                     # 로그 출력 주기
+
+
+# ---------------------- 전략 활성화 ---------------------- #
+strategies:
+  data_augmentation: false                              # 데이터 증강 사용 여부
+  cross_validation: false                               # 교차 검증 사용 여부
+  ensemble: false                                       # 앙상블 사용 여부
+  optuna: false                                         # Optuna 최적화 사용 여부
+
+
+# ---------------------- 평가 설정 ---------------------- #
+evaluation:
+  metric: "rouge"                                       # 평가 메트릭
+  rouge_types:                                          # ROUGE 타입 리스트
+    - "rouge1"
+    - "rouge2"
+    - "rougeL"
+  use_stemmer: false                                    # 스테머 사용 여부
+  tokenizer: "mecab"                                    # 토크나이저 종류
+
+
+# ---------------------- 디버깅 설정 ---------------------- #
+debug:
+  use_subset: false                                     # 데이터 샘플링 사용 여부
+  subset_size: 100                                      # 샘플 크기
+  print_sample_predictions: true                        # 샘플 예측 출력 여부
+  num_samples_to_print: 5                               # 출력할 샘플 수
