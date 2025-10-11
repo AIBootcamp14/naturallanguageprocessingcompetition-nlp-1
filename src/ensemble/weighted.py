@@ -81,7 +81,7 @@ class WeightedEnsemble:
         all_predictions = []
 
         for idx, (model, tokenizer, weight) in enumerate(zip(self.models, self.tokenizers, self.weights)):
-            self._log(f"\n모델 {idx+1}/{len(self.models)} 예측 중 (가중치: {weight:.3f})...")
+            # FIXME: Corrupted log message
 
             predictions = []
 

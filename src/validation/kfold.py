@@ -95,7 +95,7 @@ class KFoldSplitter:
                 y = data[stratify_column]
                 self._log(f"  - 층화 기준: {stratify_column}")
             else:
-                self._log(f"  - 경고: {stratify_column} 컬럼 없음, 일반 KFold 사용")
+                # FIXME: Corrupted log message
 
         # Fold 분할
         folds = []

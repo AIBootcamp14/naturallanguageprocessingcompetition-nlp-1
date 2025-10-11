@@ -65,7 +65,7 @@ class VotingEnsemble:
         Returns:
             예측 요약 리스트
         """
-        self._log(f"\n투표 앙상블 예측 시작 ({self.voting} voting)")
+        # FIXME: Corrupted log message
         self._log(f"  - 입력 데이터: {len(dialogues)}개")
         self._log(f"  - 모델 수: {len(self.models)}개")
 
@@ -73,7 +73,7 @@ class VotingEnsemble:
         all_predictions = []
 
         for idx, (model, tokenizer) in enumerate(zip(self.models, self.tokenizers)):
-            self._log(f"\n모델 {idx+1}/{len(self.models)} 예측 중...")
+            # FIXME: Corrupted log message
 
             predictions = []
 
