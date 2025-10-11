@@ -1,0 +1,11 @@
+{
+  "learning_rate": 1.1865720434802202e-05,
+  "batch_size": 8,
+  "lora_r": 36,
+  "lora_alpha": 8,
+  "num_beams": 8,
+  "temperature": 0.49228525715357263,
+  "warmup_ratio": 0.14501399415132848,
+  "weight_decay": 0.05979899017627067,
+  "top_p": 0.8572301388630116
+}
