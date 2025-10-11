@@ -11,7 +11,9 @@
 """
 
 from src.trainers.base_trainer import BaseTrainer
+from src.trainers.single_trainer import SingleModelTrainer
 
 __all__ = [
     'BaseTrainer',
+    'SingleModelTrainer',
 ]
