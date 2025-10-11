@@ -210,16 +210,15 @@ class FullPipelineTrainer(BaseTrainer):
             # Yµ ä
             train_result = trainer.train()
 
-            # ¨x ¥
-            final_model_path = model_output_dir / 'final_model'
-            trainer.save_model(str(final_model_path))
-            model_paths.append(str(final_model_path))
+            # Get model path from training result (model already saved by train())
+            final_model_path = train_result.get('final_model_path', str(model_output_dir / 'final_model'))
+            model_paths.append(final_model_path)
 
-            # °ü ¥
-            eval_metrics = self._extract_eval_metrics(trainer.state.log_history)
+            # Get evaluation metrics from training result
+            eval_metrics = train_result.get('eval_metrics', {})
             model_results.append({
                 'model_name': model_name,
-                'model_path': str(final_model_path),
+                'model_path': final_model_path,
                 'eval_metrics': eval_metrics
             })
 
