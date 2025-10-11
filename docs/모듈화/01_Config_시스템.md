@@ -525,6 +525,3 @@ config.get('training', {}).get('batch_size', 32)
 - `configs/experiments/baseline_kobart.yaml` - 베이스라인 실험
 
 **테스트:**
-- `tests/test_config_loader.py` - Config Loader 테스트
-
----
