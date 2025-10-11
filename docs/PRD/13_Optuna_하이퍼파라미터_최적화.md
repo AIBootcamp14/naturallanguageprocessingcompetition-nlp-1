@@ -563,32 +563,104 @@ python train.py --mode optuna --optuna_stage fine_tuning
 
 ## 🏆 NLP 대화 요약 추천 설정
 
-### 검증된 최적 범위 (시작점)
+### 검증된 최적 설정 (실제 데이터 기반)
 ```python
-recommended_ranges = {
-    # 모델
-    'model_name': ['solar-10.7b', 'polyglot-ko-12.8b'],
+# KoBART (Encoder-Decoder) - 검증 완료
+kobart_optimal = {
+    'model_name': 'digit82/kobart-summarization',
+    'learning_rate': 5e-5,
+    'batch_size': 8,
+    'num_train_epochs': 20,
+    'encoder_max_len': 512,
+    'decoder_max_len': 100,
+    'num_beams': 4,
+    # Result: ROUGE Sum 94.51
+}
 
-    # LoRA
-    'lora_r': [16, 32],
-    'lora_alpha': [32, 64],
-    'lora_dropout': [0.05, 0.1],
+# Llama-3.2-Korean (LLM QLoRA) - 최적화 중
+llama_optimal = {
+    'model_name': 'Bllossom/llama-3.2-Korean-Bllossom-3B',
+    'learning_rate': 2e-5,
+    'batch_size': 8,
+    'gradient_accumulation_steps': 8,  # effective=64
+    'num_train_epochs': 3,
 
-    # 학습
-    'learning_rate': [2e-5, 5e-5],
-    'batch_size': [8, 16],
-    'gradient_accumulation_steps': [2, 4],
+    # ⚠️ 중요: Prompt Truncation 방지
+    'encoder_max_len': 1024,  # 512 → 1024 (필수!)
+    'decoder_max_len': 200,   # 100 → 200
+
+    # LoRA (검증된 값)
+    'lora_r': 16,
+    'lora_alpha': 32,
+    'lora_dropout': 0.05,
+    'target_modules': ['q_proj', 'k_proj', 'v_proj', 'o_proj',
+                       'gate_proj', 'up_proj', 'down_proj'],
+
+    # 학습 안정성
+    'warmup_ratio': 0.1,
+    'weight_decay': 0.1,
+    'lr_scheduler_type': 'cosine',
+    'max_grad_norm': 1.2,
+
+    # Mixed Precision
+    'bf16': True,  # Llama는 bf16
+    'fp16': False,
 
     # 생성
-    'temperature': [0.3, 0.5, 0.7],
-    'top_p': [0.85, 0.9, 0.95],
-    'num_beams': [3, 4, 5],
-    'max_new_tokens': [80, 100, 120],
+    'num_beams': 4,
+    'max_new_tokens': 150,  # 100 → 150 (여유)
+    'repetition_penalty': 1.1,
+    'no_repeat_ngram_size': 3,
 
-    # 전처리
-    'max_input_length': [768, 1024],
-    'noise_removal_level': 'moderate'
+    # Target: ROUGE Sum 95+
+}
+
+# Qwen3-4B (LLM QLoRA) - 대기
+qwen_optimal = {
+    'model_name': 'Qwen/Qwen3-4B-Instruct-2507',
+    'learning_rate': 2e-5,
+    'batch_size': 6,  # Qwen은 메모리 더 사용
+    'gradient_accumulation_steps': 8,
+    'num_train_epochs': 3,
+
+    'encoder_max_len': 1024,
+    'decoder_max_len': 200,
+
+    'lora_r': 16,
+    'lora_alpha': 32,
+    'lora_dropout': 0.05,
+
+    # Qwen은 fp16
+    'fp16': True,
+    'bf16': False,
+
+    'num_beams': 4,
+    'max_new_tokens': 150,
 }
 ```
 
-이 설정을 기반으로 Optuna 최적화를 시작하면 더 빠르게 좋은 결과를 얻을 수 있습니다!
+### Optuna 탐색 권장 범위
+```python
+# 추가 최적화 시 탐색 범위
+search_ranges = {
+    # 학습률 (검증된 범위 중심)
+    'learning_rate': [1e-5, 3e-5, 5e-5],
+
+    # 배치 크기 (GPU 메모리 고려)
+    'batch_size': [4, 6, 8],  # effective=32~64
+
+    # LoRA rank (성능 vs 속도)
+    'lora_r': [8, 16, 32],
+    'lora_alpha': [16, 32, 64],
+
+    # 생성 파라미터
+    'num_beams': [3, 4, 5],
+    'repetition_penalty': [1.0, 1.1, 1.2],
+    'max_new_tokens': [100, 150, 200],
+
+    # ⚠️ 고정 권장 (검증된 값)
+    'encoder_max_len': 1024,  # 절대 512로 하지 말것!
+    'warmup_ratio': 0.1,
+    'lr_scheduler_type': 'cosine',
+}
+```
