@@ -201,6 +201,15 @@ class InferenceDataset(Dataset):
         self.encoder_max_len = encoder_max_len              # 인코더 최대 길이 저장
         self.fnames = fnames                                # 파일명 리스트 저장
 
+        # -------------- 베이스라인 방식: 전체 데이터 한 번에 토크나이징 -------------- #
+        self.tokenized_data = self.tokenizer(               # 전체 리스트 토크나이징
+            dialogues,
+            padding=True,                                   # 동적 패딩 (전체에서 최대값)
+            max_length=encoder_max_len,
+            truncation=True,
+            return_tensors='pt'
+        )
+
 
     # ---------------------- 길이 반환 함수 ---------------------- #
     def __len__(self) -> int:
@@ -223,26 +232,10 @@ class InferenceDataset(Dataset):
                 'fname': 파일명 (있는 경우)
             }
         """
-        # -------------- 데이터 추출 -------------- #
-        dialogue = self.dialogues[idx]                      # idx번째 대화
-
-        # -------------- 인코더 입력 토크나이징 -------------- #
-        encoder_inputs = self.tokenizer(
-            dialogue,                                       # 입력 텍스트
-            max_length=self.encoder_max_len,                # 최대 길이
-            padding='max_length',                           # 최대 길이까지 패딩
-            truncation=True,                                # 최대 길이 초과 시 자르기
-            return_tensors='pt'                             # PyTorch 텐서 반환
-        )
-
-        # -------------- 텐서 차원 조정 -------------- #
-        input_ids = encoder_inputs['input_ids'].squeeze()   # 인코더 입력 ID
-        attention_mask = encoder_inputs['attention_mask'].squeeze()  # 어텐션 마스크
-
-        # -------------- 결과 딕셔너리 생성 -------------- #
+        # -------------- 미리 토크나이징된 데이터에서 추출 -------------- #
         result = {
-            'input_ids': input_ids,                         # 인코더 입력
-            'attention_mask': attention_mask                # 어텐션 마스크
+            'input_ids': self.tokenized_data['input_ids'][idx],
+            'attention_mask': self.tokenized_data['attention_mask'][idx]
         }
 
         # -------------- 파일명 추가 (선택적) -------------- #
