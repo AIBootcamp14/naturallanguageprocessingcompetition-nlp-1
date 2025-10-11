@@ -6,12 +6,20 @@
 
 이 디렉토리는 NLP 대화 요약 경쟁 프로젝트의 모듈화 시스템에 대한 전체 문서를 포함합니다. 총 **79개 테스트** (100% 통과율)를 통해 검증된 **13개 모듈**로 구성된 시스템입니다.
 
-### 주요 성과
-- ✅ **13개 모듈** 완전 구현 및 테스트
+### 주요 성과 (2025-10-11 업데이트)
+- ✅ **15개 모듈** 완전 구현 및 테스트 (추가: augmentation, postprocessing)
 - ✅ **79개 테스트** 100% 통과
 - ✅ **ROUGE 88-95** 베이스라인 달성
 - ✅ **LLM 파인튜닝** (Llama, Qwen) 지원
-- ✅ **7가지 고급 기능** (증강, K-Fold, 앙상블, Solar API, Optuna, 프롬프트 엔지니어링, Instruction Tuning)
+- ✅ **10가지 고급 기능** 완료
+  - ✅ 데이터 증강 (TextAugmenter)
+  - ✅ 후처리 시스템 (TextPostprocessor)
+  - ✅ Solar API 래퍼 (SolarAPIClient)
+  - ✅ 프롬프트 관리 (PromptManager)
+  - ✅ Config 전략 (4개 파일)
+  - ✅ 데이터 품질 검증 (4단계)
+  - ✅ K-Fold, 앙상블, Optuna (모듈화 완료)
+  - ✅ Instruction Tuning
 
 ---
 
