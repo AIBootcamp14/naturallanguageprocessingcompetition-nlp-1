@@ -306,25 +306,16 @@ def get_trainer(args, logger):
         return KFoldTrainer(args, logger)
 
     elif args.mode == 'multi_model':
-        # 추후 구현
-        raise NotImplementedError(
-            "multi_model 모드는 아직 구현되지 않았습니다. "
-            "PRD 12 (다중 모델 앙상블 전략) 구현 후 사용 가능합니다."
-        )
+        from src.trainers import MultiModelEnsembleTrainer
+        return MultiModelEnsembleTrainer(args, logger)
 
     elif args.mode == 'optuna':
-        # 추후 구현
-        raise NotImplementedError(
-            "optuna 모드는 아직 구현되지 않았습니다. "
-            "PRD 13 (Optuna 하이퍼파라미터 최적화) 구현 후 사용 가능합니다."
-        )
+        from src.trainers import OptunaTrainer
+        return OptunaTrainer(args, logger)
 
     elif args.mode == 'full':
-        # 추후 구현
-        raise NotImplementedError(
-            "full 모드는 아직 구현되지 않았습니다. "
-            "전체 파이프라인 구현 후 사용 가능합니다."
-        )
+        from src.trainers import FullPipelineTrainer
+        return FullPipelineTrainer(args, logger)
 
     else:
         raise ValueError(f"지원하지 않는 모드: {args.mode}")
