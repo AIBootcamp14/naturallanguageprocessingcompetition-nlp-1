@@ -845,7 +845,7 @@ output_df.to_csv("submissions/solar_submission.csv", index=False)  # CSV 저장
 
 ### Solar API 추론 스크립트 (예시)
 
-**파일:** `scripts/inference_solar.py`
+**참고:** Solar API 추론은 `scripts/inference.py --use_solar_api`로 실행됩니다.
 
 ```python
 # ---------------------- 표준 라이브러리 ---------------------- #
@@ -906,9 +906,10 @@ if __name__ == "__main__":
 **실행:**
 ```bash
 # Solar API 추론 스크립트 실행
-python scripts/inference_solar.py \
+python scripts/inference.py \
     --test_data data/raw/test.csv \          # 테스트 데이터 경로
     --output submissions/solar.csv \         # 출력 파일 경로
+    --use_solar_api \                        # Solar API 사용
     --batch_size 10 \                        # 배치 크기 (10개씩 처리)
     --token_limit 512                        # 토큰 제한 (512토큰)
 ```
