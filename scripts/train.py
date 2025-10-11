@@ -468,6 +468,18 @@ def setup_environment(args):
     # 시드 설정
     set_seed(args.seed)
 
+    # --models all을 실제 모델 리스트로 확장
+    if 'all' in args.models:
+        args.models = [
+            'kobart',
+            'llama-3.2-korean-3b',
+            'qwen3-4b',
+            'solar-10.7b',
+            'polyglot-ko-12.8b',
+            'kullm-v2'
+        ]
+        print(f"📋 'all' 확장 → {len(args.models)}개 모델: {', '.join(args.models)}")
+
     # 실험명 자동 생성
     if args.experiment_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
