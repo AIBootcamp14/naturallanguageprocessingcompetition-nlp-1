@@ -135,3 +135,79 @@ class BaseTrainer(ABC):
         model_name = getattr(self.args, 'models', ['default'])[0].replace('-', '_')
 
         return f"{mode}_{model_name}_{timestamp}"
+
+    def _override_config(self, config):
+        """
+        명령행 인자로 Config 오버라이드 (공통 메서드)
+
+        Args:
+            config: Config 객체
+        """
+        # 기본 학습 설정
+        if hasattr(self.args, 'epochs') and self.args.epochs is not None:
+            config.training.epochs = self.args.epochs
+
+        if hasattr(self.args, 'batch_size') and self.args.batch_size is not None:
+            config.training.batch_size = self.args.batch_size
+
+        if hasattr(self.args, 'learning_rate') and self.args.learning_rate is not None:
+            config.training.learning_rate = self.args.learning_rate
+
+        # 고급 학습 설정
+        if hasattr(self.args, 'gradient_accumulation_steps') and self.args.gradient_accumulation_steps is not None:
+            config.training.gradient_accumulation_steps = self.args.gradient_accumulation_steps
+
+        if hasattr(self.args, 'warmup_ratio') and self.args.warmup_ratio is not None:
+            config.training.warmup_ratio = self.args.warmup_ratio
+
+        if hasattr(self.args, 'weight_decay') and self.args.weight_decay is not None:
+            config.training.weight_decay = self.args.weight_decay
+
+        if hasattr(self.args, 'max_grad_norm') and self.args.max_grad_norm is not None:
+            config.training.max_grad_norm = self.args.max_grad_norm
+
+        if hasattr(self.args, 'label_smoothing') and self.args.label_smoothing is not None:
+            config.training.label_smoothing = self.args.label_smoothing
+
+        # 생성 파라미터
+        if hasattr(self.args, 'num_beams') and self.args.num_beams is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.num_beams = self.args.num_beams
+
+        if hasattr(self.args, 'temperature') and self.args.temperature is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.temperature = self.args.temperature
+
+        if hasattr(self.args, 'top_p') and self.args.top_p is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.top_p = self.args.top_p
+
+        if hasattr(self.args, 'top_k') and self.args.top_k is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.top_k = self.args.top_k
+
+        if hasattr(self.args, 'repetition_penalty') and self.args.repetition_penalty is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.repetition_penalty = self.args.repetition_penalty
+
+        if hasattr(self.args, 'length_penalty') and self.args.length_penalty is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.length_penalty = self.args.length_penalty
+
+        if hasattr(self.args, 'no_repeat_ngram_size') and self.args.no_repeat_ngram_size is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.no_repeat_ngram_size = self.args.no_repeat_ngram_size
