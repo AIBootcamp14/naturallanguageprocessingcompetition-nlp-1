@@ -50,17 +50,19 @@
 ### 📦 1. 환경 설정
 
 ```bash
-# 저장소 클론
-git clone <repository-url>
-cd natural-language-processing-competition
+# ==================== 프로젝트 환경 설정 ==================== #
 
-# Python 환경 (pyenv 권장)
-pyenv install 3.11.9
-pyenv virtualenv 3.11.9 nlp_py3_11_9
-pyenv activate nlp_py3_11_9
+# ---------------------- 저장소 클론 ---------------------- #
+git clone <repository-url>          # 원격 저장소 클론
+cd natural-language-processing-competition  # 프로젝트 디렉토리 이동
 
-# 필수 패키지 설치
-pip install -r requirements.txt
+# ---------------------- Python 가상환경 생성 (pyenv 권장) ---------------------- #
+pyenv install 3.11.9                # Python 3.11.9 설치
+pyenv virtualenv 3.11.9 nlp_py3_11_9  # 가상환경 생성
+pyenv activate nlp_py3_11_9         # 가상환경 활성화
+
+# ---------------------- 필수 패키지 설치 ---------------------- #
+pip install -r requirements.txt     # requirements.txt 기반 패키지 설치
 ```
 
 **주요 패키지:**
@@ -73,35 +75,46 @@ pip install -r requirements.txt
 ### 📁 2. 데이터 준비
 
 ```bash
-# 데이터 다운로드 및 압축 해제
+# ==================== 데이터 준비 ==================== #
+
+# ---------------------- 데이터 다운로드 및 압축 해제 ---------------------- #
+# 대회 데이터셋 다운로드
 wget https://aistages-api-public-prod.s3.amazonaws.com/app/Competitions/000365/data/data.tar.gz
+# 압축 해제 및 data/raw/ 디렉토리로 이동
 tar -xzf data.tar.gz -C data/raw/
 
-# 데이터 구조 확인
+# ---------------------- 데이터 구조 확인 ---------------------- #
 data/raw/
-├── train.csv               # 학습 데이터 (12,457개)
+├── train.csv               # 학습 데이터 (12,457개 샘플)
 ├── dev.csv                 # 검증 데이터
 ├── test.csv                # 테스트 데이터
-└── sample_submission.csv   # 제출 형식
+└── sample_submission.csv   # 제출 형식 예시
 ```
 
 ### ⚙️ 3. Config 설정
 
 ```bash
-# 베이스라인 실험 Config 확인
-cat configs/experiments/baseline_kobart.yaml
+# ==================== Config 설정 및 검증 ==================== #
 
-# Config 테스트
+# ---------------------- 베이스라인 실험 Config 확인 ---------------------- #
+cat configs/experiments/baseline_kobart.yaml  # 베이스라인 설정 파일 출력
+
+# ---------------------- Config 테스트 ---------------------- #
+# Config 로더 동작 확인 및 병합 결과 출력
 python -c "from src.config import load_config; print(load_config('baseline_kobart'))"
 ```
 
 ### 🎯 4. 베이스라인 학습
 
 ```bash
-# 간단한 베이스라인 학습 (노트북 사용)
+# ==================== 베이스라인 학습 실행 ==================== #
+
+# ---------------------- 노트북 기반 학습 ---------------------- #
+# Jupyter 노트북으로 전체 파이프라인 실행
 jupyter notebook notebooks/team/CHH/Full_Pipeline.ipynb
 
-# 또는 모듈화 시스템 사용 (구현 완료 시)
+# ---------------------- CLI 기반 학습 (모듈화 시스템) ---------------------- #
+# --experiment: 실험 설정 파일명 지정 (baseline_kobart.yaml 사용)
 python scripts/train.py --experiment baseline_kobart
 ```
 
@@ -354,55 +367,75 @@ graph TD
 
 ### 1. 베이스라인 학습
 ```bash
-# 노트북 실행
+# ==================== 베이스라인 학습 실험 ==================== #
+
+# ---------------------- Jupyter 노트북 실행 ---------------------- #
+# Full Pipeline 노트북 실행
 jupyter notebook notebooks/team/CHH/Full_Pipeline.ipynb
 
-# 또는 CLI (모듈화 시스템)
+# ---------------------- CLI 모듈화 시스템 실행 ---------------------- #
+# --experiment: 실험 설정 파일명 (baseline_kobart.yaml)
 python scripts/train.py --experiment baseline_kobart
 ```
 
 ### 2. Optuna 최적화
 ```python
+# ==================== Optuna 하이퍼파라미터 최적화 ==================== #
+
+# ---------------------- 표준 라이브러리 ---------------------- #
 from src.optimization import OptunaOptimizer
 
+# ---------------------- Optimizer 초기화 ---------------------- #
 optimizer = OptunaOptimizer(
-    config=config,
-    n_trials=50,
-    direction='maximize'  # ROUGE 점수 최대화
+    config=config,              # Config 객체
+    n_trials=50,                # 시도 횟수 (50회)
+    direction='maximize'        # ROUGE 점수 최대화
 )
 
-best_params = optimizer.optimize()
-print(f"Best ROUGE: {best_params['value']:.4f}")
+# ---------------------- 최적화 실행 ---------------------- #
+best_params = optimizer.optimize()  # 최적 하이퍼파라미터 탐색
+print(f"Best ROUGE: {best_params['value']:.4f}")  # 최적 ROUGE 점수 출력
 ```
 
 ### 3. 앙상블 실행
 ```python
+# ==================== 앙상블 예측 ==================== #
+
+# ---------------------- 프로젝트 모듈 ---------------------- #
 from src.ensemble import WeightedEnsemble
 
-# 여러 모델 로드
+# ---------------------- 모델 및 가중치 설정 ---------------------- #
+# 여러 모델 리스트 생성
 models = [model1, model2, model3]
+# 각 모델별 가중치 (합 = 1.0)
 weights = [0.5, 0.3, 0.2]
 
-# 앙상블 예측
+# ---------------------- 앙상블 예측 실행 ---------------------- #
+# Weighted Ensemble 초기화
 ensemble = WeightedEnsemble(models, weights)
+# 테스트 데이터로 예측 수행
 predictions = ensemble.predict(test_data)
 ```
 
 ### 4. TensorRT 최적화
 ```python
+# ==================== TensorRT 추론 최적화 ==================== #
+
+# ---------------------- 프로젝트 모듈 ---------------------- #
 from src.inference import TensorRTOptimizer
 
+# ---------------------- Optimizer 초기화 ---------------------- #
 optimizer = TensorRTOptimizer()
 
-# PyTorch → TensorRT 변환
+# ---------------------- PyTorch → TensorRT 변환 ---------------------- #
 tensorrt_model = optimizer.convert_to_tensorrt(
-    model=model,
-    precision='fp16',  # FP16 정밀도
-    batch_size=32
+    model=model,                # PyTorch 모델
+    precision='fp16',           # FP16 정밀도 (속도 향상)
+    batch_size=32               # 배치 크기
 )
 
-# 추론 (3-5배 빠름)
-predictions = tensorrt_model.predict(test_data)
+# ---------------------- 추론 실행 (3-5배 속도 향상) ---------------------- #
+predictions = tensorrt_model.predict(test_data)  # 테스트 데이터 예측
 ```
 
 <br>
@@ -445,19 +478,26 @@ RuntimeError: CUDA out of memory. Tried to allocate 2.00 GiB
 
 #### 해결
 ```python
-# 방법 1: 배치 크기 감소
-config.training.batch_size = 16  # 기존: 32
+# ==================== GPU 메모리 부족 해결 방법 ==================== #
 
-# 방법 2: Gradient Accumulation
+# ---------------------- 방법 1: 배치 크기 감소 ---------------------- #
+config.training.batch_size = 16  # 기존: 32, 메모리 사용량 50% 감소
+
+# ---------------------- 방법 2: Gradient Accumulation ---------------------- #
+# 4번의 forward pass 후 1번 backward (효과적 배치 크기 = 16 × 4 = 64)
 config.training.gradient_accumulation_steps = 4
 
-# 방법 3: Mixed Precision 학습
+# ---------------------- 방법 3: Mixed Precision 학습 (AMP) ---------------------- #
+# ---------------------- 서드파티 라이브러리 ---------------------- #
 from torch.cuda.amp import autocast, GradScaler
+
+# Gradient Scaler 초기화 (FP16 손실 스케일링)
 scaler = GradScaler()
 
-with autocast():
-    loss = model(**batch).loss
-scaler.scale(loss).backward()
+# -------------- FP16 자동 형변환 실행 -------------- #
+with autocast():                    # FP16 모드로 forward pass
+    loss = model(**batch).loss      # 손실 계산
+scaler.scale(loss).backward()       # 스케일된 손실로 backward
 ```
 
 ### 2. 그래디언트 폭발
@@ -467,11 +507,14 @@ WandB에서 `gradient/total_norm` > 10.0
 
 #### 해결
 ```python
-# Gradient Clipping 적용
+# ==================== 그래디언트 폭발 해결 방법 ==================== #
+
+# ---------------------- 방법 1: Gradient Clipping ---------------------- #
+# 그래디언트 L2 norm을 1.0으로 제한
 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
-# 또는 학습률 감소
-config.training.learning_rate = 5e-6  # 기존: 1e-5
+# ---------------------- 방법 2: 학습률 감소 ---------------------- #
+config.training.learning_rate = 5e-6  # 기존: 1e-5, 50% 감소
 ```
 
 ### 3. 과적합 (Overfitting)
@@ -481,18 +524,21 @@ WandB에서 `loss/train_val_diff` < -0.5
 
 #### 해결
 ```python
-# Dropout 증가
-config.model.dropout = 0.3  # 기존: 0.1
+# ==================== 과적합 해결 방법 ==================== #
 
-# Weight Decay 증가
-config.training.weight_decay = 0.01  # 기존: 0.0
+# ---------------------- 방법 1: Dropout 증가 ---------------------- #
+config.model.dropout = 0.3  # 기존: 0.1, 정규화 강화
 
-# Early Stopping
+# ---------------------- 방법 2: Weight Decay 증가 ---------------------- #
+config.training.weight_decay = 0.01  # 기존: 0.0, L2 정규화 적용
+
+# ---------------------- 방법 3: Early Stopping ---------------------- #
+# 검증 손실이 개선되지 않으면 카운터 증가
 if val_loss > best_val_loss:
-    patience_counter += 1
-    if patience_counter >= 3:
-        print("Early stopping!")
-        break
+    patience_counter += 1           # 인내 카운터 증가
+    if patience_counter >= 3:       # 3 에포크 동안 개선 없으면
+        print("Early stopping!")    # 조기 종료 메시지 출력
+        break                       # 학습 중단
 ```
 
 <br>
