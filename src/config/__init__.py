@@ -9,10 +9,11 @@ Config 시스템 모듈
 """
 
 # ---------------------- Config 모듈 Import ---------------------- #
-from .loader import ConfigLoader, load_config           # Config 로더 클래스 및 함수
+from .loader import ConfigLoader, load_config, load_model_config  # Config 로더 클래스 및 함수
 
 # ---------------------- 외부 노출 모듈 정의 ---------------------- #
 __all__ = [
     'ConfigLoader',         # Config 로더 클래스
-    'load_config'           # Config 로드 함수
+    'load_config',          # 실험명으로 Config 로드
+    'load_model_config'     # 모델명으로 Config 로드 (PRD 08, 14)
 ]

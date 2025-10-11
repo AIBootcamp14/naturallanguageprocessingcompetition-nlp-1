@@ -81,6 +81,8 @@ class ConfigLoader:
         """
         모델별 설정 로드 (models/{model_name}.yaml)
 
+        _base_ 필드를 지원하여 base 설정 상속 가능
+
         Args:
             model_name: 모델 이름 (kobart, llama_3.2_3b 등)
 
@@ -91,7 +93,20 @@ class ConfigLoader:
 
         # 파일이 존재하면 로드
         if path.exists():
-            return OmegaConf.load(path)                     # YAML 파일 로드
+            config = OmegaConf.load(path)                   # YAML 파일 로드
+
+            # _base_ 상속 처리 (PRD 19)
+            if '_base_' in config:
+                base_path = self.config_root / config['_base_']
+                if base_path.exists():
+                    base_config = OmegaConf.load(base_path)
+                    # base config와 병합 (현재 config가 우선)
+                    config = OmegaConf.merge(base_config, config)
+                    # _base_ 키 제거
+                    if '_base_' in config:
+                        del config['_base_']
+
+            return config
 
         # 파일이 없으면 빈 설정 반환
         return OmegaConf.create({})                         # 빈 설정 생성
@@ -205,3 +220,45 @@ def load_config(experiment_name: str, config_root: str = "configs") -> DictConfi
     """
     loader = ConfigLoader(config_root)                      # Config 로더 생성
     return loader.merge_configs(experiment_name)            # 설정 병합 및 반환
+
+
+def load_model_config(model_name: str, config_root: str = "configs") -> DictConfig:
+    """
+    모델 이름으로 직접 Config 로드 (PRD 08, 14)
+
+    Args:
+        model_name: 모델 이름 (kobart, llama-3.2-korean-3b 등)
+        config_root: config 루트 디렉토리
+
+    Returns:
+        DictConfig: 모델 설정
+
+    Example:
+        >>> config = load_model_config("llama-3.2-korean-3b")
+        >>> print(config.model.type)
+        causal_lm
+    """
+    loader = ConfigLoader(config_root)
+
+    # 모델명 정규화 (하이픈 → 언더스코어)
+    normalized_name = model_name.replace('-', '_')
+
+    # 1. 기본 설정 로드
+    configs = [loader.load_base()]
+
+    # 2. 모델 설정 로드
+    model_config = loader.load_model(normalized_name)
+
+    if not model_config:
+        raise FileNotFoundError(
+            f"모델 설정 파일을 찾을 수 없습니다: configs/models/{normalized_name}.yaml"
+        )
+
+    # 3. 모델 타입별 설정 로드
+    model_type = model_config.get('model', {}).get('type', 'encoder_decoder')
+    type_config = loader.load_model_type(model_type)
+
+    # 4. 병합 (base → type → model 순서)
+    merged = OmegaConf.merge(configs[0], type_config, model_config)
+
+    return merged

@@ -14,7 +14,7 @@ from sklearn.model_selection import KFold
 
 # ---------------------- 프로젝트 모듈 ---------------------- #
 from src.trainers.base_trainer import BaseTrainer
-from src.config import load_config
+from src.config import load_config, load_model_config
 from src.models import load_model_and_tokenizer
 from src.data import DialogueSummarizationDataset
 from src.training import create_trainer
@@ -49,13 +49,13 @@ class KFoldTrainer(BaseTrainer):
 
         # 2. Config 로드
         self.log("\n[2/3] Config 로딩...")
-        config_path = self.get_config_path(self.args.models[0])
-        config = load_config(config_path)
+        # 모델명으로 직접 config 로드 (PRD 19)
+        config = load_model_config(self.args.models[0])
 
         # 명령행 인자로 Config 오버라이드
         self._override_config(config)
 
-        self.log(f"  ✅ Config 로드 완료: {config_path}")
+        self.log(f"  ✅ Config 로드 완료: {self.args.models[0]}")
 
         # 3. K-Fold 분할 및 학습
         self.log("\n[3/3] K-Fold 교차검증 실행...")
