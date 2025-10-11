@@ -57,8 +57,12 @@ src/ensemble/weighted.py
 ### 클래스 구조
 
 ```python
+# ==================== WeightedEnsemble 클래스 ==================== #
 class WeightedEnsemble:
+    # ---------------------- 초기화 메서드 ---------------------- #
     def __init__(models, tokenizers, weights=None)
+
+    # ---------------------- 예측 메서드 ---------------------- #
     def predict(dialogues, max_length, num_beams, batch_size)
 ```
 
@@ -78,24 +82,25 @@ class WeightedEnsemble:
 ### 사용 예시
 
 ```python
+# ---------------------- 가중치 앙상블 모듈 임포트 ---------------------- #
 from src.ensemble import WeightedEnsemble
 
 # 모델 로드 (이미 로드된 모델 가정)
-models = [model1, model2, model3]
-tokenizers = [tokenizer1, tokenizer2, tokenizer3]
+models = [model1, model2, model3]              # 앙상블할 모델 리스트
+tokenizers = [tokenizer1, tokenizer2, tokenizer3]  # 각 모델의 토크나이저
 
 # 가중치 설정 (ROUGE 점수 기반)
-weights = [0.5, 0.3, 0.2]  # 모델1이 가장 높은 성능
+weights = [0.5, 0.3, 0.2]                      # 모델1이 가장 높은 성능
 
 # 앙상블 생성
 ensemble = WeightedEnsemble(models, tokenizers, weights)
 
 # 예측
 predictions = ensemble.predict(
-    dialogues=test_dialogues,
-    max_length=200,
-    num_beams=4,
-    batch_size=8
+    dialogues=test_dialogues,                  # 테스트 대화 데이터
+    max_length=200,                            # 생성할 최대 토큰 수
+    num_beams=4,                               # 빔 서치 빔 개수
+    batch_size=8                               # 배치 크기
 )
 ```
 
@@ -103,8 +108,8 @@ predictions = ensemble.predict(
 
 ```python
 # 가중치 없이 초기화 → 자동으로 균등 가중치
-ensemble = WeightedEnsemble(models, tokenizers)
-# weights = [0.333, 0.333, 0.333]
+ensemble = WeightedEnsemble(models, tokenizers)  # 균등 가중치 자동 할당
+# weights = [0.333, 0.333, 0.333]                # 각 모델에 동일한 가중치
 ```
 
 ---
@@ -119,8 +124,12 @@ src/ensemble/voting.py
 ### 클래스 구조
 
 ```python
+# ==================== VotingEnsemble 클래스 ==================== #
 class VotingEnsemble:
+    # ---------------------- 초기화 메서드 ---------------------- #
     def __init__(models, tokenizers, voting="hard")
+
+    # ---------------------- 예측 메서드 ---------------------- #
     def predict(dialogues, max_length, num_beams, batch_size)
 ```
 
@@ -144,20 +153,22 @@ class VotingEnsemble:
 ### 사용 예시
 
 ```python
+# ---------------------- 투표 앙상블 모듈 임포트 ---------------------- #
 from src.ensemble import VotingEnsemble
 
-models = [model1, model2, model3]
-tokenizers = [tokenizer1, tokenizer2, tokenizer3]
+# 모델 및 토크나이저 준비
+models = [model1, model2, model3]              # 앙상블할 모델 리스트
+tokenizers = [tokenizer1, tokenizer2, tokenizer3]  # 각 모델의 토크나이저
 
 # Hard Voting 앙상블
-ensemble = VotingEnsemble(models, tokenizers, voting="hard")
+ensemble = VotingEnsemble(models, tokenizers, voting="hard")  # 다수결 방식 선택
 
 # 예측
 predictions = ensemble.predict(
-    dialogues=test_dialogues,
-    max_length=200,
-    num_beams=4,
-    batch_size=8
+    dialogues=test_dialogues,                  # 테스트 대화 데이터
+    max_length=200,                            # 생성할 최대 토큰 수
+    num_beams=4,                               # 빔 서치 빔 개수
+    batch_size=8                               # 배치 크기
 )
 ```
 
@@ -173,11 +184,21 @@ src/ensemble/stacking.py
 ### 클래스 구조
 
 ```python
+# ==================== StackingEnsemble 클래스 ==================== #
 class StackingEnsemble:
+    # ---------------------- 초기화 메서드 ---------------------- #
     def __init__(base_models, tokenizers, model_names, meta_learner="ridge", logger=None)
+
+    # ---------------------- 메타 학습기 학습 메서드 ---------------------- #
     def train_meta_learner(train_dialogues, train_summaries)
+
+    # ---------------------- 예측 메서드 ---------------------- #
     def predict(dialogues, max_length, num_beams, batch_size)
+
+    # ---------------------- Base 모델 예측 수집 메서드 ---------------------- #
     def _get_base_predictions(dialogues)
+
+    # ---------------------- ROUGE 특징 추출 메서드 ---------------------- #
     def _extract_rouge_features(predictions, references)
 ```
 
@@ -210,32 +231,34 @@ class StackingEnsemble:
 ### 사용 예시
 
 ```python
+# ---------------------- Stacking 앙상블 모듈 임포트 ---------------------- #
 from src.ensemble import StackingEnsemble
 
-models = [model1, model2, model3]
-tokenizers = [tokenizer1, tokenizer2, tokenizer3]
-model_names = ["KoBART", "Llama", "Qwen"]
+# 모델 및 토크나이저 준비
+models = [model1, model2, model3]              # Base 모델 리스트
+tokenizers = [tokenizer1, tokenizer2, tokenizer3]  # 각 모델의 토크나이저
+model_names = ["KoBART", "Llama", "Qwen"]      # 모델 이름 (로깅용)
 
 # Stacking 앙상블 생성
 ensemble = StackingEnsemble(
-    base_models=models,
-    tokenizers=tokenizers,
-    model_names=model_names,
-    meta_learner="ridge"
+    base_models=models,                        # Base 모델들
+    tokenizers=tokenizers,                     # 토크나이저들
+    model_names=model_names,                   # 모델 이름들
+    meta_learner="ridge"                       # 메타 학습기 타입 (ridge/random_forest/linear)
 )
 
 # Meta-learner 학습 (검증 데이터 사용)
 ensemble.train_meta_learner(
-    train_dialogues=val_df['dialogue'].tolist(),
-    train_summaries=val_df['summary'].tolist()
+    train_dialogues=val_df['dialogue'].tolist(),  # 검증 대화 데이터
+    train_summaries=val_df['summary'].tolist()    # 검증 요약 데이터 (정답)
 )
 
 # 예측
 predictions = ensemble.predict(
-    dialogues=test_dialogues,
-    max_length=200,
-    num_beams=4,
-    batch_size=8
+    dialogues=test_dialogues,                  # 테스트 대화 데이터
+    max_length=200,                            # 생성할 최대 토큰 수
+    num_beams=4,                               # 빔 서치 빔 개수
+    batch_size=8                               # 배치 크기
 )
 ```
 
@@ -257,10 +280,18 @@ src/ensemble/blending.py
 ### 클래스 구조
 
 ```python
+# ==================== BlendingEnsemble 클래스 ==================== #
 class BlendingEnsemble:
+    # ---------------------- 초기화 메서드 ---------------------- #
     def __init__(base_models, tokenizers, model_names, logger=None)
+
+    # ---------------------- 가중치 최적화 메서드 ---------------------- #
     def optimize_weights(val_dialogues, val_summaries, method="rouge")
+
+    # ---------------------- 예측 메서드 ---------------------- #
     def predict(dialogues, max_length, num_beams, batch_size)
+
+    # ---------------------- ROUGE 기반 가중치 최적화 메서드 ---------------------- #
     def _optimize_by_rouge(val_predictions, val_summaries)
 ```
 
@@ -272,48 +303,52 @@ class BlendingEnsemble:
 3. 학습된 가중치로 테스트 데이터 예측
 
 ```python
-# 목적 함수
+# ---------------------- 목적 함수 정의 ---------------------- #
 def objective(weights):
+    # 가중치 기반 앙상블 예측 생성
     ensemble_pred = weighted_combine(predictions, weights)
+    # ROUGE 점수 계산
     rouge_score = calculate_rouge(ensemble_pred, references)
-    return -rouge_score  # 최소화 문제로 변환
+    return -rouge_score                        # 최소화 문제로 변환 (음수)
 
 # scipy.optimize로 최적 가중치 탐색
-optimal_weights = minimize(objective, init_weights, method='SLSQP')
+optimal_weights = minimize(objective, init_weights, method='SLSQP')  # SLSQP 알고리즘 사용
 ```
 
 ### 사용 예시
 
 ```python
+# ---------------------- Blending 앙상블 모듈 임포트 ---------------------- #
 from src.ensemble import BlendingEnsemble
 
-models = [model1, model2, model3]
-tokenizers = [tokenizer1, tokenizer2, tokenizer3]
-model_names = ["KoBART", "Llama", "Qwen"]
+# 모델 및 토크나이저 준비
+models = [model1, model2, model3]              # Base 모델 리스트
+tokenizers = [tokenizer1, tokenizer2, tokenizer3]  # 각 모델의 토크나이저
+model_names = ["KoBART", "Llama", "Qwen"]      # 모델 이름 (로깅용)
 
 # Blending 앙상블 생성
 ensemble = BlendingEnsemble(
-    base_models=models,
-    tokenizers=tokenizers,
-    model_names=model_names
+    base_models=models,                        # Base 모델들
+    tokenizers=tokenizers,                     # 토크나이저들
+    model_names=model_names                    # 모델 이름들
 )
 
 # 가중치 최적화 (검증 데이터 사용)
 ensemble.optimize_weights(
-    val_dialogues=val_df['dialogue'].tolist(),
-    val_summaries=val_df['summary'].tolist(),
-    method="rouge"
+    val_dialogues=val_df['dialogue'].tolist(),  # 검증 대화 데이터
+    val_summaries=val_df['summary'].tolist(),   # 검증 요약 데이터 (정답)
+    method="rouge"                              # ROUGE 기반 최적화
 )
 
 print(f"최적 가중치: {ensemble.weights}")
-# 최적 가중치: [0.52, 0.31, 0.17]
+# 최적 가중치: [0.52, 0.31, 0.17]              # 자동 계산된 최적 가중치
 
 # 예측
 predictions = ensemble.predict(
-    dialogues=test_dialogues,
-    max_length=200,
-    num_beams=4,
-    batch_size=8
+    dialogues=test_dialogues,                  # 테스트 대화 데이터
+    max_length=200,                            # 생성할 최대 토큰 수
+    num_beams=4,                               # 빔 서치 빔 개수
+    batch_size=8                               # 배치 크기
 )
 ```
 
@@ -340,11 +375,21 @@ src/ensemble/manager.py
 ### 클래스 구조
 
 ```python
+# ==================== ModelManager 클래스 ==================== #
 class ModelManager:
+    # ---------------------- 초기화 메서드 ---------------------- #
     def __init__()
+
+    # ---------------------- 단일 모델 로드 메서드 ---------------------- #
     def load_model(model_path, model_name)
+
+    # ---------------------- 여러 모델 로드 메서드 ---------------------- #
     def load_models(model_paths, model_names)
+
+    # ---------------------- 앙상블 생성 메서드 ---------------------- #
     def create_ensemble(ensemble_type, weights, voting)
+
+    # ---------------------- 정보 조회 메서드 ---------------------- #
     def get_info()
 ```
 
@@ -353,24 +398,26 @@ class ModelManager:
 #### 1. 모델 로드
 
 ```python
+# ---------------------- 모델 매니저 모듈 임포트 ---------------------- #
 from src.ensemble import ModelManager
 
+# 모델 매니저 초기화
 manager = ModelManager()
 
 # 단일 모델 로드
 manager.load_model(
-    model_path="outputs/baseline_kobart/final_model",
-    model_name="KoBART"
+    model_path="outputs/baseline_kobart/final_model",  # 모델 저장 경로
+    model_name="KoBART"                                # 모델 이름 (식별용)
 )
 
 # 여러 모델 로드
 manager.load_models(
-    model_paths=[
+    model_paths=[                                  # 모델 경로 리스트
         "outputs/baseline_kobart/final_model",
         "outputs/kobart_v2/final_model",
         "outputs/kobart_v3/final_model"
     ],
-    model_names=["KoBART_v1", "KoBART_v2", "KoBART_v3"]
+    model_names=["KoBART_v1", "KoBART_v2", "KoBART_v3"]  # 각 모델 이름
 )
 ```
 
@@ -378,26 +425,29 @@ manager.load_models(
 
 **가중치 앙상블:**
 ```python
+# 가중치 앙상블 생성
 ensemble = manager.create_ensemble(
-    ensemble_type="weighted",
-    weights=[0.5, 0.3, 0.2]
+    ensemble_type="weighted",                  # 앙상블 타입 (weighted)
+    weights=[0.5, 0.3, 0.2]                    # 각 모델의 가중치
 )
 ```
 
 **투표 앙상블:**
 ```python
+# 투표 앙상블 생성
 ensemble = manager.create_ensemble(
-    ensemble_type="voting",
-    voting="hard"
+    ensemble_type="voting",                    # 앙상블 타입 (voting)
+    voting="hard"                              # 투표 방식 (hard/soft)
 )
 ```
 
 #### 3. 정보 조회
 
 ```python
-info = manager.get_info()
-print(f"모델 수: {info['num_models']}")
-print(f"모델 이름: {info['model_names']}")
+# 모델 매니저 정보 조회
+info = manager.get_info()                      # 로드된 모델 정보 반환
+print(f"모델 수: {info['num_models']}")        # 로드된 모델 개수
+print(f"모델 이름: {info['model_names']}")     # 로드된 모델 이름 리스트
 ```
 
 ---
@@ -407,50 +457,51 @@ print(f"모델 이름: {info['model_names']}")
 ### 전체 파이프라인 예시
 
 ```python
+# ---------------------- 필요한 모듈 임포트 ---------------------- #
 from src.ensemble import ModelManager
 import pandas as pd
 
-# 1. 모델 매니저 생성
-manager = ModelManager()
+# ==================== 1. 모델 매니저 생성 ==================== #
+manager = ModelManager()                       # 모델 관리 객체 초기화
 
-# 2. 여러 모델 로드
-model_paths = [
+# ==================== 2. 여러 모델 로드 ==================== #
+model_paths = [                                # 앙상블할 모델 경로 리스트
     "outputs/baseline_kobart/final_model",
     "outputs/kobart_fold1/final_model",
     "outputs/kobart_fold2/final_model"
 ]
 
-manager.load_models(model_paths)
+manager.load_models(model_paths)               # 모델들 메모리에 로드
 
-# 3. 가중치 앙상블 생성
+# ==================== 3. 가중치 앙상블 생성 ==================== #
 # ROUGE 점수 기반 가중치
-weights = [0.45, 0.30, 0.25]  # 검증 성능에 비례
+weights = [0.45, 0.30, 0.25]                   # 검증 성능에 비례하여 설정
 
 ensemble = manager.create_ensemble(
-    ensemble_type="weighted",
-    weights=weights
+    ensemble_type="weighted",                  # 가중치 앙상블 타입
+    weights=weights                            # 모델별 가중치
 )
 
-# 4. 테스트 데이터 로드
-test_df = pd.read_csv("data/raw/test.csv")
-dialogues = test_df['dialogue'].tolist()
+# ==================== 4. 테스트 데이터 로드 ==================== #
+test_df = pd.read_csv("data/raw/test.csv")    # 테스트 데이터 로드
+dialogues = test_df['dialogue'].tolist()      # 대화 컬럼 리스트로 변환
 
-# 5. 예측
+# ==================== 5. 예측 ==================== #
 predictions = ensemble.predict(
-    dialogues=dialogues,
-    max_length=200,
-    num_beams=4,
-    batch_size=8
+    dialogues=dialogues,                       # 테스트 대화 데이터
+    max_length=200,                            # 생성할 최대 토큰 수
+    num_beams=4,                               # 빔 서치 빔 개수
+    batch_size=8                               # 배치 크기
 )
 
-# 6. 결과 저장
+# ==================== 6. 결과 저장 ==================== #
 output_df = pd.DataFrame({
-    'fname': test_df['fname'],
-    'summary': predictions
+    'fname': test_df['fname'],                 # 파일명
+    'summary': predictions                     # 앙상블 예측 결과
 })
-output_df.to_csv("submissions/ensemble_submission.csv", index=False)
+output_df.to_csv("submissions/ensemble_submission.csv", index=False)  # CSV 저장
 
-print(f"앙상블 예측 완료: {len(predictions)}개")
+print(f"앙상블 예측 완료: {len(predictions)}개")  # 완료 메시지
 ```
 
 ---
@@ -458,23 +509,25 @@ print(f"앙상블 예측 완료: {len(predictions)}개")
 ### K-Fold 모델 앙상블
 
 ```python
+# ---------------------- 모델 매니저 모듈 임포트 ---------------------- #
 from src.ensemble import ModelManager
 
+# 모델 매니저 초기화
 manager = ModelManager()
 
 # K-Fold로 학습된 모델들 로드
-fold_paths = [
+fold_paths = [                                 # 각 폴드별 모델 경로 생성
     f"outputs/baseline_kobart_fold{i}/final_model"
-    for i in range(1, 6)  # 5-Fold
+    for i in range(1, 6)                       # 5-Fold 교차검증
 ]
 
-manager.load_models(fold_paths)
+manager.load_models(fold_paths)                # 모든 폴드 모델 로드
 
 # 균등 가중치 앙상블 (K-Fold는 보통 균등)
-ensemble = manager.create_ensemble(ensemble_type="weighted")
+ensemble = manager.create_ensemble(ensemble_type="weighted")  # 가중치 자동 균등 분배
 
 # 예측
-predictions = ensemble.predict(dialogues)
+predictions = ensemble.predict(dialogues)      # 앙상블 예측 실행
 ```
 
 ---
@@ -507,25 +560,41 @@ src/api/solar_api.py
 ### 클래스 구조
 
 ```python
+# ==================== SolarAPI 클래스 ==================== #
 class SolarAPI:
+    # ---------------------- 초기화 메서드 ---------------------- #
     def __init__(api_key, token_limit, cache_dir)
+
+    # ---------------------- 대화 전처리 메서드 ---------------------- #
     def preprocess_dialogue(dialogue)
+
+    # ---------------------- 스마트 텍스트 절단 메서드 ---------------------- #
     def smart_truncate(text, max_tokens)
+
+    # ---------------------- 토큰 수 추정 메서드 ---------------------- #
     def estimate_tokens(text)
+
+    # ---------------------- Few-shot 프롬프트 생성 메서드 ---------------------- #
     def build_few_shot_prompt(dialogue, example_dialogue, example_summary)
+
+    # ---------------------- 단일 요약 메서드 ---------------------- #
     def summarize(dialogue, ...)
+
+    # ---------------------- 배치 요약 메서드 ---------------------- #
     def summarize_batch(dialogues, ...)
 ```
 
 ### 초기화
 
 ```python
+# ---------------------- Solar API 모듈 임포트 ---------------------- #
 from src.api import SolarAPI
 
+# Solar API 클라이언트 초기화
 api = SolarAPI(
-    api_key="your_api_key",  # 또는 환경 변수 SOLAR_API_KEY
-    token_limit=512,          # 대화당 최대 토큰
-    cache_dir="cache/solar"   # 캐시 디렉토리
+    api_key="your_api_key",                    # API 키 (또는 환경 변수 SOLAR_API_KEY)
+    token_limit=512,                           # 대화당 최대 토큰 수
+    cache_dir="cache/solar"                    # 응답 캐시 저장 디렉토리
 )
 ```
 
@@ -538,20 +607,21 @@ api = SolarAPI(
 **목적:** 불필요한 토큰 제거
 
 ```python
+# ---------------------- 대화 전처리 함수 ---------------------- #
 def preprocess_dialogue(dialogue):
     # 1. 공백 제거
-    dialogue = ' '.join(dialogue.split())
+    dialogue = ' '.join(dialogue.split())      # 연속된 공백을 하나로 통합
 
     # 2. Person 태그 간소화
     #    #Person1#: → A:
     #    #Person2#: → B:
-    dialogue = dialogue.replace('#Person1#:', 'A:')
-    dialogue = dialogue.replace('#Person2#:', 'B:')
+    dialogue = dialogue.replace('#Person1#:', 'A:')  # Person1 태그 축약
+    dialogue = dialogue.replace('#Person2#:', 'B:')  # Person2 태그 축약
 
     # 3. 스마트 절단
-    dialogue = smart_truncate(dialogue, 512)
+    dialogue = smart_truncate(dialogue, 512)   # 토큰 제한에 맞춰 절단
 
-    return dialogue
+    return dialogue                            # 전처리된 대화 반환
 ```
 
 **효과:**
@@ -569,28 +639,30 @@ def preprocess_dialogue(dialogue):
 **목적:** 문장 단위로 토큰 제한
 
 ```python
+# ---------------------- 스마트 텍스트 절단 함수 ---------------------- #
 def smart_truncate(text, max_tokens=512):
     # 토큰 수 추정
-    estimated = estimate_tokens(text)
+    estimated = estimate_tokens(text)          # 현재 텍스트의 토큰 수 추정
 
-    if estimated <= max_tokens:
-        return text
+    if estimated <= max_tokens:                # 토큰 제한 이하면
+        return text                            # 원본 반환
 
     # 문장 단위로 자르기 (마침표 기준)
-    sentences = text.split('.')
-    truncated = []
-    current_tokens = 0
+    sentences = text.split('.')                # 마침표 기준 문장 분리
+    truncated = []                             # 절단된 문장 리스트
+    current_tokens = 0                         # 현재 누적 토큰 수
 
+    # 각 문장 순회
     for sentence in sentences:
-        sentence_tokens = estimate_tokens(sentence)
+        sentence_tokens = estimate_tokens(sentence)  # 문장의 토큰 수 추정
 
-        if current_tokens + sentence_tokens > max_tokens:
-            break
+        if current_tokens + sentence_tokens > max_tokens:  # 토큰 제한 초과 시
+            break                              # 루프 종료
 
-        truncated.append(sentence)
-        current_tokens += sentence_tokens
+        truncated.append(sentence)             # 문장 추가
+        current_tokens += sentence_tokens      # 토큰 수 누적
 
-    return '.'.join(truncated) + '.'
+    return '.'.join(truncated) + '.'           # 문장들 결합하여 반환
 ```
 
 **특징:**
@@ -604,20 +676,21 @@ def smart_truncate(text, max_tokens=512):
 
 **공식:**
 ```python
+# ---------------------- 토큰 수 추정 함수 ---------------------- #
 def estimate_tokens(text):
     # 한글: 2.5자 = 1토큰
-    korean_chars = len(re.findall(r'[가-힣]', text))
-    korean_tokens = korean_chars / 2.5
+    korean_chars = len(re.findall(r'[가-힣]', text))  # 한글 문자 수 계산
+    korean_tokens = korean_chars / 2.5             # 한글 토큰 추정
 
     # 영어: 4자 = 1토큰
-    english_chars = len(re.findall(r'[a-zA-Z]', text))
-    english_tokens = english_chars / 4
+    english_chars = len(re.findall(r'[a-zA-Z]', text))  # 영문 문자 수 계산
+    english_tokens = english_chars / 4             # 영문 토큰 추정
 
     # 기타: 3자 = 1토큰
-    other_chars = len(text) - korean_chars - english_chars
-    other_tokens = other_chars / 3
+    other_chars = len(text) - korean_chars - english_chars  # 기타 문자 수 계산
+    other_tokens = other_chars / 3                 # 기타 토큰 추정
 
-    return int(korean_tokens + english_tokens + other_tokens)
+    return int(korean_tokens + english_tokens + other_tokens)  # 총 토큰 수 반환
 ```
 
 **정확도:** ±5% 내외
@@ -629,29 +702,30 @@ def estimate_tokens(text):
 ### 프롬프트 구조
 
 ```python
+# ---------------------- Few-shot 프롬프트 메시지 구성 ---------------------- #
 messages = [
     # 1. System 프롬프트
     {
-        "role": "system",
-        "content": "You are an expert in dialogue summarization..."
+        "role": "system",                      # 시스템 역할
+        "content": "You are an expert in dialogue summarization..."  # 시스템 지시사항
     },
 
     # 2. User 예시 (Few-shot)
     {
-        "role": "user",
-        "content": "Dialogue:\nA: 점심 뭐 먹을까? B: 김치찌개\nSummary:"
+        "role": "user",                        # 사용자 역할
+        "content": "Dialogue:\nA: 점심 뭐 먹을까? B: 김치찌개\nSummary:"  # 예시 대화
     },
 
     # 3. Assistant 답변 (Few-shot)
     {
-        "role": "assistant",
-        "content": "점심 메뉴 상의"
+        "role": "assistant",                   # 어시스턴트 역할
+        "content": "점심 메뉴 상의"            # 예시 요약 답변
     },
 
     # 4. 실제 입력
     {
-        "role": "user",
-        "content": f"Dialogue:\n{dialogue}\nSummary:"
+        "role": "user",                        # 사용자 역할
+        "content": f"Dialogue:\n{dialogue}\nSummary:"  # 요약할 실제 대화
     }
 ]
 ```
@@ -661,16 +735,17 @@ messages = [
 **1. 대표 샘플:**
 ```python
 # 평균 길이, 일반적인 주제
-example_dialogue = "A: 오늘 회의 시간 정했어? B: 3시로 하자"
-example_summary = "회의 시간 결정"
+example_dialogue = "A: 오늘 회의 시간 정했어? B: 3시로 하자"  # 대표 대화 예시
+example_summary = "회의 시간 결정"                              # 대표 요약 예시
 ```
 
 **2. 다양한 예시 (3-shot):**
 ```python
+# 다양한 길이의 예시 준비
 examples = [
-    ("짧은 대화", "짧은 요약"),
-    ("중간 대화", "중간 요약"),
-    ("긴 대화", "긴 요약")
+    ("짧은 대화", "짧은 요약"),                # 짧은 대화 패턴
+    ("중간 대화", "중간 요약"),                # 중간 길이 대화 패턴
+    ("긴 대화", "긴 요약")                     # 긴 대화 패턴
 ]
 ```
 
@@ -681,7 +756,8 @@ examples = [
 ### 1. 환경 변수 설정
 
 ```bash
-export SOLAR_API_KEY="your_api_key_here"
+# Solar API 키 환경 변수 설정
+export SOLAR_API_KEY="your_api_key_here"      # API 키를 환경 변수로 등록
 ```
 
 또는 `.env` 파일:
@@ -694,21 +770,22 @@ SOLAR_API_KEY=your_api_key_here
 ### 2. 단일 대화 요약
 
 ```python
+# ---------------------- Solar API 모듈 임포트 ---------------------- #
 from src.api import SolarAPI
 
 # API 초기화
-api = SolarAPI()
+api = SolarAPI()                               # Solar API 클라이언트 생성
 
 # 대화 요약
 dialogue = "A: 안녕하세요 B: 안녕하세요 A: 오늘 날씨 좋네요 B: 네, 정말 좋아요"
 
 summary = api.summarize(
-    dialogue=dialogue,
-    temperature=0.2,  # 낮을수록 일관성 ↑
-    top_p=0.3         # 낮을수록 일관성 ↑
+    dialogue=dialogue,                         # 요약할 대화
+    temperature=0.2,                           # 생성 온도 (낮을수록 일관성 ↑)
+    top_p=0.3                                  # Top-p 샘플링 (낮을수록 일관성 ↑)
 )
 
-print(f"요약: {summary}")
+print(f"요약: {summary}")                       # 요약 결과 출력
 ```
 
 ---
@@ -717,14 +794,14 @@ print(f"요약: {summary}")
 
 ```python
 # Few-shot 예시 준비
-example_dialogue = "A: 점심 뭐 먹을까? B: 김치찌개 어때?"
-example_summary = "점심 메뉴 상의"
+example_dialogue = "A: 점심 뭐 먹을까? B: 김치찌개 어때?"  # 예시 대화
+example_summary = "점심 메뉴 상의"                          # 예시 요약
 
 # Few-shot 요약
 summary = api.summarize(
-    dialogue=dialogue,
-    example_dialogue=example_dialogue,
-    example_summary=example_summary
+    dialogue=dialogue,                         # 요약할 대화
+    example_dialogue=example_dialogue,         # Few-shot 예시 대화
+    example_summary=example_summary            # Few-shot 예시 요약
 )
 ```
 
@@ -733,32 +810,33 @@ summary = api.summarize(
 ### 4. 배치 요약
 
 ```python
+# ---------------------- 데이터 처리 라이브러리 임포트 ---------------------- #
 import pandas as pd
 
 # 테스트 데이터 로드
-test_df = pd.read_csv("data/raw/test.csv")
-dialogues = test_df['dialogue'].tolist()
+test_df = pd.read_csv("data/raw/test.csv")    # 테스트 CSV 로드
+dialogues = test_df['dialogue'].tolist()      # 대화 컬럼을 리스트로 변환
 
 # Few-shot 예시 (학습 데이터에서 선택)
-train_df = pd.read_csv("data/raw/train.csv")
-example_dialogue = train_df['dialogue'].iloc[0]
-example_summary = train_df['summary'].iloc[0]
+train_df = pd.read_csv("data/raw/train.csv")  # 학습 CSV 로드
+example_dialogue = train_df['dialogue'].iloc[0]  # 첫 번째 대화를 예시로 선택
+example_summary = train_df['summary'].iloc[0]    # 첫 번째 요약을 예시로 선택
 
 # 배치 요약
 summaries = api.summarize_batch(
-    dialogues=dialogues,
-    example_dialogue=example_dialogue,
-    example_summary=example_summary,
-    batch_size=10,     # 배치당 10개
-    delay=1.0          # 1초 대기 (Rate limit)
+    dialogues=dialogues,                       # 요약할 대화 리스트
+    example_dialogue=example_dialogue,         # Few-shot 예시 대화
+    example_summary=example_summary,           # Few-shot 예시 요약
+    batch_size=10,                             # 배치당 처리할 개수
+    delay=1.0                                  # 배치 간 대기 시간 (초, Rate limit 대응)
 )
 
 # 결과 저장
 output_df = pd.DataFrame({
-    'fname': test_df['fname'],
-    'summary': summaries
+    'fname': test_df['fname'],                 # 파일명
+    'summary': summaries                       # 요약 결과
 })
-output_df.to_csv("submissions/solar_submission.csv", index=False)
+output_df.to_csv("submissions/solar_submission.csv", index=False)  # CSV 저장
 ```
 
 ---
@@ -770,58 +848,69 @@ output_df.to_csv("submissions/solar_submission.csv", index=False)
 **파일:** `scripts/inference_solar.py`
 
 ```python
+# ---------------------- 표준 라이브러리 ---------------------- #
 import argparse
+# argparse : 명령줄 인자 파싱
+
+# ---------------------- 서드파티 라이브러리 ---------------------- #
 import pandas as pd
+# pandas   : 데이터프레임 처리
+
+# ---------------------- 프로젝트 모듈 ---------------------- #
 from src.api import SolarAPI
 
+# ---------------------- 메인 함수 ---------------------- #
 def main():
+    # 명령줄 인자 파서 생성
     parser = argparse.ArgumentParser()
-    parser.add_argument("--test_data", default="data/raw/test.csv")
-    parser.add_argument("--train_data", default="data/raw/train.csv")
-    parser.add_argument("--output", default="submissions/solar.csv")
-    parser.add_argument("--batch_size", type=int, default=10)
-    parser.add_argument("--token_limit", type=int, default=512)
-    args = parser.parse_args()
+    parser.add_argument("--test_data", default="data/raw/test.csv")    # 테스트 데이터 경로
+    parser.add_argument("--train_data", default="data/raw/train.csv")  # 학습 데이터 경로
+    parser.add_argument("--output", default="submissions/solar.csv")   # 출력 파일 경로
+    parser.add_argument("--batch_size", type=int, default=10)          # 배치 크기
+    parser.add_argument("--token_limit", type=int, default=512)        # 토큰 제한
+    args = parser.parse_args()                                         # 인자 파싱
 
     # API 초기화
-    api = SolarAPI(token_limit=args.token_limit)
+    api = SolarAPI(token_limit=args.token_limit)                       # Solar API 클라이언트 생성
 
     # 데이터 로드
-    test_df = pd.read_csv(args.test_data)
-    train_df = pd.read_csv(args.train_data)
+    test_df = pd.read_csv(args.test_data)                              # 테스트 데이터 로드
+    train_df = pd.read_csv(args.train_data)                            # 학습 데이터 로드
 
     # Few-shot 예시 선택
-    example_dialogue = train_df['dialogue'].iloc[0]
-    example_summary = train_df['summary'].iloc[0]
+    example_dialogue = train_df['dialogue'].iloc[0]                    # 예시 대화 선택
+    example_summary = train_df['summary'].iloc[0]                      # 예시 요약 선택
 
     # 배치 요약
     summaries = api.summarize_batch(
-        dialogues=test_df['dialogue'].tolist(),
-        example_dialogue=example_dialogue,
-        example_summary=example_summary,
-        batch_size=args.batch_size
+        dialogues=test_df['dialogue'].tolist(),                        # 대화 리스트
+        example_dialogue=example_dialogue,                             # Few-shot 예시 대화
+        example_summary=example_summary,                               # Few-shot 예시 요약
+        batch_size=args.batch_size                                     # 배치 크기
     )
 
     # 저장
     output_df = pd.DataFrame({
-        'fname': test_df['fname'],
-        'summary': summaries
+        'fname': test_df['fname'],                                     # 파일명
+        'summary': summaries                                           # 요약 결과
     })
-    output_df.to_csv(args.output, index=False)
+    output_df.to_csv(args.output, index=False)                         # CSV 저장
 
-    print(f"Solar API 추론 완료: {args.output}")
+    print(f"Solar API 추론 완료: {args.output}")                       # 완료 메시지
 
+# ---------------------- 메인 실행부 ---------------------- #
 if __name__ == "__main__":
-    main()
+    main()                                                             # 메인 함수 실행
 ```
 
 **실행:**
 ```bash
+# Solar API 추론 스크립트 실행
 python scripts/inference_solar.py \
-    --test_data data/raw/test.csv \
-    --output submissions/solar.csv \
-    --batch_size 10 \
-    --token_limit 512
+    --test_data data/raw/test.csv \          # 테스트 데이터 경로
+    --output submissions/solar.csv \         # 출력 파일 경로
+    --batch_size 10 \                        # 배치 크기 (10개씩 처리)
+    --token_limit 512                        # 토큰 제한 (512토큰)
 ```
 
 ---
@@ -855,39 +944,42 @@ src/prompts/template.py
 ### 클래스 구조
 
 ```python
+# ==================== PromptTemplate 데이터클래스 ==================== #
 @dataclass
 class PromptTemplate:
-    name: str              # 템플릿 이름
-    template: str          # 프롬프트 문자열
-    description: str       # 설명
-    category: str          # 카테고리
-    variables: List[str]   # 필수 변수 목록
+    name: str                                  # 템플릿 이름
+    template: str                              # 프롬프트 문자열
+    description: str                           # 설명
+    category: str                              # 카테고리 (zero_shot/few_shot/cot 등)
+    variables: List[str]                       # 필수 변수 목록 (예: ['dialogue'])
 
-    def format(**kwargs) -> str  # 템플릿 포맷팅
+    # ---------------------- 템플릿 포맷팅 메서드 ---------------------- #
+    def format(**kwargs) -> str                # 변수를 채워 최종 프롬프트 생성
 ```
 
 ### 사용 예시
 
 ```python
+# ---------------------- 프롬프트 템플릿 모듈 임포트 ---------------------- #
 from src.prompts import PromptTemplate
 
 # 템플릿 생성
 template = PromptTemplate(
-    name="custom_summary",
+    name="custom_summary",                     # 템플릿 이름
     template="""다음 대화를 요약해주세요:
 
 {dialogue}
 
-요약 ({style} 스타일):""",
-    description="스타일 지정 가능한 템플릿",
-    category="custom",
-    variables=["dialogue", "style"]
+요약 ({style} 스타일):""",                     # 프롬프트 문자열 (변수 포함)
+    description="스타일 지정 가능한 템플릿",   # 템플릿 설명
+    category="custom",                         # 카테고리 (커스텀)
+    variables=["dialogue", "style"]            # 필수 변수 리스트
 )
 
 # 템플릿 포맷팅
 prompt = template.format(
-    dialogue="A: 안녕 B: 안녕",
-    style="간결한"
+    dialogue="A: 안녕 B: 안녕",                # dialogue 변수 채우기
+    style="간결한"                             # style 변수 채우기
 )
 
 print(prompt)
@@ -912,38 +1004,49 @@ print(prompt)
 ### 주요 메서드
 
 ```python
+# ==================== PromptLibrary 클래스 ==================== #
 class PromptLibrary:
+    # ---------------------- 템플릿 조회 메서드 ---------------------- #
     def get_template(name: str) -> PromptTemplate
+
+    # ---------------------- 템플릿 추가 메서드 ---------------------- #
     def add_template(template: PromptTemplate)
+
+    # ---------------------- 템플릿 목록 조회 메서드 ---------------------- #
     def list_templates(category: Optional[str]) -> List[str]
+
+    # ---------------------- 카테고리별 템플릿 조회 메서드 ---------------------- #
     def get_templates_by_category(category: str) -> List[PromptTemplate]
+
+    # ---------------------- 토큰 수 추정 메서드 ---------------------- #
     def estimate_tokens(template_name: str, **kwargs) -> int
 ```
 
 ### 사용 예시
 
 ```python
+# ---------------------- 프롬프트 라이브러리 모듈 임포트 ---------------------- #
 from src.prompts import PromptLibrary
 
 # 라이브러리 생성
-library = PromptLibrary()
+library = PromptLibrary()                      # 기본 템플릿이 로드된 라이브러리
 
 # 템플릿 조회
-template = library.get_template('zero_shot_basic')
+template = library.get_template('zero_shot_basic')  # 기본 zero-shot 템플릿 조회
 
 # 카테고리별 목록
-zero_shot_templates = library.list_templates(category='zero_shot')
+zero_shot_templates = library.list_templates(category='zero_shot')  # zero_shot 카테고리 템플릿 목록
 print(zero_shot_templates)
 # ['zero_shot_basic', 'zero_shot_detailed', 'zero_shot_structured']
 
 # 템플릿 포맷팅
-dialogue = "A: 안녕하세요 B: 안녕하세요"
-prompt = template.format(dialogue=dialogue)
+dialogue = "A: 안녕하세요 B: 안녕하세요"       # 대화 데이터
+prompt = template.format(dialogue=dialogue)    # 템플릿에 대화 삽입
 
 # 토큰 추정
-tokens = library.estimate_tokens('zero_shot_basic', dialogue=dialogue)
+tokens = library.estimate_tokens('zero_shot_basic', dialogue=dialogue)  # 토큰 수 추정
 print(f"예상 토큰: {tokens}")
-# 예상 토큰: 14
+# 예상 토큰: 14                                # 추정된 토큰 수
 ```
 
 ---
@@ -965,47 +1068,62 @@ print(f"예상 토큰: {tokens}")
 ### 주요 메서드
 
 ```python
+# ==================== PromptSelector 클래스 ==================== #
 class PromptSelector:
+    # ---------------------- 길이 기반 선택 메서드 ---------------------- #
     def select_by_length(dialogue: str) -> PromptTemplate
+
+    # ---------------------- 참여자 수 기반 선택 메서드 ---------------------- #
     def select_by_speakers(dialogue: str) -> PromptTemplate
+
+    # ---------------------- 토큰 예산 기반 선택 메서드 ---------------------- #
     def select_by_token_budget(dialogue: str, token_budget: int) -> PromptTemplate
+
+    # ---------------------- 카테고리 기반 선택 메서드 ---------------------- #
     def select_by_category(category: str, dialogue: str, **kwargs) -> PromptTemplate
+
+    # ---------------------- 적응형 선택 메서드 ---------------------- #
     def select_adaptive(dialogue: str, token_budget: int, prefer_category: str) -> PromptTemplate
+
+    # ---------------------- 선택 정보 조회 메서드 ---------------------- #
     def get_selection_info(dialogue: str) -> Dict[str, Any]
 ```
 
 ### 사용 예시
 
 ```python
+# ---------------------- 프롬프트 선택기 모듈 임포트 ---------------------- #
 from src.prompts import PromptSelector
 
+# 선택기 초기화
 selector = PromptSelector()
 
+# 테스트 대화
 dialogue = "#Person1#: 안녕하세요 #Person2#: 안녕하세요"
 
 # 1. 길이 기반 선택
-template = selector.select_by_length(dialogue)
+template = selector.select_by_length(dialogue)  # 대화 길이 분석하여 선택
 print(f"길이 기반: {template.name}")
-# 길이 기반: short_dialogue
+# 길이 기반: short_dialogue                    # 짧은 대화용 템플릿
 
 # 2. 참여자 수 기반 선택
-template = selector.select_by_speakers(dialogue)
+template = selector.select_by_speakers(dialogue)  # 참여자 수 분석하여 선택
 print(f"참여자 수 기반: {template.name}")
-# 참여자 수 기반: two_speakers
+# 참여자 수 기반: two_speakers                 # 2인 대화용 템플릿
 
 # 3. 토큰 예산 기반 선택
-template = selector.select_by_token_budget(dialogue, token_budget=100)
+template = selector.select_by_token_budget(dialogue, token_budget=100)  # 토큰 예산 고려
 print(f"토큰 예산 기반: {template.name}")
-# 토큰 예산 기반: zero_shot_detailed
+# 토큰 예산 기반: zero_shot_detailed           # 예산 내 최적 템플릿
 
 # 4. 적응형 선택 (자동 최적화)
 template = selector.select_adaptive(
-    dialogue=dialogue,
-    token_budget=512,
-    prefer_category="zero_shot"
+    dialogue=dialogue,                         # 대화 데이터
+    token_budget=512,                          # 토큰 예산
+    prefer_category="zero_shot"                # 선호 카테고리
 )
 print(f"적응형: {template.name}")
-# 적응형: zero_shot_basic
+# 적응형: zero_shot_basic                      # 종합 분석 결과
 ```
 
 ---
@@ -1135,21 +1253,22 @@ print(f"적응형: {template.name}")
 ### 1. 기본 사용 (자동 선택)
 
 ```python
+# ---------------------- 프롬프트 시스템 모듈 임포트 ---------------------- #
 from src.prompts import create_prompt_library, create_prompt_selector
 
 # 초기화
-library = create_prompt_library()
-selector = create_prompt_selector(library)
+library = create_prompt_library()              # 템플릿 라이브러리 생성
+selector = create_prompt_selector(library)     # 선택기 생성 (라이브러리 연결)
 
 # 대화 준비
 dialogue = "#Person1#: 안녕하세요. 오늘 회의 시간을 정하려고 합니다. #Person2#: 3시는 어떠세요?"
 
 # 자동 선택 및 포맷팅
-template = selector.select_adaptive(dialogue)
-prompt = template.format(dialogue=dialogue)
+template = selector.select_adaptive(dialogue)  # 대화 분석하여 최적 템플릿 선택
+prompt = template.format(dialogue=dialogue)    # 선택된 템플릿에 대화 삽입
 
-print(f"선택된 템플릿: {template.name}")
-print(f"프롬프트:\n{prompt}")
+print(f"선택된 템플릿: {template.name}")       # 선택된 템플릿 이름 출력
+print(f"프롬프트:\n{prompt}")                   # 최종 프롬프트 출력
 ```
 
 ---
@@ -1157,33 +1276,34 @@ print(f"프롬프트:\n{prompt}")
 ### 2. Solar API와 통합
 
 ```python
+# ---------------------- 필요한 모듈 임포트 ---------------------- #
 from src.api import SolarAPI
 from src.prompts import create_prompt_selector
 
 # 초기화
-api = SolarAPI()
-selector = create_prompt_selector()
+api = SolarAPI()                               # Solar API 클라이언트 생성
+selector = create_prompt_selector()            # 프롬프트 선택기 생성
 
 # 대화 준비
 dialogue = "#Person1#: 안녕하세요 #Person2#: 안녕하세요"
 
 # 프롬프트 자동 선택
 template = selector.select_adaptive(
-    dialogue=dialogue,
-    token_budget=512,
-    prefer_category="zero_shot"
+    dialogue=dialogue,                         # 대화 데이터
+    token_budget=512,                          # 토큰 예산
+    prefer_category="zero_shot"                # 선호 카테고리
 )
 
 # 프롬프트 생성
-prompt = template.format(dialogue=dialogue)
+prompt = template.format(dialogue=dialogue)    # 템플릿에 대화 삽입
 
 # API 호출
 summary = api.summarize(
-    dialogue=dialogue,
-    custom_prompt=prompt  # 커스텀 프롬프트 사용
+    dialogue=dialogue,                         # 요약할 대화
+    custom_prompt=prompt                       # 자동 선택된 커스텀 프롬프트 사용
 )
 
-print(f"요약: {summary}")
+print(f"요약: {summary}")                       # 요약 결과 출력
 ```
 
 ---
@@ -1217,20 +1337,24 @@ src/prompts/ab_testing.py
 ### 클래스 구조
 
 ```python
+# ==================== PromptABTester 클래스 ==================== #
 class PromptABTester:
+    # ---------------------- 초기화 메서드 ---------------------- #
     def __init__(api_client, rouge_calculator, logger)
 
-    # 변형 관리
+    # ---------------------- 변형 추가 메서드 ---------------------- #
     def add_variant(name, template, description)
 
-    # 테스트 실행
+    # ---------------------- A/B 테스트 실행 메서드 ---------------------- #
     def run_ab_test(dialogues, references, sample_size) -> ABTestResult
 
-    # 결과 조회
+    # ---------------------- 최고 변형 조회 메서드 ---------------------- #
     def get_best_variant() -> PromptVariant
 
-    # 보고서 생성
+    # ---------------------- 보고서 생성 메서드 ---------------------- #
     def generate_report(output_path) -> str
+
+    # ---------------------- 결과 내보내기 메서드 ---------------------- #
     def export_results(output_path)
 ```
 
@@ -1243,15 +1367,16 @@ class PromptABTester:
 프롬프트 변형 정보를 담는 클래스
 
 ```python
+# ==================== PromptVariant 데이터클래스 ==================== #
 @dataclass
 class PromptVariant:
-    name: str                       # 변형 이름
-    template: str                   # 프롬프트 템플릿
-    description: str                # 설명
-    results: List[str]              # 테스트 결과
-    rouge_scores: Dict[str, float]  # ROUGE 점수
-    avg_latency: float              # 평균 응답 시간 (초)
-    token_usage: int                # 토큰 사용량
+    name: str                                  # 변형 이름
+    template: str                              # 프롬프트 템플릿 문자열
+    description: str                           # 변형 설명
+    results: List[str]                         # 테스트 결과 리스트
+    rouge_scores: Dict[str, float]             # ROUGE 점수 딕셔너리 (rouge1/rouge2/rougeL)
+    avg_latency: float                         # 평균 응답 시간 (초)
+    token_usage: int                           # 총 토큰 사용량
 ```
 
 ### 2. ABTestResult
@@ -1259,13 +1384,14 @@ class PromptVariant:
 A/B 테스트 결과를 담는 클래스
 
 ```python
+# ==================== ABTestResult 데이터클래스 ==================== #
 @dataclass
 class ABTestResult:
-    best_variant: str                     # 최고 성능 변형명
-    all_scores: Dict[str, Dict]           # 모든 변형의 점수
-    statistical_significance: bool        # 통계적 유의성 여부
-    p_value: float                        # p-value (낮을수록 유의미)
-    winner_margin: float                  # 1등과 2등의 점수 차이
+    best_variant: str                          # 최고 성능 변형명
+    all_scores: Dict[str, Dict]                # 모든 변형의 점수 딕셔너리
+    statistical_significance: bool             # 통계적 유의성 여부
+    p_value: float                             # p-value (낮을수록 유의미)
+    winner_margin: float                       # 1등과 2등의 점수 차이
 ```
 
 ---
@@ -1562,24 +1688,24 @@ tester.export_results("results/ab_test_results.json")
 
 ```json
 {
-  "best_variant": "detailed",
-  "statistical_significance": true,
-  "p_value": 0.0231,
-  "winner_margin": 0.0285,
-  "variants": {
-    "detailed": {
-      "name": "detailed",
-      "template": "...",
-      "description": "상세한 지시사항 포함",
-      "rouge_scores": {
-        "rouge1": 0.4687,
-        "rouge2": 0.3401,
-        "rougeL": 0.4298,
-        "rouge_sum": 1.2386
+  "best_variant": "detailed",                  // 최고 성능 변형 이름
+  "statistical_significance": true,            // 통계적 유의성 여부
+  "p_value": 0.0231,                          // p-value 값
+  "winner_margin": 0.0285,                    // 1등과 2등의 점수 차이
+  "variants": {                               // 모든 변형 정보
+    "detailed": {                             // 변형 이름
+      "name": "detailed",                     // 변형 이름
+      "template": "...",                      // 프롬프트 템플릿
+      "description": "상세한 지시사항 포함",  // 변형 설명
+      "rouge_scores": {                       // ROUGE 점수들
+        "rouge1": 0.4687,                     // ROUGE-1 점수
+        "rouge2": 0.3401,                     // ROUGE-2 점수
+        "rougeL": 0.4298,                     // ROUGE-L 점수
+        "rouge_sum": 1.2386                   // ROUGE 합계 점수
       },
-      "avg_latency": 1.456
-    },
-    ...
+      "avg_latency": 1.456                    // 평균 응답 시간 (초)
+    }
+    // ... 다른 변형들
   }
 }
 ```
@@ -1592,17 +1718,17 @@ tester.export_results("results/ab_test_results.json")
 
 1. **표준편차 계산**
    ```python
-   std = np.std(rouge_sums)
+   std = np.std(rouge_sums)                    # ROUGE 합계 점수들의 표준편차
    ```
 
 2. **p-value 계산**
    ```python
-   p_value = std / (best_score + 1e-10)
+   p_value = std / (best_score + 1e-10)        # 표준편차를 최고 점수로 나눔 (0 방지)
    ```
 
 3. **유의성 판단**
    ```python
-   is_significant = (p_value < 0.05) and (winner_margin > 0.01)
+   is_significant = (p_value < 0.05) and (winner_margin > 0.01)  # p-value < 0.05 and 승차 > 0.01
    ```
 
 ### 해석 가이드
