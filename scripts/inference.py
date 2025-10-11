@@ -71,8 +71,33 @@ def main():
     args = parser.parse_args()
 
     # -------------- Logger 초기화 -------------- #
-    model_name = Path(args.model).name
-    log_path = create_log_path("inference", f"inference_{model_name}_{now('%Y%m%d_%H%M%S')}.log")
+    # 모델명 추출
+    if 'kobart' in args.model.lower():
+        model_name_short = 'kobart'
+    elif 'solar' in args.model.lower():
+        model_name_short = 'solar'
+    elif 'pegasus' in args.model.lower():
+        model_name_short = 'pegasus'
+    elif 'bart' in args.model.lower():
+        model_name_short = 'bart'
+    else:
+        model_name_short = Path(args.model).name
+
+    # 옵션 태그 생성
+    timestamp = now('%Y%m%d_%H%M%S')
+    options = []
+    if args.batch_size != 32:
+        options.append(f"bs{args.batch_size}")
+    if args.num_beams != 4:
+        options.append(f"beam{args.num_beams}")
+
+    # 로그 파일명 생성
+    parts = [timestamp, model_name_short]
+    if options:
+        parts.extend(options)
+
+    log_filename = "_".join(parts) + ".log"
+    log_path = create_log_path("inference", log_filename)
     logger = Logger(log_path, print_also=True)
     logger.start_redirect()
 
