@@ -1,0 +1,54 @@
+# ==================== Upstage Solar-10.7B 모델 설정 ==================== #
+# Upstage Solar-10.7B-Instruct 모델 전용 설정
+# PRD 08: 한국어 특화 대규모 언어 모델
+
+_base_: ../base/causal_lm.yaml
+
+# ---------------------- 모델 설정 ---------------------- #
+model:
+  type: causal_lm                                       # 모델 타입: Causal Language Model
+  checkpoint: "upstage/solar-10.7b-instruct-v1.0"       # HuggingFace 모델 체크포인트
+  size: "10.7B"                                         # 모델 파라미터 크기
+  dtype: "bf16"                                         # 데이터 타입: bfloat16 사용
+  chat_template: "solar"                                # 채팅 템플릿 형식
+
+# ---------------------- LoRA 설정 (Solar 최적화) ---------------------- #
+lora:
+  r: 16                                                 # LoRA rank
+  alpha: 32                                             # LoRA alpha (r * 2)
+  target_modules:                                       # LoRA 적용 대상 레이어
+    - "q_proj"                                          # Query projection
+    - "k_proj"                                          # Key projection
+    - "v_proj"                                          # Value projection
+    - "o_proj"                                          # Output projection
+    - "gate_proj"                                       # Gate projection
+    - "up_proj"                                         # Up projection
+    - "down_proj"                                       # Down projection
+  dropout: 0.05                                         # LoRA dropout 비율
+  use_qlora: true                                       # QLoRA (4-bit 양자화) 사용
+
+# ---------------------- 학습 설정 (Solar 최적화) ---------------------- #
+training:
+  epochs: 3                                             # 총 학습 에포크
+  batch_size: 4                                         # 디바이스당 배치 크기 (10.7B 모델은 메모리 고려)
+  gradient_accumulation_steps: 16                       # 그래디언트 누적 스텝 (effective batch = 4 * 16 = 64)
+  learning_rate: 1.5e-5                                 # 학습률 (대규모 모델 최적화)
+  lr_scheduler_type: "cosine"                           # 학습률 스케줄러: Cosine
+  warmup_ratio: 0.1                                     # 워밍업 비율
+  weight_decay: 0.1                                     # 가중치 감쇠
+  max_grad_norm: 1.2                                    # 그래디언트 클리핑 임계값
+
+# ---------------------- LLM 데이터셋 설정 ---------------------- #
+dataset:
+  format_type: "chat"                                   # Solar는 chat format 사용
+  use_instruction_augmentation: false                   # Instruction Augmentation 비활성화
+
+# ---------------------- 실험 설정 ---------------------- #
+experiment:
+  name: "solar_10.7b_qlora"                             # 실험명
+  tags:                                                 # 실험 태그
+    - "solar"
+    - "10.7b"
+    - "qlora"
+    - "upstage"
+    - "korean"

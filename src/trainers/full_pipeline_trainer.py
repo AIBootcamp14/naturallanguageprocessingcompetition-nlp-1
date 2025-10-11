@@ -1,22 +1,22 @@
 # ==================== FullPipelineTrainer ==================== #
 """
-´ t|x Trainer
+풀 파이프라인 Trainer
 
-PRD 14: ä 5X Ü¤\ - Full ¨Ü
-¨à 0¥D °i\ \ t|x:
-- ä ¨x YÁ
-- Optuna \T (5X)
-- K-Fold P( 
+PRD 14: 다중 선택 옵션 - Full 실행
+통합 운영 가능한 주요 파이프라인:
+- 다중 모델 앙상블
+- Optuna 하이퍼파라미터 튜닝 (선택)
+- K-Fold 교차검증
 - TTA (Test Time Augmentation)
-- Solar API µi
+- Solar API 통합
 """
 
-# ---------------------- \ |tì¬ ---------------------- #
+# ---------------------- 표준 라이브러리 ---------------------- #
 import json
 from pathlib import Path
 from typing import List, Dict, Any
 
-# ---------------------- \¸ ¨È ---------------------- #
+# ---------------------- 로컬 모듈 ---------------------- #
 from src.trainers.base_trainer import BaseTrainer
 from src.config import load_model_config
 from src.models import load_model_and_tokenizer
@@ -28,57 +28,57 @@ from src.api import create_solar_api
 
 # ==================== FullPipelineTrainer ==================== #
 class FullPipelineTrainer(BaseTrainer):
-    """´ t|x Trainer"""
+    """풀 파이프라인 Trainer"""
 
     def train(self):
         """
-        ´ t|x ä
+        풀 파이프라인 학습
 
         Returns:
-            dict: ä °ü
+            dict: 학습 결과
                 - mode: 'full'
-                - models: ¬©\ ¨x ¬¤¸
-                - ensemble_results: YÁ °ü
-                - solar_results: Solar API °ü (5X)
-                - final_metrics: \ É T¸­
+                - models: 사용된 모델 리스트
+                - ensemble_results: 앙상블 결과
+                - solar_results: Solar API 결과 (선택)
+                - final_metrics: 최종 평가 지표
         """
         self.log("=" * 60)
-        self.log("= FULL PIPELINE ¨Ü Ü")
-        self.log(f"=Ë ¨x: {', '.join(self.args.models)}")
-        self.log(f"=' YÁ µ: {self.args.ensemble_strategy}")
-        self.log(f"= TTA ¬©: {self.args.use_tta}")
+        self.log("= FULL PIPELINE 실행 시작")
+        self.log(f"=대상 모델: {', '.join(self.args.models)}")
+        self.log(f"=앙상블 앙상블 전략: {self.args.ensemble_strategy}")
+        self.log(f"= TTA 사용: {self.args.use_tta}")
         self.log("=" * 60)
 
-        # 1. pt0 \Ü
-        self.log("\n[1/5] pt0 \)...")
+        # 1. 데이터 로드
+        self.log("\n[1/5] 데이터 로딩...")
         train_df, eval_df = self.load_data()
 
-        # 2. ¨x Yµ (ä ¨x)
-        self.log(f"\n[2/5] ä ¨x Yµ ({len(self.args.models)} ¨x)...")
+        # 2. 모델 학습 (다중 모델)
+        self.log(f"\n[2/5] 다중 모델 학습 ({len(self.args.models)} 모델)...")
         model_results, model_paths = self._train_multiple_models(train_df, eval_df)
 
-        # 3. YÁ l1
-        self.log(f"\n[3/5] YÁ l1...")
+        # 3. 앙상블 생성
+        self.log(f"\n[3/5] 앙상블 생성...")
         ensemble_results = self._create_and_evaluate_ensemble(
             model_paths=model_paths,
             eval_df=eval_df
         )
 
-        # 4. Solar API µi (5X)
+        # 4. Solar API 통합 (선택)
         solar_results = {}
         try:
-            self.log(f"\n[4/5] Solar API µi...")
+            self.log(f"\n[4/5] Solar API 통합...")
             solar_results = self._integrate_solar_api(eval_df)
         except Exception as e:
-            self.log(f"    Solar API µi t: {e}")
+            self.log(f"    Solar API 통합 오류: {e}")
 
-        # 5. TTA © (5X)
+        # 5. TTA 적용 (선택)
         tta_results = {}
         if self.args.use_tta:
-            self.log(f"\n[5/5] TTA ©...")
+            self.log(f"\n[5/5] TTA 적용...")
             tta_results = self._apply_tta(model_paths, eval_df)
 
-        # °ü Ñ
+        # 결과 수집
         results = {
             'mode': 'full',
             'models': self.args.models,
@@ -91,9 +91,9 @@ class FullPipelineTrainer(BaseTrainer):
         }
 
         self.log("\n" + "=" * 60)
-        self.log(" FULL PIPELINE DÌ!")
+        self.log(" FULL PIPELINE 완료!")
 
-        self.log("\n=Ê Ä ¨x 1¥:")
+        self.log("\n=요약 개별 모델 결과:")
         for result in model_results:
             self.log(f"\n{result['model_name']}:")
             if result['eval_metrics']:
@@ -101,13 +101,13 @@ class FullPipelineTrainer(BaseTrainer):
                     if 'rouge' in key.lower():
                         self.log(f"  {key}: {value:.4f}")
 
-        self.log("\n=Ê YÁ 1¥:")
+        self.log("\n=요약 앙상블 결과:")
         if ensemble_results:
             for key, value in ensemble_results.items():
                 self.log(f"  {key}: {value:.4f}")
 
         if solar_results:
-            self.log("\n=Ê Solar API 1¥:")
+            self.log("\n=요약 Solar API 결과:")
             for key, value in solar_results.items():
                 if isinstance(value, (int, float)):
                     self.log(f"  {key}: {value:.4f}")
@@ -118,14 +118,14 @@ class FullPipelineTrainer(BaseTrainer):
 
     def save_results(self, results):
         """
-        °ü ¥
+        결과 저장
 
         Args:
-            results: ä °ü T¬
+            results: 학습 결과 딕셔너리
         """
         result_path = self.output_dir / "full_pipeline_results.json"
 
-        # ¥ ¥\ Ü\ ÀX
+        # 저장 가능한 형태로 변환
         saveable_results = {
             'mode': results['mode'],
             'models': results['models'],
@@ -140,15 +140,15 @@ class FullPipelineTrainer(BaseTrainer):
         with open(result_path, 'w', encoding='utf-8') as f:
             json.dump(saveable_results, f, indent=2, ensure_ascii=False)
 
-        self.log(f"\n=¾ °ü ¥: {result_path}")
+        self.log(f"\n=저장 결과 저장: {result_path}")
 
     def _train_multiple_models(self, train_df, eval_df):
         """
-        ä ¨x Yµ
+        다중 모델 학습
 
         Args:
-            train_df: Yµ pt0
-            eval_df: É pt0
+            train_df: 학습 데이터
+            eval_df: 평가 데이터
 
         Returns:
             tuple: (model_results, model_paths)
@@ -158,17 +158,17 @@ class FullPipelineTrainer(BaseTrainer):
 
         for idx, model_name in enumerate(self.args.models):
             self.log(f"\n{'='*50}")
-            self.log(f"¨x {idx+1}/{len(self.args.models)}: {model_name}")
+            self.log(f"모델 {idx+1}/{len(self.args.models)}: {model_name}")
             self.log(f"{'='*50}")
 
-            # Config \Ü
+            # Config 로드
             config = load_model_config(model_name)
             self._override_config(config)
 
-            # ¨x   lt \Ü
+            # 모델 및 토크나이저 로드
             model, tokenizer = load_model_and_tokenizer(config, logger=self.logger)
 
-            # Dataset Ý1
+            # Dataset 생성
             model_type = config.model.get('type', 'encoder_decoder')
 
             train_dataset = DialogueSummarizationDataset(
@@ -191,7 +191,7 @@ class FullPipelineTrainer(BaseTrainer):
                 model_type=model_type
             )
 
-            # Trainer Ý1  Yµ
+            # Trainer 생성 및 학습
             model_output_dir = self.output_dir / f"model_{idx}_{model_name.replace('-', '_')}"
             model_output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -207,7 +207,7 @@ class FullPipelineTrainer(BaseTrainer):
                 logger=self.logger
             )
 
-            # Yµ ä
+            # 학습 수행
             train_result = trainer.train()
 
             # Get model path from training result (model already saved by train())
@@ -228,21 +228,21 @@ class FullPipelineTrainer(BaseTrainer):
 
     def _create_and_evaluate_ensemble(self, model_paths, eval_df):
         """
-        YÁ Ý1  É
+        앙상블 생성 및 평가
 
         Args:
-            model_paths: ¨x ½\ ¬¤¸
-            eval_df: É pt0
+            model_paths: 모델 경로 리스트
+            eval_df: 평가 데이터
 
         Returns:
-            dict: YÁ É T¸­
+            dict: 앙상블 평가 지표
         """
         try:
             from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
             from rouge import Rouge
             import torch
 
-            # ¨x \Ü
+            # 모델 로드
             models = []
             tokenizers = []
 
@@ -257,7 +257,7 @@ class FullPipelineTrainer(BaseTrainer):
                 models.append(model)
                 tokenizers.append(tokenizer)
 
-            # YÁ Ý1
+            # 앙상블 생성
             manager = ModelManager(logger=self.logger)
             manager.models = models
             manager.tokenizers = tokenizers
@@ -274,7 +274,7 @@ class FullPipelineTrainer(BaseTrainer):
                     voting='hard'
                 )
 
-            # !
+            # 샘플 추출
             dialogues = eval_df['dialogue'].tolist()[:100]
             references = eval_df['summary'].tolist()[:100]
 
@@ -285,7 +285,7 @@ class FullPipelineTrainer(BaseTrainer):
                 batch_size=8
             )
 
-            # ROUGE Ä°
+            # ROUGE 계산
             rouge = Rouge()
             scores = rouge.get_scores(predictions, references, avg=True)
 
@@ -296,24 +296,24 @@ class FullPipelineTrainer(BaseTrainer):
             }
 
         except Exception as e:
-            self.log(f"    YÁ É ä(: {e}")
+            self.log(f"    앙상블 평가 오류 발생: {e}")
             return {}
 
     def _integrate_solar_api(self, eval_df):
         """
-        Solar API µi
+        Solar API 통합
 
         Args:
-            eval_df: É pt0
+            eval_df: 평가 데이터
 
         Returns:
-            dict: Solar API É °ü
+            dict: Solar API 평가 결과
         """
         try:
-            # Solar API t|t¸¸ Ý1
+            # Solar API 클라이언트 생성
             solar_client = create_solar_api(use_cache=True)
 
-            # Ø !
+            # 소량 샘플 추출
             dialogues = eval_df['dialogue'].tolist()[:50]
             references = eval_df['summary'].tolist()[:50]
 
@@ -326,7 +326,7 @@ class FullPipelineTrainer(BaseTrainer):
                 preprocess=True
             )
 
-            # ROUGE Ä°
+            # ROUGE 계산
             from rouge import Rouge
             rouge = Rouge()
             scores = rouge.get_scores(predictions, references, avg=True)
@@ -339,26 +339,26 @@ class FullPipelineTrainer(BaseTrainer):
             }
 
         except Exception as e:
-            self.log(f"    Solar API µi ä(: {e}")
+            self.log(f"    Solar API 통합 오류 발생: {e}")
             return {}
 
     def _apply_tta(self, model_paths, eval_df):
         """
-        TTA (Test Time Augmentation) ©
+        TTA (Test Time Augmentation) 적용
 
         Args:
-            model_paths: ¨x ½\ ¬¤¸
-            eval_df: É pt0
+            model_paths: 모델 경로 리스트
+            eval_df: 평가 데이터
 
         Returns:
-            dict: TTA °ü
+            dict: TTA 결과
         """
         try:
-            self.log(f"  TTA µ: {', '.join(self.args.tta_strategies)}")
-            self.log(f"   : {self.args.tta_num_aug}")
+            self.log(f"  TTA 전략: {', '.join(self.args.tta_strategies)}")
+            self.log(f"  증강 횟수: {self.args.tta_num_aug}")
 
-            # TTA Ä l 
-            self.log("    TTA 0¥@ Ä l Èä.")
+            # TTA 기능 구현 예정
+            self.log("    TTA 기능은 아직 구현 중입니다.")
 
             return {
                 'tta_applied': False,
@@ -367,11 +367,11 @@ class FullPipelineTrainer(BaseTrainer):
             }
 
         except Exception as e:
-            self.log(f"    TTA © ä(: {e}")
+            self.log(f"    TTA 적용 오류 발생: {e}")
             return {}
 
     def _override_config(self, config):
-        """Config $|tÜ"""
+        """Config 오버라이드"""
         if hasattr(self.args, 'epochs') and self.args.epochs is not None:
             config.training.epochs = self.args.epochs
 
@@ -382,7 +382,7 @@ class FullPipelineTrainer(BaseTrainer):
             config.training.learning_rate = self.args.learning_rate
 
     def _extract_eval_metrics(self, log_history):
-        """É T¸­ """
+        """평가 지표 추출"""
         eval_metrics = {}
 
         for log_entry in reversed(log_history):
@@ -395,17 +395,17 @@ class FullPipelineTrainer(BaseTrainer):
         return eval_metrics
 
 
-# ==================== ¸X h ==================== #
+# ==================== 편의 함수 ==================== #
 def create_full_pipeline_trainer(args, logger, wandb_logger=None):
     """
-    FullPipelineTrainer Ý1 ¸X h
+    FullPipelineTrainer 생성 편의 함수
 
     Args:
-        args: 9 x
-        logger: Logger x¤4¤
-        wandb_logger: WandB Logger ( Ý)
+        args: 명령행 인자
+        logger: Logger 인스턴스
+        wandb_logger: WandB Logger (선택 사항)
 
     Returns:
-        FullPipelineTrainer x¤4¤
+        FullPipelineTrainer 인스턴스
     """
     return FullPipelineTrainer(args, logger, wandb_logger)
