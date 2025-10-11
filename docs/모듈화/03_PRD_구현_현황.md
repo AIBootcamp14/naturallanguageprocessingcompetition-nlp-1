@@ -269,19 +269,26 @@
 
 #### 1. 모든 핵심 기능 사용 가능
 ```bash
-# 단일 모델 학습
+# ==================== 핵심 기능 실행 명령어 ==================== #
+
+# ---------------------- 단일 모델 학습 ---------------------- #
+# 빠른 실험을 위한 단일 모델 학습 (KoBART)
 python scripts/train.py --mode single --models kobart
 
-# K-Fold 교차 검증
+# ---------------------- K-Fold 교차 검증 ---------------------- #
+# 5-Fold 교차 검증으로 모델 성능 안정성 평가
 python scripts/train.py --mode kfold --models kobart --k_folds 5
 
-# 다중 모델 앙상블
+# ---------------------- 다중 모델 앙상블 ---------------------- #
+# 3개 모델을 앙상블하여 성능 향상 (KoBART + Llama + Qwen)
 python scripts/train.py --mode multi_model --models kobart llama-3.2-3b qwen
 
-# Optuna 최적화
+# ---------------------- Optuna 하이퍼파라미터 최적화 ---------------------- #
+# 100회 시도로 최적 하이퍼파라미터 자동 탐색
 python scripts/train.py --mode optuna --models kobart --optuna_trials 100
 
-# Full Pipeline (모든 기능 통합)
+# ---------------------- Full Pipeline (전체 기능 통합) ---------------------- #
+# 모든 모델 + TTA + WandB 로깅까지 통합 실행
 python scripts/train.py --mode full --models all --use_tta --use_wandb
 ```
 
@@ -315,10 +322,14 @@ python scripts/train.py --mode full --models all --use_tta --use_wandb
 
 #### 검증 결과:
 ```bash
+# ==================== PRD 08 구현 파일 확인 ==================== #
+
+# ---------------------- 모델 디렉토리 구조 확인 ---------------------- #
+# LLM 파인튜닝 관련 모델 로더 파일 존재 여부 검증
 $ ls src/models/
-lora_loader.py     # ✅ LoRA/QLoRA 구현
-llm_loader.py      # ✅ Causal LM 로더
-model_loader.py    # ✅ Encoder-Decoder 로더
+lora_loader.py     # ✅ LoRA/QLoRA 4-bit 양자화 구현
+llm_loader.py      # ✅ AutoModelForCausalLM 기반 Causal LM 로더
+model_loader.py    # ✅ Encoder-Decoder 모델 로더 (KoBART 등)
 ```
 
 #### 구현된 파일:
@@ -345,12 +356,18 @@ model_loader.py    # ✅ Encoder-Decoder 로더
 
 #### 검증 결과:
 ```bash
-$ ls src/api/
-solar_client.py    # ✅ Solar API Client
-solar_api.py       # ✅ Solar API Wrapper
+# ==================== PRD 09 구현 파일 확인 ==================== #
 
+# ---------------------- Solar API 디렉토리 확인 ---------------------- #
+# Solar API 클라이언트 및 래퍼 파일 존재 여부 검증
+$ ls src/api/
+solar_client.py    # ✅ Solar API Client (배치 처리, 토큰 최적화 70% 절감)
+solar_api.py       # ✅ Solar API Wrapper (Few-shot 프롬프트, 캐싱)
+
+# ---------------------- Solar 교차 검증 시스템 확인 ---------------------- #
+# LLM vs Solar API 교차 검증 파일 존재 여부 확인
 $ ls src/validation/
-solar_cross_validation.py  # ✅ Solar 교차 검증
+solar_cross_validation.py  # ✅ Solar API vs 파인튜닝 모델 교차 검증
 ```
 
 #### 구현된 파일:
@@ -373,11 +390,17 @@ solar_cross_validation.py  # ✅ Solar 교차 검증
 
 #### 검증 결과:
 ```bash
-$ ls src/validation/
-kfold.py           # ✅ K-Fold 구현
+# ==================== PRD 10 구현 파일 확인 ==================== #
 
+# ---------------------- K-Fold 검증 디렉토리 확인 ---------------------- #
+# K-Fold 분할 및 Stratified K-Fold 파일 존재 여부 검증
+$ ls src/validation/
+kfold.py           # ✅ K-Fold/Stratified K-Fold 분할 구현
+
+# ---------------------- K-Fold Trainer 확인 ---------------------- #
+# K-Fold 교차 검증 학습 루프 파일 존재 여부 확인
 $ ls src/trainers/
-kfold_trainer.py   # ✅ K-Fold Trainer
+kfold_trainer.py   # ✅ K-Fold 교차 검증 Trainer (fold별 학습 및 평균 성능 계산)
 ```
 
 #### 구현된 파일:
@@ -400,14 +423,20 @@ kfold_trainer.py   # ✅ K-Fold Trainer
 
 #### 검증 결과:
 ```bash
-$ ls src/augmentation/
-back_translator.py     # ✅ 역번역
-paraphraser.py        # ✅ 패러프레이징
-text_augmenter.py     # ✅ 텍스트 증강
+# ==================== PRD 04 구현 파일 확인 ==================== #
 
+# ---------------------- 데이터 증강 디렉토리 확인 ---------------------- #
+# 데이터 증강 기법 파일들 존재 여부 검증
+$ ls src/augmentation/
+back_translator.py     # ✅ 역번역 (한→영→한, NLLB 모델)
+paraphraser.py        # ✅ 패러프레이징 (동의어 치환, 문장 재구성)
+text_augmenter.py     # ✅ 텍스트 증강 (문장 순서 섞기, Dialogue Sampling)
+
+# ---------------------- 데이터 증강 통합 및 TTA 확인 ---------------------- #
+# 증강 통합 모듈 및 Test Time Augmentation 파일 존재 여부 확인
 $ ls src/data/
-augmentation.py       # ✅ 증강 통합
-tta.py               # ✅ TTA
+augmentation.py       # ✅ 데이터 증강 통합 모듈 (모든 증강 기법 관리)
+tta.py               # ✅ TTA (Test Time Augmentation 4가지 전략)
 ```
 
 #### 구현된 파일:
@@ -433,11 +462,15 @@ tta.py               # ✅ TTA
 
 #### 검증 결과:
 ```bash
+# ==================== PRD 12 구현 파일 확인 ==================== #
+
+# ---------------------- 앙상블 디렉토리 구조 확인 ---------------------- #
+# 다중 모델 앙상블 전략 파일들 존재 여부 검증
 $ ls src/ensemble/
-weighted.py       # ✅ Weighted Average
-voting.py         # ✅ Voting
-stacking.py       # ✅ Stacking & Blending
-manager.py        # ✅ 앙상블 관리자
+weighted.py       # ✅ Weighted Average 앙상블 (가중 평균)
+voting.py         # ✅ Voting 앙상블 (다수결 투표)
+stacking.py       # ✅ Stacking & Blending 앙상블 (메타 학습)
+manager.py        # ✅ 앙상블 관리자 (통합 관리 및 전략 선택)
 ```
 
 #### 구현된 파일:
@@ -461,12 +494,18 @@ manager.py        # ✅ 앙상블 관리자
 
 #### 검증 결과:
 ```bash
-$ ls src/optimization/
-optuna_tuner.py       # ✅ Optuna Tuner
-optuna_optimizer.py   # ✅ Optuna Optimizer
+# ==================== PRD 13 구현 파일 확인 ==================== #
 
+# ---------------------- Optuna 최적화 디렉토리 확인 ---------------------- #
+# Optuna 하이퍼파라미터 최적화 파일들 존재 여부 검증
+$ ls src/optimization/
+optuna_tuner.py       # ✅ Optuna Tuner (하이퍼파라미터 탐색 공간 정의)
+optuna_optimizer.py   # ✅ Optuna Optimizer (최적화 실행 및 결과 분석)
+
+# ---------------------- Optuna Trainer 확인 ---------------------- #
+# Optuna 통합 학습 시스템 파일 존재 여부 확인
 $ ls src/trainers/
-optuna_trainer.py     # ✅ Optuna Trainer
+optuna_trainer.py     # ✅ Optuna Trainer (Optuna와 학습 시스템 통합, 15개 하이퍼파라미터 최적화)
 ```
 
 #### 구현된 파일:
@@ -488,12 +527,16 @@ optuna_trainer.py     # ✅ Optuna Trainer
 
 #### 검증 결과:
 ```bash
+# ==================== PRD 15 구현 파일 확인 ==================== #
+
+# ---------------------- 프롬프트 엔지니어링 디렉토리 확인 ---------------------- #
+# 프롬프트 템플릿 및 관리 시스템 파일들 존재 여부 검증
 $ ls src/prompts/
-prompt_manager.py     # ✅ Prompt Manager
-template.py          # ✅ Template 시스템
-templates.py         # ✅ 16개 템플릿
-selector.py          # ✅ Prompt Selector
-ab_testing.py        # ✅ A/B Testing
+prompt_manager.py     # ✅ Prompt Manager (프롬프트 템플릿 로드 및 관리)
+template.py          # ✅ Template 시스템 (템플릿 구조 정의)
+templates.py         # ✅ 16개 템플릿 (Zero-shot/Few-shot/CoT/특수 템플릿)
+selector.py          # ✅ Prompt Selector (최적 프롬프트 자동 선택)
+ab_testing.py        # ✅ A/B Testing (통계적 유의성 검증, p-value)
 ```
 
 #### 구현된 파일:
