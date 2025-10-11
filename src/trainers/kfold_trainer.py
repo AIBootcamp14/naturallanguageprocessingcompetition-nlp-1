@@ -130,6 +130,9 @@ class KFoldTrainer(BaseTrainer):
         # 모델 및 토크나이저 로드 (각 Fold마다 새로 로드)
         model, tokenizer = load_model_and_tokenizer(config, logger=self.logger)
 
+        # 모델 타입 가져오기 (기본값: encoder_decoder)
+        model_type = config.model.get('type', 'encoder_decoder')
+
         # Dataset 생성
         train_dataset = DialogueSummarizationDataset(
             dialogues=train_df['dialogue'].tolist(),
@@ -137,7 +140,8 @@ class KFoldTrainer(BaseTrainer):
             tokenizer=tokenizer,
             encoder_max_len=config.tokenizer.encoder_max_len,
             decoder_max_len=config.tokenizer.decoder_max_len,
-            preprocess=True
+            preprocess=True,
+            model_type=model_type  # PRD 08: LLM 지원
         )
 
         val_dataset = DialogueSummarizationDataset(
@@ -146,7 +150,8 @@ class KFoldTrainer(BaseTrainer):
             tokenizer=tokenizer,
             encoder_max_len=config.tokenizer.encoder_max_len,
             decoder_max_len=config.tokenizer.decoder_max_len,
-            preprocess=True
+            preprocess=True,
+            model_type=model_type  # PRD 08: LLM 지원
         )
 
         # Fold별 출력 디렉토리

@@ -31,7 +31,8 @@ class DialogueSummarizationDataset(Dataset):
         tokenizer,                                          # 토크나이저
         encoder_max_len: int = 512,                         # 인코더 최대 길이
         decoder_max_len: int = 100,                         # 디코더 최대 길이
-        preprocess: bool = True                             # 전처리 여부
+        preprocess: bool = True,                            # 전처리 여부
+        model_type: str = 'encoder_decoder'                 # 모델 타입 (PRD 08)
     ):
         """
         Args:
@@ -41,6 +42,7 @@ class DialogueSummarizationDataset(Dataset):
             encoder_max_len: 인코더 최대 길이
             decoder_max_len: 디코더 최대 길이
             preprocess: 전처리 적용 여부
+            model_type: 모델 타입 (encoder_decoder 또는 causal_lm)
         """
         # -------------- 전처리 -------------- #
         if preprocess:                                      # 전처리 활성화 시
@@ -55,6 +57,7 @@ class DialogueSummarizationDataset(Dataset):
         self.tokenizer = tokenizer                          # 토크나이저 저장
         self.encoder_max_len = encoder_max_len              # 인코더 최대 길이 저장
         self.decoder_max_len = decoder_max_len              # 디코더 최대 길이 저장
+        self.model_type = model_type                        # 모델 타입 저장 (PRD 08)
 
 
     # ---------------------- 길이 반환 함수 ---------------------- #
@@ -73,16 +76,28 @@ class DialogueSummarizationDataset(Dataset):
 
         Returns:
             Dict: {
-                'input_ids': 인코더 입력 토큰,
-                'attention_mask': 인코더 어텐션 마스크,
-                'labels': 디코더 출력 토큰
+                'input_ids': 입력 토큰,
+                'attention_mask': 어텐션 마스크,
+                'labels': 출력 토큰 (손실 계산용)
             }
         """
         # -------------- 데이터 추출 -------------- #
         dialogue = self.dialogues[idx]                      # idx번째 대화
         summary = self.summaries[idx]                       # idx번째 요약
 
-        # -------------- 인코더 입력 토크나이징 -------------- #
+        # -------------- 모델 타입별 처리 -------------- #
+        if self.model_type == 'encoder_decoder':
+            return self._get_encoder_decoder_item(dialogue, summary)
+        elif self.model_type == 'causal_lm':
+            return self._get_causal_lm_item(dialogue, summary)
+        else:
+            raise ValueError(f"지원하지 않는 model_type: {self.model_type}")
+
+
+    # ---------------------- Encoder-Decoder 데이터 생성 ---------------------- #
+    def _get_encoder_decoder_item(self, dialogue: str, summary: str) -> Dict[str, torch.Tensor]:
+        """Encoder-Decoder 모델용 데이터"""
+        # 인코더 입력 토크나이징
         encoder_inputs = self.tokenizer(
             dialogue,                                       # 입력 텍스트
             max_length=self.encoder_max_len,                # 최대 길이
@@ -91,7 +106,7 @@ class DialogueSummarizationDataset(Dataset):
             return_tensors='pt'                             # PyTorch 텐서 반환
         )
 
-        # -------------- 디코더 출력 토크나이징 -------------- #
+        # 디코더 출력 토크나이징
         decoder_outputs = self.tokenizer(
             summary,                                        # 출력 텍스트
             max_length=self.decoder_max_len,                # 최대 길이
@@ -100,21 +115,57 @@ class DialogueSummarizationDataset(Dataset):
             return_tensors='pt'                             # PyTorch 텐서 반환
         )
 
-        # -------------- 텐서 차원 조정 -------------- #
-        # (1, seq_len) → (seq_len)
+        # 텐서 차원 조정 (1, seq_len) → (seq_len)
         input_ids = encoder_inputs['input_ids'].squeeze()   # 인코더 입력 ID
         attention_mask = encoder_inputs['attention_mask'].squeeze()  # 어텐션 마스크
         labels = decoder_outputs['input_ids'].squeeze()     # 디코더 레이블
 
-        # -------------- 레이블 처리 -------------- #
         # 패딩 토큰을 -100으로 변경 (손실 계산 시 무시)
-        labels[labels == self.tokenizer.pad_token_id] = -100  # 패딩을 -100으로 변경
+        labels[labels == self.tokenizer.pad_token_id] = -100
 
-        # -------------- 결과 반환 -------------- #
         return {
-            'input_ids': input_ids,                         # 인코더 입력
-            'attention_mask': attention_mask,               # 어텐션 마스크
-            'labels': labels                                # 디코더 레이블
+            'input_ids': input_ids,
+            'attention_mask': attention_mask,
+            'labels': labels
+        }
+
+
+    # ---------------------- Causal LM 데이터 생성 ---------------------- #
+    def _get_causal_lm_item(self, dialogue: str, summary: str) -> Dict[str, torch.Tensor]:
+        """Causal LM 모델용 데이터 (Instruction Tuning 스타일)"""
+        from src.models.llm_loader import format_llm_prompt
+
+        # 프롬프트 생성
+        prompt = format_llm_prompt(dialogue, self.tokenizer)
+        full_text = prompt + summary + self.tokenizer.eos_token
+
+        # 전체 텍스트 토크나이징
+        encoding = self.tokenizer(
+            full_text,
+            max_length=self.encoder_max_len,                # 최대 길이
+            padding='max_length',                           # 최대 길이까지 패딩
+            truncation=True,                                # 최대 길이 초과 시 자르기
+            return_tensors='pt'                             # PyTorch 텐서 반환
+        )
+
+        # Labels 생성 (프롬프트 부분은 -100으로 마스킹)
+        prompt_encoding = self.tokenizer(
+            prompt,
+            max_length=self.encoder_max_len,
+            truncation=True,
+            return_tensors='pt'
+        )
+        prompt_length = prompt_encoding['input_ids'].shape[1]
+
+        # Labels 설정
+        labels = encoding['input_ids'].clone()
+        labels[:, :prompt_length] = -100                    # 프롬프트 부분 마스킹
+        labels[labels == self.tokenizer.pad_token_id] = -100  # 패딩 마스킹
+
+        return {
+            'input_ids': encoding['input_ids'].squeeze(),
+            'attention_mask': encoding['attention_mask'].squeeze(),
+            'labels': labels.squeeze()
         }
 
 
