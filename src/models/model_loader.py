@@ -28,13 +28,15 @@ class ModelLoader:
     """모델 로더 클래스"""
 
     # ---------------------- 초기화 함수 ---------------------- #
-    def __init__(self, config: DictConfig):
+    def __init__(self, config: DictConfig, logger=None):
         """
         Args:
             config: 전체 Config (model, training 등 포함)
+            logger: Logger 인스턴스 (선택적)
         """
         self.config = config                                # Config 저장
         self.model_config = config.model                    # 모델 Config 추출
+        self.logger = logger                                # Logger 저장
         self.device = self._get_device()                    # 디바이스 결정
 
 
@@ -84,7 +86,11 @@ class ModelLoader:
         """
         # -------------- 토크나이저 로드 -------------- #
         checkpoint = self.model_config.checkpoint           # 모델 체크포인트
-        print(f"토크나이저 로딩: {checkpoint}")
+        msg = f"토크나이저 로딩: {checkpoint}"
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
 
         tokenizer = AutoTokenizer.from_pretrained(          # 토크나이저 로드
             checkpoint,
@@ -97,13 +103,21 @@ class ModelLoader:
             num_added = tokenizer.add_special_tokens(       # 특수 토큰 추가
                 {'additional_special_tokens': special_tokens}
             )
-            print(f"  → 특수 토큰 {num_added}개 추가됨")
+            msg = f"  → 특수 토큰 {num_added}개 추가됨"
+            if self.logger:
+                self.logger.write(msg)
+            else:
+                print(msg)
 
         # -------------- 패딩 토큰 설정 -------------- #
         # BART 계열 모델은 pad_token이 없을 수 있으므로 설정
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token       # EOS 토큰을 패딩으로 사용
-            print(f"  → pad_token 설정: {tokenizer.pad_token}")
+            msg = f"  → pad_token 설정: {tokenizer.pad_token}"
+            if self.logger:
+                self.logger.write(msg)
+            else:
+                print(msg)
 
         return tokenizer                                    # 토크나이저 반환
 
@@ -124,7 +138,11 @@ class ModelLoader:
         """
         # -------------- 모델 로드 -------------- #
         checkpoint = self.model_config.checkpoint           # 모델 체크포인트
-        print(f"모델 로딩: {checkpoint}")
+        msg = f"모델 로딩: {checkpoint}"
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
 
         model = AutoModelForSeq2SeqLM.from_pretrained(      # Seq2Seq 모델 로드
             checkpoint
@@ -137,19 +155,36 @@ class ModelLoader:
 
             # 어휘 크기가 다른 경우 임베딩 리사이즈
             if vocab_size != model_vocab_size:
-                print(f"  → 임베딩 크기 조정: {model_vocab_size} → {vocab_size}")
+                msg = f"  → 임베딩 크기 조정: {model_vocab_size} → {vocab_size}"
+                if self.logger:
+                    self.logger.write(msg)
+                else:
+                    print(msg)
                 model.resize_token_embeddings(vocab_size)   # 임베딩 리사이즈
 
         # -------------- 디바이스 배치 -------------- #
         model = model.to(self.device)                       # 모델을 디바이스로 이동
-        print(f"  → 디바이스: {self.device}")
+        msg = f"  → 디바이스: {self.device}"
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
 
         # -------------- 모델 파라미터 정보 출력 -------------- #
         total_params = sum(p.numel() for p in model.parameters())  # 전체 파라미터 수
         trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)  # 학습 가능 파라미터
 
-        print(f"  → 전체 파라미터: {total_params:,}")
-        print(f"  → 학습 가능 파라미터: {trainable_params:,}")
+        msg = f"  → 전체 파라미터: {total_params:,}"
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
+
+        msg = f"  → 학습 가능 파라미터: {trainable_params:,}"
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
 
         return model                                        # 모델 반환
 
@@ -164,21 +199,36 @@ class ModelLoader:
         Returns:
             Tuple[PreTrainedModel, PreTrainedTokenizer]: (모델, 토크나이저)
         """
-        print("=" * 60)
-        print("모델 및 토크나이저 로딩 시작")
-        print("=" * 60)
+        msg = "=" * 60
+        if self.logger:
+            self.logger.write(msg)
+            self.logger.write("모델 및 토크나이저 로딩 시작")
+            self.logger.write(msg)
+        else:
+            print(msg)
+            print("모델 및 토크나이저 로딩 시작")
+            print(msg)
 
         # -------------- 1. 토크나이저 로드 -------------- #
         tokenizer = self.load_tokenizer()                   # 토크나이저 로드
 
-        print()  # 빈 줄
+        if self.logger:
+            self.logger.write("")  # 빈 줄
+        else:
+            print()  # 빈 줄
 
         # -------------- 2. 모델 로드 -------------- #
         model = self.load_model(tokenizer)                  # 모델 로드
 
-        print("=" * 60)
-        print("✅ 모델 및 토크나이저 로딩 완료")
-        print("=" * 60)
+        msg = "=" * 60
+        if self.logger:
+            self.logger.write(msg)
+            self.logger.write("✅ 모델 및 토크나이저 로딩 완료")
+            self.logger.write(msg)
+        else:
+            print(msg)
+            print("✅ 모델 및 토크나이저 로딩 완료")
+            print(msg)
 
         return model, tokenizer                             # 모델, 토크나이저 반환
 
@@ -186,16 +236,18 @@ class ModelLoader:
 # ==================== 편의 함수 ==================== #
 # ---------------------- Config에서 모델 로드 함수 ---------------------- #
 def load_model_and_tokenizer(
-    config: DictConfig
+    config: DictConfig,
+    logger=None
 ) -> Tuple[PreTrainedModel, PreTrainedTokenizer]:
     """
     Config에서 모델과 토크나이저 로드 편의 함수
 
     Args:
         config: 전체 Config
+        logger: Logger 인스턴스 (선택적)
 
     Returns:
         Tuple[PreTrainedModel, PreTrainedTokenizer]: (모델, 토크나이저)
     """
-    loader = ModelLoader(config)                            # 모델 로더 생성
+    loader = ModelLoader(config, logger=logger)             # 모델 로더 생성
     return loader.load_model_and_tokenizer()                # 모델 및 토크나이저 로드

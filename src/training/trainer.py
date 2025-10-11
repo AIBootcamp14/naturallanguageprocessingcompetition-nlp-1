@@ -45,7 +45,8 @@ class ModelTrainer:
         tokenizer: PreTrainedTokenizer,                 # 토크나이저
         train_dataset: Dataset,                         # 학습 데이터셋
         eval_dataset: Optional[Dataset] = None,         # 검증 데이터셋 (선택적)
-        use_wandb: bool = True                          # WandB 사용 여부
+        use_wandb: bool = True,                         # WandB 사용 여부
+        logger=None                                     # Logger 인스턴스 (선택적)
     ):
         """
         Args:
@@ -55,6 +56,7 @@ class ModelTrainer:
             train_dataset: 학습 데이터셋
             eval_dataset: 검증 데이터셋
             use_wandb: WandB 로깅 사용 여부
+            logger: Logger 인스턴스 (선택적)
         """
         self.config = config                            # Config 저장
         self.model = model                              # 모델 저장
@@ -62,6 +64,7 @@ class ModelTrainer:
         self.train_dataset = train_dataset              # 학습 데이터셋 저장
         self.eval_dataset = eval_dataset                # 검증 데이터셋 저장
         self.use_wandb = use_wandb                      # WandB 사용 여부 저장
+        self.logger = logger                            # Logger 저장
 
         # -------------- WandB Logger 초기화 -------------- #
         self.wandb_logger = None                        # WandB Logger 초기값
@@ -231,9 +234,15 @@ class ModelTrainer:
         Returns:
             Dict[str, Any]: 학습 결과 (메트릭, 체크포인트 경로 등)
         """
-        print("=" * 60)
-        print("모델 학습 시작")
-        print("=" * 60)
+        msg = "=" * 60
+        if self.logger:
+            self.logger.write(msg)
+            self.logger.write("모델 학습 시작")
+            self.logger.write(msg)
+        else:
+            print(msg)
+            print("모델 학습 시작")
+            print(msg)
 
         # -------------- WandB 초기화 -------------- #
         if self.wandb_logger:
@@ -243,28 +252,52 @@ class ModelTrainer:
         self.trainer = self._create_trainer()           # Trainer 생성
 
         # -------------- 학습 실행 -------------- #
-        print("\n학습 진행 중...")
+        msg = "\n학습 진행 중..."
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
         train_result = self.trainer.train()             # 학습 실행
 
         # -------------- 최종 모델 저장 -------------- #
-        print("\n최종 모델 저장 중...")
+        msg = "\n최종 모델 저장 중..."
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
         output_dir = Path(self.training_args.output_dir) / "final_model"  # 최종 모델 디렉토리
         self.trainer.save_model(str(output_dir))        # 모델 저장
         self.tokenizer.save_pretrained(str(output_dir))  # 토크나이저 저장
 
-        print(f"  → 모델 저장 위치: {output_dir}")
+        msg = f"  → 모델 저장 위치: {output_dir}"
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
 
         # -------------- 평가 실행 (검증 데이터가 있는 경우) -------------- #
         eval_results = {}                               # 평가 결과 초기화
         if self.eval_dataset:
-            print("\n최종 평가 중...")
+            msg = "\n최종 평가 중..."
+            if self.logger:
+                self.logger.write(msg)
+            else:
+                print(msg)
             eval_results = self.trainer.evaluate()      # 평가 실행
 
             # 결과 출력
-            print("\n최종 평가 결과:")
+            msg = "\n최종 평가 결과:"
+            if self.logger:
+                self.logger.write(msg)
+            else:
+                print(msg)
             for key, value in eval_results.items():
                 if 'rouge' in key:                      # ROUGE 관련 메트릭만
-                    print(f"  {key}: {value:.4f}")
+                    msg = f"  {key}: {value:.4f}"
+                    if self.logger:
+                        self.logger.write(msg)
+                    else:
+                        print(msg)
 
         # -------------- 학습 결과 정리 -------------- #
         result = {
@@ -278,9 +311,15 @@ class ModelTrainer:
         if self.wandb_logger:
             self.wandb_logger.finish()                  # WandB Run 종료
 
-        print("=" * 60)
-        print("✅ 학습 완료!")
-        print("=" * 60)
+        msg = "=" * 60
+        if self.logger:
+            self.logger.write(msg)
+            self.logger.write("✅ 학습 완료!")
+            self.logger.write(msg)
+        else:
+            print(msg)
+            print("✅ 학습 완료!")
+            print(msg)
 
         return result                                   # 학습 결과 반환
 
@@ -314,7 +353,8 @@ def create_trainer(
     tokenizer: PreTrainedTokenizer,                     # 토크나이저
     train_dataset: Dataset,                             # 학습 데이터셋
     eval_dataset: Optional[Dataset] = None,             # 검증 데이터셋
-    use_wandb: bool = True                              # WandB 사용 여부
+    use_wandb: bool = True,                             # WandB 사용 여부
+    logger=None                                         # Logger 인스턴스 (선택적)
 ) -> ModelTrainer:
     """
     ModelTrainer 생성 편의 함수
@@ -326,6 +366,7 @@ def create_trainer(
         train_dataset: 학습 데이터셋
         eval_dataset: 검증 데이터셋
         use_wandb: WandB 로깅 사용 여부
+        logger: Logger 인스턴스 (선택적)
 
     Returns:
         ModelTrainer: 생성된 Trainer 객체
@@ -336,5 +377,6 @@ def create_trainer(
         tokenizer=tokenizer,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        use_wandb=use_wandb
+        use_wandb=use_wandb,
+        logger=logger
     )
