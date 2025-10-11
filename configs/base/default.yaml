@@ -26,6 +26,21 @@ paths:
   submission_dir: "submissions"                         # 제출 파일 디렉토리
 
 
+# ---------------------- 학습 설정 ---------------------- #
+training:
+  output_dir: "outputs"                                 # 학습 출력 디렉토리
+  epochs: 10                                            # 학습 에포크 수
+  batch_size: 8                                         # 배치 크기
+  learning_rate: 5e-5                                   # 학습률
+  weight_decay: 0.01                                    # 가중치 감쇠
+  warmup_steps: 500                                     # Warmup 스텝
+  save_total_limit: 3                                   # 최대 저장 체크포인트 수
+  logging_steps: 100                                    # 로깅 주기
+  num_workers: 4                                        # 데이터로더 워커 수
+  early_stopping_patience: 3                            # 조기 종료 인내심
+  device: "cuda"                                        # 디바이스 (cuda/cpu)
+
+
 # ---------------------- 로깅 설정 ---------------------- #
 logging:
   log_level: "INFO"                                     # 로그 레벨
