@@ -24,7 +24,7 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from src.config import load_config
 from src.inference import create_predictor
 from src.logging.logger import Logger
-from src.utils.core.common import create_log_path
+from src.utils.core.common import create_log_path, now
 from src.utils.gpu_optimization.team_gpu_check import get_gpu_info, check_gpu_tier
 
 
@@ -72,7 +72,7 @@ def main():
 
     # -------------- Logger 초기화 -------------- #
     model_name = Path(args.model).name
-    log_path = create_log_path("outputs/logs", f"inference_{model_name}")
+    log_path = create_log_path("inference", f"inference_{model_name}_{now('%Y%m%d_%H%M%S')}.log")
     logger = Logger(log_path, print_also=True)
     logger.start_redirect()
 

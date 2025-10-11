@@ -26,7 +26,7 @@ from src.data import DialogueSummarizationDataset
 from src.training import create_trainer
 from src.utils.config.seed import set_seed
 from src.logging.logger import Logger
-from src.utils.core.common import create_log_path
+from src.utils.core.common import create_log_path, now
 from src.utils.gpu_optimization.team_gpu_check import (
     get_gpu_info,
     check_gpu_tier,
@@ -52,7 +52,7 @@ def main():
     args = parser.parse_args()
 
     # -------------- Logger 초기화 -------------- #
-    log_path = create_log_path("outputs/logs", f"train_{args.experiment}")
+    log_path = create_log_path("train", f"train_{args.experiment}_{now('%Y%m%d_%H%M%S')}.log")
     logger = Logger(log_path, print_also=True)
     logger.start_redirect()
 
