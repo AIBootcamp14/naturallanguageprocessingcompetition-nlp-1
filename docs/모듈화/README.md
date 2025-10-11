@@ -107,6 +107,31 @@ graph TB
     style Eval fill:#fff9c4,stroke:#f57f17,color:#000
     style Inference fill:#fce4ec,stroke:#880e4f,color:#000
     style Output fill:#c8e6c9,stroke:#2e7d32,color:#000
+
+    style A fill:#bbdefb,stroke:#01579b,color:#000
+    style B fill:#bbdefb,stroke:#01579b,color:#000
+    style C fill:#ffe0b2,stroke:#e65100,color:#000
+    style D fill:#ffe0b2,stroke:#e65100,color:#000
+    style E fill:#ffcc80,stroke:#e65100,color:#000
+    style F fill:#ffcc80,stroke:#e65100,color:#000
+    style G fill:#ffe0b2,stroke:#e65100,color:#000
+    style H fill:#e1bee7,stroke:#4a148c,color:#000
+    style I fill:#ce93d8,stroke:#4a148c,color:#000
+    style J fill:#e1bee7,stroke:#4a148c,color:#000
+    style K fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style L fill:#81c784,stroke:#1b5e20,color:#000
+    style M fill:#81c784,stroke:#1b5e20,color:#000
+    style N fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style O fill:#fff59d,stroke:#f57f17,color:#000
+    style P fill:#fff59d,stroke:#f57f17,color:#000
+    style Q fill:#fff59d,stroke:#f57f17,color:#000
+    style R fill:#f8bbd0,stroke:#880e4f,color:#000
+    style S fill:#f48fb1,stroke:#880e4f,color:#000
+    style T fill:#f48fb1,stroke:#880e4f,color:#000
+    style U fill:#f8bbd0,stroke:#880e4f,color:#000
+    style V fill:#aed581,stroke:#2e7d32,color:#000
+    style W fill:#aed581,stroke:#2e7d32,color:#000
+    style X fill:#aed581,stroke:#2e7d32,color:#000
 ```
 
 ### 13개 모듈 구조
@@ -146,6 +171,20 @@ graph LR
     style ML fill:#f3e5f5,stroke:#7b1fa2,color:#000
     style Advanced fill:#e8f5e9,stroke:#388e3c,color:#000
     style Inference fill:#fce4ec,stroke:#c2185b,color:#000
+
+    style M1 fill:#90caf9,stroke:#1976d2,color:#000
+    style M2 fill:#90caf9,stroke:#1976d2,color:#000
+    style M3 fill:#90caf9,stroke:#1976d2,color:#000
+    style M4 fill:#ffb74d,stroke:#f57c00,color:#000
+    style M5 fill:#ffb74d,stroke:#f57c00,color:#000
+    style M6 fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style M7 fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style M8 fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style M9 fill:#81c784,stroke:#388e3c,color:#000
+    style M10 fill:#81c784,stroke:#388e3c,color:#000
+    style M11 fill:#81c784,stroke:#388e3c,color:#000
+    style M12 fill:#f48fb1,stroke:#c2185b,color:#000
+    style M13 fill:#f48fb1,stroke:#c2185b,color:#000
 ```
 
 ---
