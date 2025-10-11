@@ -12,3 +12,4 @@ torchmetrics==1.8.2
 tqdm==4.66.1
 transformers==4.57.0
 wandb==0.22.2
+python-dotenv>=1.0.0
