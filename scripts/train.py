@@ -1,170 +1,388 @@
-# ==================== 학습 실행 스크립트 ==================== #
+#!/usr/bin/env python3
+# ==================== NLP 대화 요약 통합 학습 스크립트 ==================== #
 """
-전체 학습 파이프라인 실행 스크립트
+NLP 대화 요약 통합 학습 스크립트
+PRD 14번 "실행 옵션 시스템" 구현
 
 사용법:
-    python scripts/train.py --experiment baseline_kobart
-    python scripts/train.py --experiment baseline_kobart --debug
+    # 단일 모델
+    python scripts/train.py --mode single --models kobart
+
+    # K-Fold 교차검증
+    python scripts/train.py --mode kfold --models solar-10.7b --k_folds 5
+
+    # 다중 모델 앙상블
+    python scripts/train.py --mode multi_model --models kobart llama-3.2-3b
+
+    # Optuna 최적화
+    python scripts/train.py --mode optuna --optuna_trials 50
+
+    # 풀 파이프라인
+    python scripts/train.py --mode full --models all --use_tta
 """
 
 # ---------------------- 표준 라이브러리 ---------------------- #
 import sys
 import argparse
 from pathlib import Path
+from datetime import datetime
 
 # 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-# ---------------------- 서드파티 라이브러리 ---------------------- #
-import pandas as pd
-
 # ---------------------- 프로젝트 모듈 ---------------------- #
-from src.config import load_config
-from src.models import load_model_and_tokenizer
-from src.data import DialogueSummarizationDataset
-from src.training import create_trainer
-from src.utils.config.seed import set_seed
 from src.logging.logger import Logger
-from src.utils.core.common import create_log_path, now
-from src.utils.gpu_optimization.team_gpu_check import (
-    get_gpu_info,
-    check_gpu_tier,
-    get_optimal_batch_size
-)
+from src.utils.config.seed import set_seed
 
 
-# ==================== 메인 함수 ==================== #
-def main():
-    # -------------- 인자 파싱 -------------- #
-    parser = argparse.ArgumentParser(description="모델 학습 스크립트")
+# ==================== 인자 파싱 ==================== #
+def parse_arguments():
+    """명령행 인자 파싱"""
+    parser = argparse.ArgumentParser(
+        description='NLP 대화 요약 모델 학습 - 유연한 실행 옵션',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+
+    # ==================== 기본 설정 ====================
     parser.add_argument(
-        "--experiment",
+        '--mode',
         type=str,
-        required=True,
-        help="실험 이름 (예: baseline_kobart)"
+        default='single',
+        choices=['single', 'kfold', 'multi_model', 'optuna', 'full'],
+        help='''실행 모드 선택:
+        single: 단일 모델 학습 (빠른 실험)
+        kfold: K-Fold 교차 검증 (안정성)
+        multi_model: 다중 모델 앙상블 (성능)
+        optuna: 하이퍼파라미터 최적화 (자동화)
+        full: 전체 파이프라인 (최종 제출)'''
     )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="디버그 모드 (작은 데이터셋으로 빠른 테스트)"
-    )
-    args = parser.parse_args()
 
-    # -------------- Logger 초기화 -------------- #
-    log_path = create_log_path("train", f"train_{args.experiment}_{now('%Y%m%d_%H%M%S')}.log")
+    parser.add_argument(
+        '--config',
+        type=str,
+        default='configs/train_config.yaml',
+        help='설정 파일 경로'
+    )
+
+    parser.add_argument(
+        '--experiment_name',
+        type=str,
+        default=None,
+        help='실험명 (자동 생성: {mode}_{model}_{timestamp})'
+    )
+
+    # ==================== 모델 선택 ====================
+    parser.add_argument(
+        '--models',
+        type=str,
+        nargs='+',
+        default=['kobart'],
+        choices=[
+            'kobart',
+            'solar-10.7b',
+            'polyglot-ko-12.8b',
+            'llama-3.2-korean-3b',
+            'qwen3-4b',
+            'kullm-v2',
+            'all'  # 모든 모델
+        ],
+        help='사용할 모델 (multi_model 모드에서 여러 개 선택 가능)'
+    )
+
+    # ==================== 학습 설정 ====================
+    parser.add_argument(
+        '--epochs',
+        type=int,
+        default=None,
+        help='에폭 수 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--batch_size',
+        type=int,
+        default=None,
+        help='배치 크기 (None: config 파일 값 사용 또는 자동 탐색)'
+    )
+
+    parser.add_argument(
+        '--learning_rate',
+        type=float,
+        default=None,
+        help='학습률 (None: config 파일 값 사용)'
+    )
+
+    # ==================== K-Fold 설정 ====================
+    parser.add_argument(
+        '--k_folds',
+        type=int,
+        default=5,
+        help='K-Fold 수 (kfold 모드)'
+    )
+
+    parser.add_argument(
+        '--fold_seed',
+        type=int,
+        default=42,
+        help='Fold 분할 시드'
+    )
+
+    # ==================== 앙상블 설정 ====================
+    parser.add_argument(
+        '--ensemble_strategy',
+        type=str,
+        default='weighted_avg',
+        choices=[
+            'averaging',
+            'weighted_avg',
+            'majority_vote',
+            'stacking',
+            'blending',
+            'rouge_weighted'
+        ],
+        help='앙상블 전략'
+    )
+
+    parser.add_argument(
+        '--ensemble_weights',
+        type=float,
+        nargs='+',
+        default=None,
+        help='모델별 가중치 (자동 최적화 가능)'
+    )
+
+    # ==================== TTA 설정 ====================
+    parser.add_argument(
+        '--use_tta',
+        action='store_true',
+        help='Test Time Augmentation 사용'
+    )
+
+    parser.add_argument(
+        '--tta_strategies',
+        type=str,
+        nargs='+',
+        default=['paraphrase'],
+        choices=['paraphrase', 'reorder', 'synonym', 'mask'],
+        help='TTA 전략'
+    )
+
+    parser.add_argument(
+        '--tta_num_aug',
+        type=int,
+        default=3,
+        help='TTA 증강 수'
+    )
+
+    # ==================== Optuna 설정 ====================
+    parser.add_argument(
+        '--optuna_trials',
+        type=int,
+        default=100,
+        help='Optuna 시도 횟수'
+    )
+
+    parser.add_argument(
+        '--optuna_timeout',
+        type=int,
+        default=7200,
+        help='Optuna 제한 시간 (초)'
+    )
+
+    parser.add_argument(
+        '--optuna_sampler',
+        type=str,
+        default='tpe',
+        choices=['tpe', 'gp', 'random', 'cmaes'],
+        help='Optuna 샘플러'
+    )
+
+    parser.add_argument(
+        '--optuna_pruner',
+        type=str,
+        default='median',
+        choices=['median', 'percentile', 'hyperband'],
+        help='Optuna 가지치기'
+    )
+
+    # ==================== 로깅 및 모니터링 ====================
+    parser.add_argument(
+        '--use_wandb',
+        action='store_true',
+        help='WandB 사용'
+    )
+
+    parser.add_argument(
+        '--wandb_project',
+        type=str,
+        default='dialogue-summarization',
+        help='WandB 프로젝트명'
+    )
+
+    parser.add_argument(
+        '--save_visualizations',
+        action='store_true',
+        help='시각화 저장'
+    )
+
+    # ==================== 기타 옵션 ====================
+    parser.add_argument(
+        '--seed',
+        type=int,
+        default=42,
+        help='랜덤 시드'
+    )
+
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='디버그 모드 (적은 데이터)'
+    )
+
+    # ==================== 데이터 경로 ====================
+    parser.add_argument(
+        '--train_data',
+        type=str,
+        default='data/raw/train.csv',
+        help='학습 데이터 경로'
+    )
+
+    parser.add_argument(
+        '--dev_data',
+        type=str,
+        default='data/raw/dev.csv',
+        help='검증 데이터 경로'
+    )
+
+    # ==================== 출력 경로 ====================
+    parser.add_argument(
+        '--output_dir',
+        type=str,
+        default=None,
+        help='출력 디렉토리 (None: 자동 생성)'
+    )
+
+    return parser.parse_args()
+
+
+# ==================== 환경 설정 ====================
+def setup_environment(args):
+    """환경 설정"""
+    # 시드 설정
+    set_seed(args.seed)
+
+    # 실험명 자동 생성
+    if args.experiment_name is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        model_name = args.models[0].replace('-', '_') if args.models else 'default'
+        args.experiment_name = f"{args.mode}_{model_name}_{timestamp}"
+
+    # 출력 디렉토리 생성
+    if args.output_dir is None:
+        output_dir = Path(f"experiments/{args.experiment_name}")
+    else:
+        output_dir = Path(args.output_dir)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    args.output_dir = str(output_dir)
+
+    # 로거 설정
+    log_path = output_dir / "train.log"
     logger = Logger(log_path, print_also=True)
     logger.start_redirect()
 
+    return logger
+
+
+# ==================== Trainer 선택 ====================
+def get_trainer(args, logger):
+    """모드에 따른 Trainer 선택"""
+    if args.mode == 'single':
+        from src.trainers import SingleModelTrainer
+        return SingleModelTrainer(args, logger)
+
+    elif args.mode == 'kfold':
+        from src.trainers import KFoldTrainer
+        return KFoldTrainer(args, logger)
+
+    elif args.mode == 'multi_model':
+        # 추후 구현
+        raise NotImplementedError(
+            "multi_model 모드는 아직 구현되지 않았습니다. "
+            "PRD 12 (다중 모델 앙상블 전략) 구현 후 사용 가능합니다."
+        )
+
+    elif args.mode == 'optuna':
+        # 추후 구현
+        raise NotImplementedError(
+            "optuna 모드는 아직 구현되지 않았습니다. "
+            "PRD 13 (Optuna 하이퍼파라미터 최적화) 구현 후 사용 가능합니다."
+        )
+
+    elif args.mode == 'full':
+        # 추후 구현
+        raise NotImplementedError(
+            "full 모드는 아직 구현되지 않았습니다. "
+            "전체 파이프라인 구현 후 사용 가능합니다."
+        )
+
+    else:
+        raise ValueError(f"지원하지 않는 모드: {args.mode}")
+
+
+# ==================== 메인 함수 ====================
+def main():
+    """메인 실행 함수"""
+    # 인자 파싱
+    args = parse_arguments()
+
+    print("=" * 60)
+    print("🚀 NLP 대화 요약 학습 시작")
+    print(f"📋 실행 모드: {args.mode}")
+    print(f"🤖 모델: {', '.join(args.models)}")
+    print(f"📁 실험명: {args.experiment_name or '(자동 생성)'}")
+    print("=" * 60)
+
+    # 환경 설정
+    logger = setup_environment(args)
+
     try:
-        logger.write("=" * 60)
-        logger.write(f"학습 시작: {args.experiment}")
-        logger.write("=" * 60)
-
-        # -------------- GPU 정보 출력 -------------- #
-        logger.write("\n[GPU 정보]")
-        gpu_info = get_gpu_info()
-        for key, value in gpu_info.items():
-            logger.write(f"  {key}: {value}")
-
-        gpu_tier = check_gpu_tier()
-        logger.write(f"  GPU Tier: {gpu_tier}")
-
-        # -------------- 1. Config 로드 -------------- #
-        logger.write("\n[1/6] Config 로딩...")
-        config = load_config(args.experiment)
-
-        # 디버그 모드 설정
-        if args.debug:
-            logger.write("  ⚠️ 디버그 모드 활성화")
-            config.training.epochs = 2
-            config.training.batch_size = 4
-            config.wandb.enabled = False
-        else:
-            # GPU tier에 따른 배치 크기 최적화 제안
-            optimal_batch_size = get_optimal_batch_size("kobart", gpu_tier)
-            if config.training.batch_size != optimal_batch_size:
-                logger.write(f"  💡 추천 배치 크기: {optimal_batch_size} (현재: {config.training.batch_size})")
-
-        # 시드 설정
-        set_seed(config.experiment.seed)
-        logger.write(f"  ✅ Config 로드 완료 (seed: {config.experiment.seed})")
-
-        # -------------- 2. 데이터 로드 -------------- #
-        logger.write("\n[2/6] 데이터 로딩...")
-        train_df = pd.read_csv(config.paths.train_data)
-        eval_df = pd.read_csv(config.paths.dev_data)
-
-        # 디버그 모드: 데이터 축소
-        if args.debug:
-            train_df = train_df.head(100)
-            eval_df = eval_df.head(20)
-            logger.write(f"  ⚠️ 디버그: 학습 {len(train_df)}개, 검증 {len(eval_df)}개")
-        else:
-            logger.write(f"  ✅ 학습 데이터: {len(train_df)}개")
-            logger.write(f"  ✅ 검증 데이터: {len(eval_df)}개")
-
-        # -------------- 3. 모델 및 토크나이저 로드 -------------- #
-        logger.write("\n[3/6] 모델 로딩...")
-        model, tokenizer = load_model_and_tokenizer(config, logger=logger)
-        logger.write("  ✅ 모델 로드 완료")
-
-        # -------------- 4. Dataset 생성 -------------- #
-        logger.write("\n[4/6] Dataset 생성...")
-        train_dataset = DialogueSummarizationDataset(
-            dialogues=train_df['dialogue'].tolist(),
-            summaries=train_df['summary'].tolist(),
-            tokenizer=tokenizer,
-            encoder_max_len=config.tokenizer.encoder_max_len,
-            decoder_max_len=config.tokenizer.decoder_max_len,
-            preprocess=True
-        )
-
-        eval_dataset = DialogueSummarizationDataset(
-            dialogues=eval_df['dialogue'].tolist(),
-            summaries=eval_df['summary'].tolist(),
-            tokenizer=tokenizer,
-            encoder_max_len=config.tokenizer.encoder_max_len,
-            decoder_max_len=config.tokenizer.decoder_max_len,
-            preprocess=True
-        )
-
-        logger.write(f"  ✅ 학습 Dataset: {len(train_dataset)}개")
-        logger.write(f"  ✅ 검증 Dataset: {len(eval_dataset)}개")
-
-        # -------------- 5. Trainer 생성 및 학습 -------------- #
-        logger.write("\n[5/6] 학습 시작...")
-        trainer = create_trainer(
-            config=config,
-            model=model,
-            tokenizer=tokenizer,
-            train_dataset=train_dataset,
-            eval_dataset=eval_dataset,
-            use_wandb=config.wandb.enabled and not args.debug,
-            logger=logger
-        )
+        # Trainer 생성
+        trainer = get_trainer(args, logger)
 
         # 학습 실행
+        logger.write(f"\n📊 {args.mode.upper()} 모드 실행 중...")
         results = trainer.train()
 
-        # -------------- 6. 결과 출력 -------------- #
-        logger.write("\n[6/6] 학습 완료!")
-        logger.write(f"  최종 모델 저장: {results['final_model_path']}")
-        if 'best_model_checkpoint' in results:
-            logger.write(f"  최상 체크포인트: {results['best_model_checkpoint']}")
+        # 결과 저장
+        trainer.save_results(results)
 
-        if 'eval_metrics' in results and results['eval_metrics']:
-            logger.write("\n  최종 평가 결과:")
-            for key, value in results['eval_metrics'].items():
-                if 'rouge' in key:
-                    logger.write(f"    {key}: {value:.4f}")
+        # 시각화 (옵션)
+        if args.save_visualizations:
+            logger.write("\n📈 시각화 생성 중...")
+            try:
+                from src.utils.visualizations import create_training_visualizations
+                create_training_visualizations(
+                    results=results,
+                    output_dir=args.output_dir
+                )
+                logger.write("  ✅ 시각화 저장 완료")
+            except ImportError:
+                logger.write("  ⚠️ 시각화 모듈 없음 (추후 구현 예정)")
+            except Exception as e:
+                logger.write(f"  ⚠️ 시각화 생성 실패: {e}")
 
-        logger.write("\n" + "=" * 60)
-        logger.write("🎉 학습 완료!")
-        logger.write("=" * 60)
+        print("\n" + "=" * 60)
+        print("✅ 학습 완료!")
+        print(f"📁 결과 저장: {args.output_dir}")
+        print("=" * 60)
+
+    except Exception as e:
+        logger.write(f"\n❌ 오류 발생: {e}", print_error=True)
+        raise
 
     finally:
-        # Logger 정리
+        # 정리
         logger.stop_redirect()
         logger.close()
 
