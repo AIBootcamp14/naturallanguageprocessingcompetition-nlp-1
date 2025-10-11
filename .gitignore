@@ -165,5 +165,4 @@ nosetests.xml # Test results
 *.bin
 
 /docs/*.md
-/docs/modify
 /docs/참고
