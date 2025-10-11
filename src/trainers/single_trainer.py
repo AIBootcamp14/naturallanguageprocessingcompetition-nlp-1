@@ -58,13 +58,18 @@ class SingleModelTrainer(BaseTrainer):
 
         # 4. Dataset 생성
         self.log("\n[4/5] Dataset 생성...")
+
+        # 모델 타입 가져오기 (기본값: encoder_decoder)
+        model_type = config.model.get('type', 'encoder_decoder')
+
         train_dataset = DialogueSummarizationDataset(
             dialogues=train_df['dialogue'].tolist(),
             summaries=train_df['summary'].tolist(),
             tokenizer=tokenizer,
             encoder_max_len=config.tokenizer.encoder_max_len,
             decoder_max_len=config.tokenizer.decoder_max_len,
-            preprocess=True
+            preprocess=True,
+            model_type=model_type  # PRD 08: LLM 지원
         )
 
         eval_dataset = DialogueSummarizationDataset(
@@ -73,7 +78,8 @@ class SingleModelTrainer(BaseTrainer):
             tokenizer=tokenizer,
             encoder_max_len=config.tokenizer.encoder_max_len,
             decoder_max_len=config.tokenizer.decoder_max_len,
-            preprocess=True
+            preprocess=True,
+            model_type=model_type  # PRD 08: LLM 지원
         )
 
         self.log(f"  ✅ 학습 Dataset: {len(train_dataset)}개")
