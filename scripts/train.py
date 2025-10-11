@@ -112,6 +112,92 @@ def parse_arguments():
         help='학습률 (None: config 파일 값 사용)'
     )
 
+    # ==================== 고급 학습 설정 ====================
+    parser.add_argument(
+        '--gradient_accumulation_steps',
+        type=int,
+        default=None,
+        help='그래디언트 누적 단계 수 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--warmup_ratio',
+        type=float,
+        default=None,
+        help='Warmup 비율 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--weight_decay',
+        type=float,
+        default=None,
+        help='가중치 감쇠 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--max_grad_norm',
+        type=float,
+        default=None,
+        help='최대 그래디언트 노름 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--label_smoothing',
+        type=float,
+        default=None,
+        help='레이블 스무딩 (None: config 파일 값 사용)'
+    )
+
+    # ==================== 생성 파라미터 ====================
+    parser.add_argument(
+        '--num_beams',
+        type=int,
+        default=None,
+        help='Beam search 빔 개수 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--temperature',
+        type=float,
+        default=None,
+        help='생성 온도 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--top_p',
+        type=float,
+        default=None,
+        help='Nucleus sampling 확률 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--top_k',
+        type=int,
+        default=None,
+        help='Top-K sampling 개수 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--repetition_penalty',
+        type=float,
+        default=None,
+        help='반복 패널티 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--length_penalty',
+        type=float,
+        default=None,
+        help='길이 패널티 (None: config 파일 값 사용)'
+    )
+
+    parser.add_argument(
+        '--no_repeat_ngram_size',
+        type=int,
+        default=None,
+        help='반복 금지 n-gram 크기 (None: config 파일 값 사용)'
+    )
+
     # ==================== K-Fold 설정 ====================
     parser.add_argument(
         '--k_folds',
