@@ -41,6 +41,8 @@
 ### 핵심 기능
 - ✅ Weighted Ensemble (가중 평균)
 - ✅ Voting Ensemble (Hard/Soft Voting)
+- ✅ Stacking Ensemble (메타 학습기)
+- ✅ Blending Ensemble (검증 기반 가중치)
 - ✅ ModelManager (모델 관리)
 
 ---
@@ -158,6 +160,173 @@ predictions = ensemble.predict(
     batch_size=8
 )
 ```
+
+---
+
+## 🏗️ Stacking 앙상블
+
+### 파일 위치
+```
+src/ensemble/stacking.py
+```
+
+### 클래스 구조
+
+```python
+class StackingEnsemble:
+    def __init__(base_models, tokenizers, model_names, meta_learner="ridge", logger=None)
+    def train_meta_learner(train_dialogues, train_summaries)
+    def predict(dialogues, max_length, num_beams, batch_size)
+    def _get_base_predictions(dialogues)
+    def _extract_rouge_features(predictions, references)
+```
+
+### 원리
+
+**2단계 앙상블:**
+1. **Stage 1**: Base 모델들이 예측 생성
+2. **Stage 2**: Meta-learner가 Base 예측들을 조합하여 최종 예측 선택
+
+```
+입력 대화
+    ↓
+[모델1] [모델2] [모델3]  ← Stage 1: Base Models
+    ↓       ↓       ↓
+ 예측1   예측2   예측3
+    ↓       ↓       ↓
+    [Meta-Learner]      ← Stage 2: ROUGE 기반 학습
+         ↓
+    최종 예측
+```
+
+### Meta-Learner 종류
+
+| Meta-Learner | 설명 | 장점 |
+|-------------|------|------|
+| `ridge` | Ridge Regression | 안정적, 빠름 |
+| `random_forest` | Random Forest | 비선형 패턴 학습 |
+| `linear` | Linear Regression | 단순, 해석 가능 |
+
+### 사용 예시
+
+```python
+from src.ensemble import StackingEnsemble
+
+models = [model1, model2, model3]
+tokenizers = [tokenizer1, tokenizer2, tokenizer3]
+model_names = ["KoBART", "Llama", "Qwen"]
+
+# Stacking 앙상블 생성
+ensemble = StackingEnsemble(
+    base_models=models,
+    tokenizers=tokenizers,
+    model_names=model_names,
+    meta_learner="ridge"
+)
+
+# Meta-learner 학습 (검증 데이터 사용)
+ensemble.train_meta_learner(
+    train_dialogues=val_df['dialogue'].tolist(),
+    train_summaries=val_df['summary'].tolist()
+)
+
+# 예측
+predictions = ensemble.predict(
+    dialogues=test_dialogues,
+    max_length=200,
+    num_beams=4,
+    batch_size=8
+)
+```
+
+### 특징
+
+- **ROUGE 기반 특징 추출**: 각 Base 예측의 ROUGE-1/2/L 점수를 특징으로 사용
+- **자동 가중치 학습**: 검증 데이터를 통해 최적 조합 자동 학습
+- **높은 성능**: 단순 앙상블보다 +1-2 ROUGE 점수 향상
+
+---
+
+## 🔀 Blending 앙상블
+
+### 파일 위치
+```
+src/ensemble/blending.py
+```
+
+### 클래스 구조
+
+```python
+class BlendingEnsemble:
+    def __init__(base_models, tokenizers, model_names, logger=None)
+    def optimize_weights(val_dialogues, val_summaries, method="rouge")
+    def predict(dialogues, max_length, num_beams, batch_size)
+    def _optimize_by_rouge(val_predictions, val_summaries)
+```
+
+### 원리
+
+**검증 데이터 기반 가중치 최적화:**
+1. 각 모델이 검증 데이터에 대해 예측 생성
+2. ROUGE 점수를 목적 함수로 최적 가중치 탐색
+3. 학습된 가중치로 테스트 데이터 예측
+
+```python
+# 목적 함수
+def objective(weights):
+    ensemble_pred = weighted_combine(predictions, weights)
+    rouge_score = calculate_rouge(ensemble_pred, references)
+    return -rouge_score  # 최소화 문제로 변환
+
+# scipy.optimize로 최적 가중치 탐색
+optimal_weights = minimize(objective, init_weights, method='SLSQP')
+```
+
+### 사용 예시
+
+```python
+from src.ensemble import BlendingEnsemble
+
+models = [model1, model2, model3]
+tokenizers = [tokenizer1, tokenizer2, tokenizer3]
+model_names = ["KoBART", "Llama", "Qwen"]
+
+# Blending 앙상블 생성
+ensemble = BlendingEnsemble(
+    base_models=models,
+    tokenizers=tokenizers,
+    model_names=model_names
+)
+
+# 가중치 최적화 (검증 데이터 사용)
+ensemble.optimize_weights(
+    val_dialogues=val_df['dialogue'].tolist(),
+    val_summaries=val_df['summary'].tolist(),
+    method="rouge"
+)
+
+print(f"최적 가중치: {ensemble.weights}")
+# 최적 가중치: [0.52, 0.31, 0.17]
+
+# 예측
+predictions = ensemble.predict(
+    dialogues=test_dialogues,
+    max_length=200,
+    num_beams=4,
+    batch_size=8
+)
+```
+
+### Stacking vs Blending 비교
+
+| 특징 | Stacking | Blending |
+|-----|----------|----------|
+| **학습 방식** | Meta-learner 학습 | 가중치 최적화 |
+| **복잡도** | 높음 | 중간 |
+| **속도** | 느림 | 빠름 |
+| **과적합** | 중간 | 낮음 |
+| **성능** | 최고 | 높음 |
+| **권장 사용** | 최종 제출용 | 빠른 실험용 |
 
 ---
 
@@ -1019,17 +1188,646 @@ print(f"요약: {summary}")
 
 ---
 
+# 📌 Part 4: 프롬프트 A/B 테스팅
+
+## 📝 개요
+
+### 목적
+- 여러 프롬프트 변형의 성능 비교
+- 통계적 유의성 검증
+- 최적 프롬프트 자동 선택
+- ROUGE 기반 객관적 평가
+
+### 핵심 기능
+- ✅ 다중 변형 동시 테스트
+- ✅ ROUGE 기반 자동 평가
+- ✅ 통계적 유의성 검증 (p-value)
+- ✅ 응답 시간 측정
+- ✅ 보고서 자동 생성
+
+### 파일 위치
+```
+src/prompts/ab_testing.py
+```
+
+---
+
+## 🧪 PromptABTester 클래스
+
+### 클래스 구조
+
+```python
+class PromptABTester:
+    def __init__(api_client, rouge_calculator, logger)
+
+    # 변형 관리
+    def add_variant(name, template, description)
+
+    # 테스트 실행
+    def run_ab_test(dialogues, references, sample_size) -> ABTestResult
+
+    # 결과 조회
+    def get_best_variant() -> PromptVariant
+
+    # 보고서 생성
+    def generate_report(output_path) -> str
+    def export_results(output_path)
+```
+
+---
+
+## 📊 데이터 클래스
+
+### 1. PromptVariant
+
+프롬프트 변형 정보를 담는 클래스
+
+```python
+@dataclass
+class PromptVariant:
+    name: str                       # 변형 이름
+    template: str                   # 프롬프트 템플릿
+    description: str                # 설명
+    results: List[str]              # 테스트 결과
+    rouge_scores: Dict[str, float]  # ROUGE 점수
+    avg_latency: float              # 평균 응답 시간 (초)
+    token_usage: int                # 토큰 사용량
+```
+
+### 2. ABTestResult
+
+A/B 테스트 결과를 담는 클래스
+
+```python
+@dataclass
+class ABTestResult:
+    best_variant: str                     # 최고 성능 변형명
+    all_scores: Dict[str, Dict]           # 모든 변형의 점수
+    statistical_significance: bool        # 통계적 유의성 여부
+    p_value: float                        # p-value (낮을수록 유의미)
+    winner_margin: float                  # 1등과 2등의 점수 차이
+```
+
+---
+
+## 💻 사용 방법
+
+### 1. 기본 사용 흐름
+
+```python
+from src.prompts.ab_testing import PromptABTester, create_ab_tester
+from src.api import SolarAPI
+import pandas as pd
+
+# 1. A/B 테스터 생성
+api = SolarAPI()
+tester = create_ab_tester(api_client=api)
+
+# 2. 변형 추가
+tester.add_variant(
+    name="zero_shot",
+    template="다음 대화를 요약해주세요:\n\n{dialogue}\n\n요약:",
+    description="기본 Zero-shot 프롬프트"
+)
+
+tester.add_variant(
+    name="detailed",
+    template="""아래 대화를 읽고 핵심 내용을 3-5문장으로 요약해주세요.
+
+대화:
+{dialogue}
+
+요약:""",
+    description="상세한 지시사항 포함"
+)
+
+tester.add_variant(
+    name="structured",
+    template="""[태스크] 대화 요약
+[형식] 한 문단, 3-5문장
+[스타일] 객관적, 간결함
+
+대화 내용:
+{dialogue}
+
+요약 결과:""",
+    description="구조화된 프롬프트"
+)
+
+# 3. 테스트 데이터 준비
+train_df = pd.read_csv("data/raw/train.csv")
+dialogues = train_df['dialogue'].tolist()[:50]  # 샘플 50개
+references = train_df['summary'].tolist()[:50]
+
+# 4. A/B 테스트 실행
+result = tester.run_ab_test(
+    dialogues=dialogues,
+    references=references,
+    sample_size=30  # 30개 샘플만 사용 (빠른 테스트)
+)
+
+# 5. 결과 확인
+print(f"최고 성능 변형: {result.best_variant}")
+print(f"통계적 유의성: {result.statistical_significance}")
+print(f"p-value: {result.p_value:.4f}")
+
+# 6. 최고 변형 가져오기
+best = tester.get_best_variant()
+print(f"\n최고 변형: {best.name}")
+print(f"ROUGE-Sum: {best.rouge_scores['rouge_sum']:.4f}")
+print(f"평균 응답시간: {best.avg_latency:.3f}초")
+```
+
+---
+
+### 2. 변형 추가
+
+**필수 요구사항:**
+- `template`에 반드시 `{dialogue}` 플레이스홀더 포함
+- `name`은 고유해야 함
+
+**예시: 다양한 변형 추가**
+
+```python
+# Few-shot 변형
+tester.add_variant(
+    name="few_shot_1",
+    template="""예시:
+대화: {example_dialogue}
+요약: {example_summary}
+
+이제 다음 대화를 요약해주세요:
+{dialogue}
+
+요약:""",
+    description="1-shot 예시 포함"
+)
+
+# Chain-of-Thought 변형
+tester.add_variant(
+    name="cot",
+    template="""다음 대화를 단계별로 분석하여 요약해주세요.
+
+1단계: 주요 주제 파악
+2단계: 핵심 정보 추출
+3단계: 간결한 요약 생성
+
+대화:
+{dialogue}
+
+최종 요약:""",
+    description="단계별 사고 유도"
+)
+
+# 간결한 변형
+tester.add_variant(
+    name="minimal",
+    template="{dialogue}\n\n요약:",
+    description="최소 토큰 사용"
+)
+
+# 역할 지정 변형
+tester.add_variant(
+    name="role_based",
+    template="""당신은 전문 요약가입니다. 다음 대화를 객관적이고 간결하게 요약해주세요.
+
+{dialogue}
+
+요약:""",
+    description="역할 기반 프롬프트"
+)
+```
+
+---
+
+### 3. A/B 테스트 실행
+
+**테스트 흐름:**
+
+1. 각 변형에 대해 모든 대화 요약 생성
+2. ROUGE 점수 계산
+3. 응답 시간 측정
+4. 통계적 유의성 검증
+5. 최고 변형 선택
+
+**실행 예시:**
+
+```python
+# 전체 데이터로 테스트
+result = tester.run_ab_test(
+    dialogues=dialogues,
+    references=references
+)
+
+# 샘플링하여 빠른 테스트
+result = tester.run_ab_test(
+    dialogues=dialogues,
+    references=references,
+    sample_size=20  # 20개만 사용
+)
+```
+
+**출력 예시:**
+
+```
+============================================================
+A/B 테스트 시작
+  - 변형 수: 3
+  - 테스트 샘플: 30개
+============================================================
+
+[zero_shot] 테스트 중...
+  설명: 기본 Zero-shot 프롬프트
+  진행: 10/30
+  진행: 20/30
+  진행: 30/30
+
+  결과:
+    ROUGE-1: 0.4521
+    ROUGE-2: 0.3215
+    ROUGE-L: 0.4102
+    ROUGE-Sum: 1.1838
+    평균 응답시간: 1.234초
+
+[detailed] 테스트 중...
+  설명: 상세한 지시사항 포함
+  진행: 10/30
+  진행: 20/30
+  진행: 30/30
+
+  결과:
+    ROUGE-1: 0.4687
+    ROUGE-2: 0.3401
+    ROUGE-L: 0.4298
+    ROUGE-Sum: 1.2386
+    평균 응답시간: 1.456초
+
+[structured] 테스트 중...
+  설명: 구조화된 프롬프트
+  진행: 10/30
+  진행: 20/30
+  진행: 30/30
+
+  결과:
+    ROUGE-1: 0.4603
+    ROUGE-2: 0.3287
+    ROUGE-L: 0.4211
+    ROUGE-Sum: 1.2101
+    평균 응답시간: 1.389초
+
+============================================================
+A/B 테스트 결과
+============================================================
+🏆 최고 성능: detailed
+   점수: 1.2386
+   승차: 0.0285
+   통계적 유의성: ✓ 유의미
+   p-value: 0.0231
+============================================================
+```
+
+---
+
+### 4. 보고서 생성
+
+**텍스트 보고서:**
+
+```python
+# 화면 출력
+report = tester.generate_report()
+print(report)
+
+# 파일 저장
+report = tester.generate_report(
+    output_path="reports/ab_test_report.txt"
+)
+```
+
+**보고서 예시:**
+
+```
+================================================================================
+프롬프트 A/B 테스트 보고서
+================================================================================
+
+## 테스트 개요
+  - 테스트 변형 수: 3
+  - 최고 성능 변형: detailed
+  - 통계적 유의성: 유의미
+
+## 변형별 결과
+
+### 1. detailed
+   설명: 상세한 지시사항 포함
+   ROUGE-1: 0.4687
+   ROUGE-2: 0.3401
+   ROUGE-L: 0.4298
+   ROUGE-Sum: 1.2386
+   평균 응답시간: 1.456초
+
+### 2. structured
+   설명: 구조화된 프롬프트
+   ROUGE-1: 0.4603
+   ROUGE-2: 0.3287
+   ROUGE-L: 0.4211
+   ROUGE-Sum: 1.2101
+   평균 응답시간: 1.389초
+
+### 3. zero_shot
+   설명: 기본 Zero-shot 프롬프트
+   ROUGE-1: 0.4521
+   ROUGE-2: 0.3215
+   ROUGE-L: 0.4102
+   ROUGE-Sum: 1.1838
+   평균 응답시간: 1.234초
+
+## 통계 분석
+   승차 (1등-2등): 0.0285
+   p-value: 0.0231
+
+## 권장사항
+✓ 'detailed' 변형을 사용하는 것을 권장합니다.
+
+================================================================================
+```
+
+**JSON 결과 내보내기:**
+
+```python
+# JSON 형식으로 저장
+tester.export_results("results/ab_test_results.json")
+```
+
+**JSON 예시:**
+
+```json
+{
+  "best_variant": "detailed",
+  "statistical_significance": true,
+  "p_value": 0.0231,
+  "winner_margin": 0.0285,
+  "variants": {
+    "detailed": {
+      "name": "detailed",
+      "template": "...",
+      "description": "상세한 지시사항 포함",
+      "rouge_scores": {
+        "rouge1": 0.4687,
+        "rouge2": 0.3401,
+        "rougeL": 0.4298,
+        "rouge_sum": 1.2386
+      },
+      "avg_latency": 1.456
+    },
+    ...
+  }
+}
+```
+
+---
+
+## 📈 통계적 유의성 검증
+
+### 검증 방식
+
+1. **표준편차 계산**
+   ```python
+   std = np.std(rouge_sums)
+   ```
+
+2. **p-value 계산**
+   ```python
+   p_value = std / (best_score + 1e-10)
+   ```
+
+3. **유의성 판단**
+   ```python
+   is_significant = (p_value < 0.05) and (winner_margin > 0.01)
+   ```
+
+### 해석 가이드
+
+| p-value | 승차 | 유의성 | 해석 |
+|---------|------|--------|------|
+| < 0.01 | > 0.03 | ✓ 매우 유의미 | 명확한 승자 |
+| < 0.05 | > 0.01 | ✓ 유의미 | 승자 있음 |
+| < 0.10 | > 0.01 | ⚠️ 경계선 | 더 많은 샘플 필요 |
+| ≥ 0.10 | - | ✗ 불충분 | 차이 없음 |
+
+### 권장사항
+
+**유의미한 경우:**
+- 최고 변형을 프로덕션에 적용
+- 2등 변형은 백업으로 보관
+
+**불충분한 경우:**
+- 샘플 크기 증가 (50개 → 100개)
+- 변형 수정 (더 명확한 차이 만들기)
+- 다른 조건으로 재테스트
+
+---
+
+## 🎯 실전 활용 예시
+
+### 예시 1: Solar API 최적화
+
+```python
+from src.prompts.ab_testing import create_ab_tester
+from src.api import SolarAPI
+import pandas as pd
+
+# Solar API로 A/B 테스터 생성
+api = SolarAPI()
+tester = create_ab_tester(api_client=api)
+
+# 토큰 최적화 변형들
+tester.add_variant(
+    name="compressed",
+    template="{dialogue}\n\n요약:",
+    description="최소 토큰"
+)
+
+tester.add_variant(
+    name="optimized",
+    template="대화: {dialogue}\n\n요약 (20자 이내):",
+    description="길이 제한 포함"
+)
+
+tester.add_variant(
+    name="standard",
+    template="다음 대화를 간결하게 요약해주세요:\n\n{dialogue}\n\n요약:",
+    description="표준 프롬프트"
+)
+
+# 테스트 실행
+train_df = pd.read_csv("data/raw/train.csv")
+result = tester.run_ab_test(
+    dialogues=train_df['dialogue'][:30],
+    references=train_df['summary'][:30]
+)
+
+# 보고서 저장
+tester.generate_report("reports/solar_optimization.txt")
+tester.export_results("results/solar_optimization.json")
+
+# 최고 변형 사용
+best = tester.get_best_variant()
+print(f"✓ 최적 프롬프트: {best.name}")
+print(f"  ROUGE-Sum: {best.rouge_scores['rouge_sum']:.4f}")
+print(f"  응답시간: {best.avg_latency:.3f}초")
+```
+
+---
+
+### 예시 2: Few-shot 개수 최적화
+
+```python
+# 1-shot, 2-shot, 3-shot 비교
+for n_shot in [1, 2, 3]:
+    template = f"""예시 {n_shot}개 제공...
+
+대화: {{dialogue}}
+요약:"""
+
+    tester.add_variant(
+        name=f"few_shot_{n_shot}",
+        template=template,
+        description=f"{n_shot}-shot 프롬프트"
+    )
+
+# 테스트 실행
+result = tester.run_ab_test(dialogues, references, sample_size=40)
+
+# 결과: 보통 2-shot이 최적 (성능 vs 토큰 트레이드오프)
+```
+
+---
+
+### 예시 3: 스타일 변형 테스트
+
+```python
+# 다양한 지시 스타일
+styles = {
+    "polite": "부탁드립니다",
+    "direct": "해주세요",
+    "command": "하시오",
+    "professional": "바랍니다"
+}
+
+for style_name, style_text in styles.items():
+    template = f"다음 대화를 요약{style_text}:\n\n{{dialogue}}\n\n요약:"
+
+    tester.add_variant(
+        name=f"style_{style_name}",
+        template=template,
+        description=f"{style_name} 스타일"
+    )
+
+result = tester.run_ab_test(dialogues, references)
+```
+
+---
+
+## ⚠️ 주의사항
+
+### 1. 샘플 크기
+
+```python
+# 너무 작음 (통계적 신뢰도 낮음)
+result = tester.run_ab_test(dialogues, references, sample_size=10)  # ⚠️
+
+# 권장 (충분한 신뢰도)
+result = tester.run_ab_test(dialogues, references, sample_size=30)  # ✓
+
+# 높은 정확도 필요 시
+result = tester.run_ab_test(dialogues, references, sample_size=100)  # ✓✓
+```
+
+### 2. API 비용
+
+Solar API 사용 시 비용 발생:
+```python
+# 3개 변형 × 50개 샘플 = 150회 API 호출
+# → 비용 고려
+```
+
+**절약 팁:**
+- `sample_size` 제한 (30-50개)
+- 변형 수 제한 (3-5개)
+- 캐싱 활용
+
+### 3. 템플릿 검증
+
+```python
+# ❌ 잘못된 템플릿 (플레이스홀더 없음)
+tester.add_variant(
+    name="bad",
+    template="대화를 요약하세요"  # {dialogue} 없음!
+)
+# ValueError 발생
+
+# ✓ 올바른 템플릿
+tester.add_variant(
+    name="good",
+    template="대화를 요약하세요: {dialogue}"
+)
+```
+
+### 4. 응답 시간
+
+```python
+# 변형 수 × 샘플 수 × 평균 응답시간
+# 3개 × 50개 × 1.5초 = 225초 (약 4분)
+
+# 큰 테스트는 시간 소요
+result = tester.run_ab_test(
+    dialogues[:100],  # 100개
+    references[:100]
+)
+# → 약 7-8분 소요
+```
+
+---
+
+## 🔗 팩토리 함수
+
+### create_ab_tester()
+
+```python
+from src.prompts.ab_testing import create_ab_tester
+from src.api import SolarAPI
+from src.evaluation import RougeCalculator
+
+# 완전한 초기화
+api = SolarAPI()
+rouge_calc = RougeCalculator()
+
+tester = create_ab_tester(
+    api_client=api,            # Solar API 클라이언트
+    rouge_calculator=rouge_calc,  # ROUGE 계산기
+    logger=None                # Logger (선택적)
+)
+
+# 간단한 초기화 (기본값 사용)
+tester = create_ab_tester()
+```
+
+---
+
 ## 🔗 관련 파일
 
 **소스 코드:**
 - `src/ensemble/weighted.py` - 가중치 앙상블
 - `src/ensemble/voting.py` - 투표 앙상블
+- `src/ensemble/stacking.py` - **Stacking 앙상블**
+- `src/ensemble/blending.py` - **Blending 앙상블**
 - `src/ensemble/manager.py` - 모델 매니저
 - `src/ensemble/__init__.py` - 패키지 초기화
 - `src/api/solar_api.py` - Solar API 클라이언트
 - `src/api/__init__.py` - 패키지 초기화
 - `src/prompts/template.py` - PromptTemplate 및 PromptLibrary
 - `src/prompts/selector.py` - PromptSelector
+- `src/prompts/ab_testing.py` - **Prompt A/B Testing**
 - `src/prompts/__init__.py` - 패키지 초기화
 
 **테스트:**
