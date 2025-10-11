@@ -1,0 +1,10 @@
+# 데이터 증강 전략 Config
+augmentation:
+  enable: true
+  methods:
+    - shuffle
+    - synonym
+    - sample
+  n_augmentations_per_sample: 2
+  shuffle_prob: 0.5
+  synonym_replacement_prob: 0.2
