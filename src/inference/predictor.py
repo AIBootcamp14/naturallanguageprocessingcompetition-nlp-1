@@ -78,7 +78,7 @@ class Predictor:
         """
         # -------------- 기본 생성 파라미터 -------------- #
         default_config = {
-            'max_length': 100,                          # 최대 생성 길이
+            'max_new_tokens': 100,                      # 새로 생성할 토큰 수 (베이스라인 수정)
             'num_beams': 4,                             # Beam 개수
             'early_stopping': True,                     # 조기 종료
             'no_repeat_ngram_size': 2,                  # 반복 방지 n-gram 크기
@@ -90,8 +90,9 @@ class Predictor:
             inference_cfg = self.config.inference       # 추론 Config
 
             # Config 값으로 오버라이드
+            max_gen_length = inference_cfg.get('generate_max_length', 100)
             default_config.update({
-                'max_length': inference_cfg.get('generate_max_length', 100),
+                'max_new_tokens': max_gen_length,       # max_new_tokens 사용 (입력 길이와 무관)
                 'num_beams': inference_cfg.get('num_beams', 4),
                 'early_stopping': inference_cfg.get('early_stopping', True),
                 'no_repeat_ngram_size': inference_cfg.get('no_repeat_ngram_size', 2),
