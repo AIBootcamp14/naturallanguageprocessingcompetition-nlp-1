@@ -12,8 +12,10 @@
 
 from src.trainers.base_trainer import BaseTrainer
 from src.trainers.single_trainer import SingleModelTrainer
+from src.trainers.kfold_trainer import KFoldTrainer
 
 __all__ = [
     'BaseTrainer',
     'SingleModelTrainer',
+    'KFoldTrainer',
 ]
