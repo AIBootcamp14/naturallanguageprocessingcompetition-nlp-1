@@ -25,6 +25,13 @@ from src.models import load_model_and_tokenizer
 from src.data import DialogueSummarizationDataset
 from src.training import create_trainer
 from src.utils.config.seed import set_seed
+from src.logging.logger import Logger
+from src.utils.core.common import create_log_path
+from src.utils.gpu_optimization.team_gpu_check import (
+    get_gpu_info,
+    check_gpu_tier,
+    get_optimal_batch_size
+)
 
 
 # ==================== 메인 함수 ==================== #
@@ -44,96 +51,122 @@ def main():
     )
     args = parser.parse_args()
 
-    print("=" * 60)
-    print(f"학습 시작: {args.experiment}")
-    print("=" * 60)
+    # -------------- Logger 초기화 -------------- #
+    log_path = create_log_path("outputs/logs", f"train_{args.experiment}")
+    logger = Logger(log_path, print_also=True)
+    logger.start_redirect()
 
-    # -------------- 1. Config 로드 -------------- #
-    print("\n[1/6] Config 로딩...")
-    config = load_config(args.experiment)
+    try:
+        logger.write("=" * 60)
+        logger.write(f"학습 시작: {args.experiment}")
+        logger.write("=" * 60)
 
-    # 디버그 모드 설정
-    if args.debug:
-        print("  ⚠️ 디버그 모드 활성화")
-        config.training.epochs = 2
-        config.training.batch_size = 4
-        config.wandb.enabled = False
+        # -------------- GPU 정보 출력 -------------- #
+        logger.write("\n[GPU 정보]")
+        gpu_info = get_gpu_info()
+        for key, value in gpu_info.items():
+            logger.write(f"  {key}: {value}")
 
-    # 시드 설정
-    set_seed(config.experiment.seed)
-    print(f"  ✅ Config 로드 완료 (seed: {config.experiment.seed})")
+        gpu_tier = check_gpu_tier()
+        logger.write(f"  GPU Tier: {gpu_tier}")
 
-    # -------------- 2. 데이터 로드 -------------- #
-    print("\n[2/6] 데이터 로딩...")
-    train_df = pd.read_csv(config.paths.train_data)
-    eval_df = pd.read_csv(config.paths.dev_data)
+        # -------------- 1. Config 로드 -------------- #
+        logger.write("\n[1/6] Config 로딩...")
+        config = load_config(args.experiment)
 
-    # 디버그 모드: 데이터 축소
-    if args.debug:
-        train_df = train_df.head(100)
-        eval_df = eval_df.head(20)
-        print(f"  ⚠️ 디버그: 학습 {len(train_df)}개, 검증 {len(eval_df)}개")
-    else:
-        print(f"  ✅ 학습 데이터: {len(train_df)}개")
-        print(f"  ✅ 검증 데이터: {len(eval_df)}개")
+        # 디버그 모드 설정
+        if args.debug:
+            logger.write("  ⚠️ 디버그 모드 활성화")
+            config.training.epochs = 2
+            config.training.batch_size = 4
+            config.wandb.enabled = False
+        else:
+            # GPU tier에 따른 배치 크기 최적화 제안
+            optimal_batch_size = get_optimal_batch_size("kobart", gpu_tier)
+            if config.training.batch_size != optimal_batch_size:
+                logger.write(f"  💡 추천 배치 크기: {optimal_batch_size} (현재: {config.training.batch_size})")
 
-    # -------------- 3. 모델 및 토크나이저 로드 -------------- #
-    print("\n[3/6] 모델 로딩...")
-    model, tokenizer = load_model_and_tokenizer(config)
-    print("  ✅ 모델 로드 완료")
+        # 시드 설정
+        set_seed(config.experiment.seed)
+        logger.write(f"  ✅ Config 로드 완료 (seed: {config.experiment.seed})")
 
-    # -------------- 4. Dataset 생성 -------------- #
-    print("\n[4/6] Dataset 생성...")
-    train_dataset = DialogueSummarizationDataset(
-        dialogues=train_df['dialogue'].tolist(),
-        summaries=train_df['summary'].tolist(),
-        tokenizer=tokenizer,
-        encoder_max_len=config.tokenizer.encoder_max_len,
-        decoder_max_len=config.tokenizer.decoder_max_len,
-        preprocess=True
-    )
+        # -------------- 2. 데이터 로드 -------------- #
+        logger.write("\n[2/6] 데이터 로딩...")
+        train_df = pd.read_csv(config.paths.train_data)
+        eval_df = pd.read_csv(config.paths.dev_data)
 
-    eval_dataset = DialogueSummarizationDataset(
-        dialogues=eval_df['dialogue'].tolist(),
-        summaries=eval_df['summary'].tolist(),
-        tokenizer=tokenizer,
-        encoder_max_len=config.tokenizer.encoder_max_len,
-        decoder_max_len=config.tokenizer.decoder_max_len,
-        preprocess=True
-    )
+        # 디버그 모드: 데이터 축소
+        if args.debug:
+            train_df = train_df.head(100)
+            eval_df = eval_df.head(20)
+            logger.write(f"  ⚠️ 디버그: 학습 {len(train_df)}개, 검증 {len(eval_df)}개")
+        else:
+            logger.write(f"  ✅ 학습 데이터: {len(train_df)}개")
+            logger.write(f"  ✅ 검증 데이터: {len(eval_df)}개")
 
-    print(f"  ✅ 학습 Dataset: {len(train_dataset)}개")
-    print(f"  ✅ 검증 Dataset: {len(eval_dataset)}개")
+        # -------------- 3. 모델 및 토크나이저 로드 -------------- #
+        logger.write("\n[3/6] 모델 로딩...")
+        model, tokenizer = load_model_and_tokenizer(config, logger=logger)
+        logger.write("  ✅ 모델 로드 완료")
 
-    # -------------- 5. Trainer 생성 및 학습 -------------- #
-    print("\n[5/6] 학습 시작...")
-    trainer = create_trainer(
-        config=config,
-        model=model,
-        tokenizer=tokenizer,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        use_wandb=config.wandb.enabled and not args.debug
-    )
+        # -------------- 4. Dataset 생성 -------------- #
+        logger.write("\n[4/6] Dataset 생성...")
+        train_dataset = DialogueSummarizationDataset(
+            dialogues=train_df['dialogue'].tolist(),
+            summaries=train_df['summary'].tolist(),
+            tokenizer=tokenizer,
+            encoder_max_len=config.tokenizer.encoder_max_len,
+            decoder_max_len=config.tokenizer.decoder_max_len,
+            preprocess=True
+        )
 
-    # 학습 실행
-    results = trainer.train()
+        eval_dataset = DialogueSummarizationDataset(
+            dialogues=eval_df['dialogue'].tolist(),
+            summaries=eval_df['summary'].tolist(),
+            tokenizer=tokenizer,
+            encoder_max_len=config.tokenizer.encoder_max_len,
+            decoder_max_len=config.tokenizer.decoder_max_len,
+            preprocess=True
+        )
 
-    # -------------- 6. 결과 출력 -------------- #
-    print("\n[6/6] 학습 완료!")
-    print(f"  최종 모델 저장: {results['final_model_path']}")
-    if 'best_model_checkpoint' in results:
-        print(f"  최상 체크포인트: {results['best_model_checkpoint']}")
+        logger.write(f"  ✅ 학습 Dataset: {len(train_dataset)}개")
+        logger.write(f"  ✅ 검증 Dataset: {len(eval_dataset)}개")
 
-    if 'eval_metrics' in results and results['eval_metrics']:
-        print("\n  최종 평가 결과:")
-        for key, value in results['eval_metrics'].items():
-            if 'rouge' in key:
-                print(f"    {key}: {value:.4f}")
+        # -------------- 5. Trainer 생성 및 학습 -------------- #
+        logger.write("\n[5/6] 학습 시작...")
+        trainer = create_trainer(
+            config=config,
+            model=model,
+            tokenizer=tokenizer,
+            train_dataset=train_dataset,
+            eval_dataset=eval_dataset,
+            use_wandb=config.wandb.enabled and not args.debug,
+            logger=logger
+        )
 
-    print("\n" + "=" * 60)
-    print("🎉 학습 완료!")
-    print("=" * 60)
+        # 학습 실행
+        results = trainer.train()
+
+        # -------------- 6. 결과 출력 -------------- #
+        logger.write("\n[6/6] 학습 완료!")
+        logger.write(f"  최종 모델 저장: {results['final_model_path']}")
+        if 'best_model_checkpoint' in results:
+            logger.write(f"  최상 체크포인트: {results['best_model_checkpoint']}")
+
+        if 'eval_metrics' in results and results['eval_metrics']:
+            logger.write("\n  최종 평가 결과:")
+            for key, value in results['eval_metrics'].items():
+                if 'rouge' in key:
+                    logger.write(f"    {key}: {value:.4f}")
+
+        logger.write("\n" + "=" * 60)
+        logger.write("🎉 학습 완료!")
+        logger.write("=" * 60)
+
+    finally:
+        # Logger 정리
+        logger.stop_redirect()
+        logger.close()
 
 
 # ==================== 실행부 ==================== #

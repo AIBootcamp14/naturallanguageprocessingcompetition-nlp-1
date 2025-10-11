@@ -38,7 +38,8 @@ class Predictor:
         model: PreTrainedModel,                         # 학습된 모델
         tokenizer: PreTrainedTokenizer,                 # 토크나이저
         config: Optional[DictConfig] = None,            # Config (선택적)
-        device: Optional[torch.device] = None           # 디바이스 (선택적)
+        device: Optional[torch.device] = None,          # 디바이스 (선택적)
+        logger=None                                     # Logger 인스턴스 (선택적)
     ):
         """
         Args:
@@ -46,10 +47,12 @@ class Predictor:
             tokenizer: 토크나이저
             config: 전체 Config (inference 파라미터 포함)
             device: 추론 디바이스
+            logger: Logger 인스턴스 (선택적)
         """
         self.model = model                              # 모델 저장
         self.tokenizer = tokenizer                      # 토크나이저 저장
         self.config = config                            # Config 저장
+        self.logger = logger                            # Logger 저장
 
         # -------------- 디바이스 설정 -------------- #
         if device is None:                              # 디바이스가 지정되지 않은 경우
@@ -281,12 +284,23 @@ class Predictor:
         Returns:
             pd.DataFrame: 제출용 DataFrame (fname, summary)
         """
-        print("=" * 60)
-        print("제출 파일 생성 시작")
-        print("=" * 60)
+        msg = "=" * 60
+        if self.logger:
+            self.logger.write(msg)
+            self.logger.write("제출 파일 생성 시작")
+            self.logger.write(msg)
+        else:
+            print(msg)
+            print("제출 파일 생성 시작")
+            print(msg)
 
         # -------------- 예측 수행 -------------- #
-        print(f"\n샘플 수: {len(test_df)}")
+        msg = f"\n샘플 수: {len(test_df)}"
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
+
         result_df = self.predict_dataframe(             # DataFrame 예측
             test_df,
             batch_size=batch_size,
@@ -303,8 +317,17 @@ class Predictor:
 
         submission_df.to_csv(output_path, index=False)  # CSV로 저장
 
-        print(f"\n✅ 제출 파일 저장 완료: {output_path}")
-        print("=" * 60)
+        msg = f"\n✅ 제출 파일 저장 완료: {output_path}"
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
+
+        msg = "=" * 60
+        if self.logger:
+            self.logger.write(msg)
+        else:
+            print(msg)
 
         return submission_df                            # 제출 DataFrame 반환
 
@@ -315,7 +338,8 @@ def create_predictor(
     model: PreTrainedModel,                             # 학습된 모델
     tokenizer: PreTrainedTokenizer,                     # 토크나이저
     config: Optional[DictConfig] = None,                # Config (선택적)
-    device: Optional[torch.device] = None               # 디바이스 (선택적)
+    device: Optional[torch.device] = None,              # 디바이스 (선택적)
+    logger=None                                         # Logger 인스턴스 (선택적)
 ) -> Predictor:
     """
     Predictor 생성 편의 함수
@@ -325,6 +349,7 @@ def create_predictor(
         tokenizer: 토크나이저
         config: 전체 Config
         device: 추론 디바이스
+        logger: Logger 인스턴스 (선택적)
 
     Returns:
         Predictor: 생성된 Predictor 객체
@@ -333,5 +358,6 @@ def create_predictor(
         model=model,
         tokenizer=tokenizer,
         config=config,
-        device=device
+        device=device,
+        logger=logger
     )
