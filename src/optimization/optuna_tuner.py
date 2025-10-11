@@ -1,19 +1,19 @@
-# ==================== Optuna Xt||�0 \T ==================== #
+# ==================== Optuna 하이퍼파라미터 튜닝 모듈 ==================== #
 """
-Optuna 0 Xt||�0 ��
+Optuna 기반 하이퍼파라미터 튜닝
 
-PRD 13: Optuna \T � l
-- Xt||�0 �� � X
-- p0 �� (Pruning) �
-- @�-T�� \T
+PRD 13: Optuna 탐색 공간 확장
+- 하이퍼파라미터 자동 탐색
+- 조기 종료 (Pruning) 지원
+- 멀티-트라이얼 최적화
 """
 
-# ---------------------- \ |t� ---------------------- #
+# ---------------------- 라이브러리 임포트 ---------------------- #
 from typing import Dict, List, Optional, Callable, Any, Tuple
 from pathlib import Path
 import json
 
-# ---------------------- �� |t� ---------------------- #
+# ---------------------- 외부 라이브러리 ---------------------- #
 import optuna
 from optuna.pruners import MedianPruner, SuccessiveHalvingPruner
 from optuna.samplers import TPESampler
@@ -21,9 +21,9 @@ import torch
 from transformers import TrainingArguments
 
 
-# ==================== OptunaHyperparameterTuner t�� ==================== #
+# ==================== OptunaHyperparameterTuner 클래스 ==================== #
 class OptunaHyperparameterTuner:
-    """Optuna 0 Xt||�0 �"""
+    """Optuna 기반 하이퍼파라미터 튜너"""
 
     def __init__(
         self,
@@ -37,19 +37,19 @@ class OptunaHyperparameterTuner:
     ):
         """
         Args:
-            study_name: Optuna �0 t�
-            storage: �0 �� (Nonett xT��)
-            direction: \T )� ("maximize" � "minimize")
-            pruner_type: Pruner �� ("median" � "halving")
-            n_startup_trials: Pruning ܑ  ܉ �
-            n_warmup_steps: Pruning  warmup �] 
-            logger: Logger x�4�
+            study_name: Optuna 스터디 이름
+            storage: 스터디 저장 경로 (None이면 메모리)
+            direction: 최적화 방향 ("maximize" 또는 "minimize")
+            pruner_type: Pruner 종류 ("median" 또는 "halving")
+            n_startup_trials: Pruning 시작 전 최소 트라이얼 수
+            n_warmup_steps: Pruning을 위한 warmup 스텝 수
+            logger: Logger 인스턴스
         """
         self.study_name = study_name
         self.direction = direction
         self.logger = logger
 
-        # Pruner $
+        # Pruner 설정
         if pruner_type == "median":
             self.pruner = MedianPruner(
                 n_startup_trials=n_startup_trials,
@@ -61,12 +61,12 @@ class OptunaHyperparameterTuner:
                 reduction_factor=4
             )
         else:
-            raise ValueError(f"��X� J� pruner ��: {pruner_type}")
+            raise ValueError(f"지원하지 않는 pruner 종류: {pruner_type}")
 
-        # Sampler $ (TPE: Tree-structured Parzen Estimator)
+        # Sampler 설정 (TPE: Tree-structured Parzen Estimator)
         self.sampler = TPESampler(seed=42)
 
-        # Study �1
+        # Study 생성
         self.study = optuna.create_study(
             study_name=study_name,
             storage=storage,
@@ -76,13 +76,13 @@ class OptunaHyperparameterTuner:
             load_if_exists=True
         )
 
-        self._log(f"OptunaHyperparameterTuner 0T")
+        self._log(f"OptunaHyperparameterTuner 초기화 완료")
         self._log(f"  - Study: {study_name}")
         self._log(f"  - Direction: {direction}")
         self._log(f"  - Pruner: {pruner_type}")
 
     def _log(self, msg: str):
-        """\E �|"""
+        """로그 출력"""
         if self.logger:
             self.logger.write(msg)
         else:
@@ -94,14 +94,14 @@ class OptunaHyperparameterTuner:
         search_space: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Xt||�0 H
+        하이퍼파라미터 제안
 
         Args:
-            trial: Optuna Trial �
-            search_space: �� � (Nonett 0� � ��)
+            trial: Optuna Trial 객체
+            search_space: 탐색 공간 정의 (None이면 기본 공간 사용)
 
         Returns:
-            H Xt||�0 T�
+            제안된 하이퍼파라미터 딕셔너리
         """
         if search_space is None:
             search_space = self.get_default_search_space()
@@ -131,19 +131,28 @@ class OptunaHyperparameterTuner:
                     param_config["choices"]
                 )
             else:
-                raise ValueError(f"��X� J� parameter importance: {param_type}")
+                raise ValueError(f"지원하지 않는 parameter type: {param_type}")
 
         return params
 
     def get_default_search_space(self) -> Dict[str, Any]:
         """
-        0� �� � (PRD 13)
+        기본 탐색 공간 정의 (PRD 13)
+
+        기존 7개 파라미터:
+        - learning_rate, per_device_train_batch_size, gradient_accumulation_steps
+        - warmup_ratio, weight_decay, max_grad_norm, label_smoothing_factor
+
+        추가 8개 생성 파라미터:
+        - num_beams, temperature, top_p, top_k
+        - repetition_penalty, length_penalty, no_repeat_ngram_size, early_stopping_patience
 
         Returns:
-            0� �� � T�
+            기본 탐색 공간 딕셔너리
         """
         return {
-            # Learning rate (\� �|)
+            # ========== 기존 7개 학습 파라미터 ========== #
+            # Learning rate (학습률)
             "learning_rate": {
                 "type": "float",
                 "low": 1e-5,
@@ -187,6 +196,62 @@ class OptunaHyperparameterTuner:
                 "low": 0.0,
                 "high": 0.2,
                 "log": False
+            },
+
+            # ========== 추가 8개 생성 파라미터 ========== #
+            # Num beams (빔 서치 개수)
+            "num_beams": {
+                "type": "categorical",
+                "choices": [1, 2, 4, 5, 8]
+            },
+            # Temperature (생성 다양성 조절)
+            "temperature": {
+                "type": "float",
+                "low": 0.5,
+                "high": 2.0,
+                "log": False
+            },
+            # Top-p (nucleus sampling)
+            "top_p": {
+                "type": "float",
+                "low": 0.7,
+                "high": 1.0,
+                "log": False
+            },
+            # Top-k (상위 k개 토큰만 고려)
+            "top_k": {
+                "type": "int",
+                "low": 10,
+                "high": 100,
+                "log": False
+            },
+            # Repetition penalty (반복 억제)
+            "repetition_penalty": {
+                "type": "float",
+                "low": 1.0,
+                "high": 2.0,
+                "log": False
+            },
+            # Length penalty (길이 페널티)
+            "length_penalty": {
+                "type": "float",
+                "low": 0.5,
+                "high": 2.0,
+                "log": False
+            },
+            # No repeat ngram size (n-gram 반복 방지)
+            "no_repeat_ngram_size": {
+                "type": "int",
+                "low": 0,
+                "high": 5,
+                "log": False
+            },
+            # Early stopping patience (조기 종료 인내)
+            "early_stopping_patience": {
+                "type": "int",
+                "low": 1,
+                "high": 5,
+                "log": False
             }
         }
 
@@ -198,18 +263,18 @@ class OptunaHyperparameterTuner:
         **kwargs
     ) -> TrainingArguments:
         """
-        Optuna |�0\ TrainingArguments �1
+        Optuna 파라미터로 TrainingArguments 생성
 
         Args:
-            params: Optuna H\ |�0
-            output_dir: �% 	��
-            num_train_epochs: �� 
-            **kwargs: � TrainingArguments x�
+            params: Optuna가 제안한 파라미터
+            output_dir: 출력 디렉토리
+            num_train_epochs: 학습 에포크 수
+            **kwargs: 추가 TrainingArguments 인자
 
         Returns:
-            TrainingArguments x�4�
+            TrainingArguments 인스턴스
         """
-        # 0� $
+        # 기본 설정
         default_args = {
             "output_dir": output_dir,
             "num_train_epochs": num_train_epochs,
@@ -227,10 +292,10 @@ class OptunaHyperparameterTuner:
             "push_to_hub": False,
         }
 
-        # Optuna |�0 �i
+        # Optuna 파라미터 병합
         default_args.update(params)
 
-        # � x� �i
+        # 추가 인자 병합
         default_args.update(kwargs)
 
         return TrainingArguments(**default_args)
@@ -244,23 +309,23 @@ class OptunaHyperparameterTuner:
         show_progress_bar: bool = True
     ) -> Tuple[Dict[str, Any], float]:
         """
-        Xt||�0 \T �
+        하이퍼파라미터 최적화 실행
 
         Args:
-            objective_fn: � h (trialD D �T� X)
-            n_trials: �� �
-            timeout: ��D� ()
-            n_jobs: �, �� 
-            show_progress_bar: ĉ  \� �
+            objective_fn: 목적 함수 (trial을 받아 metric을 반환)
+            n_trials: 시도할 트라이얼 수
+            timeout: 타임아웃 (초)
+            n_jobs: 병렬 작업 수
+            show_progress_bar: 진행바 표시 여부
 
         Returns:
-            (\ |�0, \ �T�) �
+            (최적 파라미터, 최적 성능) 튜플
         """
-        self._log(f"\nXt||�0 \T ܑ")
+        self._log(f"\n하이퍼파라미터 최적화 시작")
         self._log(f"  - Trials: {n_trials}")
         self._log(f"  - Direction: {self.direction}")
 
-        # \T �
+        # 최적화 실행
         self.study.optimize(
             objective_fn,
             n_trials=n_trials,
@@ -269,13 +334,13 @@ class OptunaHyperparameterTuner:
             show_progress_bar=show_progress_bar
         )
 
-        # \ ��
+        # 최적 결과
         best_params = self.study.best_params
         best_value = self.study.best_value
 
-        self._log(f"\n\T D�")
-        self._log(f"  - \ �T�: {best_value:.4f}")
-        self._log(f"  - \ |�0:")
+        self._log(f"\n최적화 완료")
+        self._log(f"  - 최적 성능: {best_value:.4f}")
+        self._log(f"  - 최적 파라미터:")
         for key, value in best_params.items():
             self._log(f"    - {key}: {value}")
 
@@ -288,34 +353,34 @@ class OptunaHyperparameterTuner:
         value: float
     ):
         """
-          �� (PruningD t)
+        중간 결과 보고 (Pruning에 사용)
 
         Args:
-            trial: Optuna Trial �
-            step: � �]
-            value:  �T�
+            trial: Optuna Trial 객체
+            step: 현재 스텝
+            value: 중간 성능
         """
         trial.report(value, step)
 
-        # Pruning �l
+        # Pruning 판단
         if trial.should_prune():
-            # FIXME: Corrupted log message
+            self._log(f"Trial {trial.number} pruned at step {step}")
             raise optuna.TrialPruned()
 
     def get_best_params(self) -> Dict[str, Any]:
-        """\ |�0 X"""
+        """최적 파라미터 반환"""
         return self.study.best_params
 
     def get_best_value(self) -> float:
-        """\ �T� X"""
+        """최적 성능 반환"""
         return self.study.best_value
 
     def get_study_summary(self) -> Dict[str, Any]:
         """
-        �0 �} � X
+        스터디 요약 정보 반환
 
         Returns:
-            �0 �} T�
+            스터디 요약 딕셔너리
         """
         return {
             "study_name": self.study_name,
@@ -328,10 +393,10 @@ class OptunaHyperparameterTuner:
 
     def save_study_summary(self, output_path: str):
         """
-        �0 �}D JSON |\ �
+        스터디 요약을 JSON 파일로 저장
 
         Args:
-            output_path: �% | �\
+            output_path: 출력 파일 경로
         """
         summary = self.get_study_summary()
 
@@ -345,10 +410,10 @@ class OptunaHyperparameterTuner:
 
     def plot_optimization_history(self, output_path: Optional[str] = None):
         """
-        \T ���� o
+        최적화 히스토리 시각화
 
         Args:
-            output_path: �% | �\ (Nonett \��)
+            output_path: 출력 파일 경로 (None이면 표시만)
         """
         try:
             from optuna.visualization import plot_optimization_history
@@ -357,19 +422,19 @@ class OptunaHyperparameterTuner:
 
             if output_path:
                 fig.write_html(output_path)
-                self._log(f"\T ���� �: {output_path}")
+                self._log(f"최적화 히스토리 저장: {output_path}")
             else:
                 fig.show()
 
         except ImportError:
-            self._log("Warning: plotly $X� JD �T| t��.")
+            self._log("Warning: plotly가 설치되지 않아 시각화할 수 없습니다.")
 
     def plot_param_importances(self, output_path: Optional[str] = None):
         """
-        |�0 �� o
+        파라미터 중요도 시각화
 
         Args:
-            output_path: �% | �\ (Nonett \��)
+            output_path: 출력 파일 경로 (None이면 표시만)
         """
         try:
             from optuna.visualization import plot_param_importances
@@ -378,15 +443,15 @@ class OptunaHyperparameterTuner:
 
             if output_path:
                 fig.write_html(output_path)
-                self._log(f"|�0 �� �: {output_path}")
+                self._log(f"파라미터 중요도 저장: {output_path}")
             else:
                 fig.show()
 
         except ImportError:
-            self._log("Warning: plotly $X� JD �T| t��.")
+            self._log("Warning: plotly가 설치되지 않아 시각화할 수 없습니다.")
 
 
-# ==================== �X h ==================== #
+# ==================== 팩토리 함수 ==================== #
 def create_optuna_tuner(
     study_name: str = "dialogue_summarization",
     storage: Optional[str] = None,
@@ -395,17 +460,17 @@ def create_optuna_tuner(
     logger=None
 ) -> OptunaHyperparameterTuner:
     """
-    Optuna � �1 �X h
+    Optuna 튜너 생성 팩토리 함수
 
     Args:
-        study_name: �0 t�
-        storage: �0 ��
-        direction: \T )�
-        pruner_type: Pruner ��
-        logger: Logger x�4�
+        study_name: 스터디 이름
+        storage: 스터디 저장 경로
+        direction: 최적화 방향
+        pruner_type: Pruner 종류
+        logger: Logger 인스턴스
 
     Returns:
-        OptunaHyperparameterTuner x�4�
+        OptunaHyperparameterTuner 인스턴스
     """
     return OptunaHyperparameterTuner(
         study_name=study_name,
@@ -414,3 +479,24 @@ def create_optuna_tuner(
         pruner_type=pruner_type,
         logger=logger
     )
+
+
+# ==================== 사용 예시 ==================== #
+if __name__ == "__main__":
+    # Optuna 튜너 생성
+    tuner = create_optuna_tuner(
+        study_name="test_study",
+        direction="maximize",
+        pruner_type="median"
+    )
+
+    # 탐색 공간 확인
+    search_space = tuner.get_default_search_space()
+    print(f"탐색 공간: {len(search_space)}개 파라미터")
+    print("\n학습 파라미터 (7개):")
+    for i, key in enumerate(list(search_space.keys())[:7], 1):
+        print(f"  {i}. {key}")
+
+    print("\n생성 파라미터 (8개):")
+    for i, key in enumerate(list(search_space.keys())[7:], 1):
+        print(f"  {i}. {key}")
