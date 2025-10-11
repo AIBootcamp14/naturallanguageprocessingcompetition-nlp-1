@@ -1,111 +1,136 @@
+# ============================================================================
 # 단일 모델 실험 설정 파일
-# SOLAR-10.7B 또는 Polyglot-Ko 단일 모델 최적화
+# ============================================================================
+# 용도: SOLAR-10.7B 또는 Polyglot-Ko 단일 LLM 모델 최적화
+# 설명: 하나의 대형 언어 모델을 LoRA로 파인튜닝하여 최고 성능 달성
+# 최종 수정: 2025-10-10
+# ============================================================================
 
-# 경로 설정
+# ----------------------------------------------------------------------------
+# 경로 설정 (Path Configuration)
+# ----------------------------------------------------------------------------
 paths:
-  data_dir: "../../../data/raw"  # 원본 데이터 경로
-  train_file: "../../../data/raw/train.csv"
-  dev_file: "../../../data/raw/dev.csv"
-  test_file: "../../../data/raw/test.csv"
-  output_dir: "./models/single_model"
-  log_dir: "./logs/single_model"
-  submission_dir: "./submissions/single_model"
-  visualization_dir: "./logs/single_model/visualizations"
-  cache_dir: "./cache"
+  data_dir: "../../../data/raw"  # 원본 데이터 디렉토리 경로 (상대 경로)
+  train_file: "../../../data/raw/train.csv"  # 학습 데이터 파일 경로
+  dev_file: "../../../data/raw/dev.csv"  # 검증 데이터 파일 경로
+  test_file: "../../../data/raw/test.csv"  # 테스트 데이터 파일 경로
+  output_dir: "./models/single_model"  # 모델 저장 디렉토리
+  log_dir: "./logs/single_model"  # 로그 파일 저장 디렉토리
+  submission_dir: "./submissions/single_model"  # 제출 파일 저장 디렉토리
+  visualization_dir: "./logs/single_model/visualizations"  # 시각화 파일 저장 디렉토리
+  cache_dir: "./cache"  # 캐시 데이터 저장 디렉토리 (토큰화 결과 등)
 
-# 모델 설정 (여러 모델 중 선택)
+# ----------------------------------------------------------------------------
+# 모델 설정 (Model Configuration - 여러 모델 중 선택 가능)
+# ----------------------------------------------------------------------------
 models:
+  # ===== 모델 1: SOLAR-10.7B =====
   solar:
-    name: "upstage/SOLAR-10.7B-Instruct-v1.0"
-    model_type: "llm"
-    use_lora: true
-    lora_r: 16
-    lora_alpha: 32
-    lora_dropout: 0.1
-    load_in_8bit: true
-    max_input_length: 1024
-    max_target_length: 150
+    name: "upstage/SOLAR-10.7B-Instruct-v1.0"  # 모델 이름 (Upstage SOLAR 10.7B)
+    model_type: "llm"  # 모델 타입 (llm: Large Language Model - Decoder-only)
+    use_lora: true  # LoRA 사용 여부 (대형 LLM의 효율적 파인튜닝)
+    lora_r: 16  # LoRA rank (저랭크 분해 차원, 높을수록 표현력 증가)
+    lora_alpha: 32  # LoRA alpha (스케일링 파라미터, 일반적으로 r의 2배)
+    lora_dropout: 0.1  # LoRA dropout 비율 (과적합 방지, 10%)
+    load_in_8bit: true  # 8비트 양자화 로딩 (메모리 사용량 약 1/2 감소)
+    max_input_length: 1024  # 입력 시퀀스 최대 길이 (토큰 단위)
+    max_target_length: 150  # 출력 시퀀스 최대 길이 (토큰 단위)
 
+  # ===== 모델 2: Polyglot-Ko =====
   polyglot:
-    name: "EleutherAI/polyglot-ko-12.8b"
-    model_type: "llm"
-    use_lora: true
-    lora_r: 8
-    lora_alpha: 16
-    lora_dropout: 0.05
-    load_in_8bit: true
-    max_input_length: 1024
-    max_target_length: 150
+    name: "EleutherAI/polyglot-ko-12.8b"  # 모델 이름 (Polyglot Korean 12.8B)
+    model_type: "llm"  # 모델 타입 (llm: Large Language Model)
+    use_lora: true  # LoRA 사용 여부
+    lora_r: 8  # LoRA rank (SOLAR보다 작게 설정)
+    lora_alpha: 16  # LoRA alpha (r의 2배)
+    lora_dropout: 0.05  # LoRA dropout 비율 (5%, 낮은 드롭아웃)
+    load_in_8bit: true  # 8비트 양자화 로딩
+    max_input_length: 1024  # 입력 시퀀스 최대 길이
+    max_target_length: 150  # 출력 시퀀스 최대 길이
 
+  # ===== 모델 3: KULLM-v2 =====
   kullm:
-    name: "nlpai-lab/kullm-v2"
-    model_type: "llm"
-    use_lora: true
-    lora_r: 8
-    lora_alpha: 16
-    lora_dropout: 0.1
-    load_in_4bit: true
-    max_input_length: 768
-    max_target_length: 128
+    name: "nlpai-lab/kullm-v2"  # 모델 이름 (Korea University LLM v2)
+    model_type: "llm"  # 모델 타입 (llm: Large Language Model)
+    use_lora: true  # LoRA 사용 여부
+    lora_r: 8  # LoRA rank
+    lora_alpha: 16  # LoRA alpha
+    lora_dropout: 0.1  # LoRA dropout 비율 (10%)
+    load_in_4bit: true  # 4비트 양자화 로딩 (8비트보다 더 공격적인 양자화)
+    max_input_length: 768  # 입력 시퀀스 최대 길이 (다른 모델보다 짧음)
+    max_target_length: 128  # 출력 시퀀스 최대 길이
 
-# 현재 실험할 모델 선택
-current_model: "solar"  # solar, polyglot, kullm 중 선택
+# ----------------------------------------------------------------------------
+# 현재 실험할 모델 선택 (Current Model Selection)
+# ----------------------------------------------------------------------------
+current_model: "solar"  # 사용할 모델 선택 (solar, polyglot, kullm 중 하나)
 
-# LoRA/QLoRA 설정
+# ----------------------------------------------------------------------------
+# LoRA/QLoRA 설정 (Parameter-Efficient Fine-Tuning)
+# ----------------------------------------------------------------------------
 peft:
-  task_type: "CAUSAL_LM"
-  target_modules:
-    - "q_proj"
-    - "v_proj"
-    - "k_proj"
-    - "o_proj"
-    - "gate_proj"
-    - "up_proj"
-    - "down_proj"
-  inference_mode: false
+  task_type: "CAUSAL_LM"  # 작업 타입 (CAUSAL_LM: 인과적 언어 모델, 자기회귀 생성)
 
-# 학습 설정
+  # ===== LoRA 적용 대상 모듈 =====
+  target_modules:  # LoRA를 적용할 모듈 목록 (Transformer의 주요 레이어)
+    - "q_proj"  # Query projection 레이어
+    - "v_proj"  # Value projection 레이어
+    - "k_proj"  # Key projection 레이어
+    - "o_proj"  # Output projection 레이어
+    - "gate_proj"  # Gate projection 레이어 (일부 LLM에만 존재)
+    - "up_proj"  # Up projection 레이어 (FFN의 확장 레이어)
+    - "down_proj"  # Down projection 레이어 (FFN의 축소 레이어)
+
+  inference_mode: false  # 추론 모드 여부 (false: 학습 모드, true: 추론 전용)
+
+# ----------------------------------------------------------------------------
+# 학습 설정 (Training Configuration)
+# ----------------------------------------------------------------------------
 training:
-  seed: 42
-  num_epochs: 5
-  batch_size: 4  # LLM은 메모리 제약으로 작게 설정
-  gradient_accumulation_steps: 8  # 실제 배치 크기 = 4 * 8 = 32
-  learning_rate: 2e-5
-  warmup_steps: 500
-  weight_decay: 0.01
-  max_grad_norm: 0.3
+  seed: 42  # 랜덤 시드 (재현성 보장)
+  num_epochs: 5  # 학습 에폭 수 (단일 모델은 충분히 학습)
+  batch_size: 4  # GPU당 배치 크기 (LLM은 메모리 제약으로 작게 설정)
+  gradient_accumulation_steps: 8  # 그래디언트 누적 스텝 (실제 배치 크기 = 4 × 8 = 32)
+  learning_rate: 2e-5  # 학습률 (2 × 10^-5, LLM의 일반적인 학습률)
+  warmup_steps: 500  # Warmup 스텝 수 (초반 500 스텝 동안 학습률 증가)
+  weight_decay: 0.01  # 가중치 감쇠 (L2 정규화, 과적합 방지)
+  max_grad_norm: 0.3  # 그래디언트 클리핑 최대 노름값 (그래디언트 폭발 방지)
 
-  # 옵티마이저
-  optimizer: "paged_adamw_8bit"  # 메모리 효율적인 옵티마이저
-  adam_epsilon: 1e-8
+  # ===== 옵티마이저 설정 =====
+  optimizer: "paged_adamw_8bit"  # 옵티마이저 (paged_adamw_8bit: 메모리 효율적인 AdamW)
+  adam_epsilon: 1e-8  # Adam epsilon 값 (수치 안정성을 위한 작은 상수)
 
-  # 스케줄러
-  scheduler_type: "cosine"
+  # ===== 스케줄러 설정 =====
+  scheduler_type: "cosine"  # 학습률 스케줄러 (cosine: 코사인 감쇠, 부드러운 감소)
 
-  # 조기 종료
-  early_stopping_patience: 3
-  early_stopping_threshold: 0.001
+  # ===== 조기 종료 설정 =====
+  early_stopping_patience: 3  # 조기 종료 인내 횟수 (3 epoch 동안 개선 없으면 중단)
+  early_stopping_threshold: 0.001  # 조기 종료 임계값 (0.001 미만 개선은 무시)
 
-  # 체크포인트
-  save_strategy: "steps"
-  save_steps: 500
-  evaluation_strategy: "steps"
-  eval_steps: 500
-  save_total_limit: 3
-  load_best_model_at_end: true
-  metric_for_best_model: "eval_rouge_l"
+  # ===== 체크포인트 설정 =====
+  save_strategy: "steps"  # 저장 전략 (steps: N 스텝마다 저장, epoch: 매 에폭마다 저장)
+  save_steps: 500  # 500 스텝마다 체크포인트 저장
+  evaluation_strategy: "steps"  # 평가 전략 (steps: N 스텝마다 평가)
+  eval_steps: 500  # 500 스텝마다 평가 수행
+  save_total_limit: 3  # 최대 저장 체크포인트 수 (최근 3개만 보존, 디스크 공간 절약)
+  load_best_model_at_end: true  # 학습 종료 시 최고 성능 모델 로드
+  metric_for_best_model: "eval_rouge_l"  # 최고 모델 선택 기준 (ROUGE-L 점수)
 
-  # Gradient Checkpointing (메모리 절약)
-  gradient_checkpointing: true
+  # ===== 메모리 최적화 =====
+  gradient_checkpointing: true  # 그래디언트 체크포인팅 (메모리 사용량 감소, 속도 약간 감소)
 
-  # Mixed Precision
-  fp16: true
-  fp16_opt_level: "O2"
+  # ===== Mixed Precision 설정 =====
+  fp16: true  # FP16 (16비트 부동소수점) 학습 활성화
+  fp16_opt_level: "O2"  # FP16 최적화 레벨 (O2: 거의 모든 연산을 FP16으로, 더 공격적)
 
-# Instruction 템플릿
+# ----------------------------------------------------------------------------
+# Instruction 템플릿 설정 (Prompt Template)
+# ----------------------------------------------------------------------------
 prompt_template:
-  system_prompt: "당신은 대화를 요약하는 전문가입니다. 주어진 대화를 간결하고 정확하게 요약해주세요."
+  # ===== 시스템 프롬프트 =====
+  system_prompt: "당신은 대화를 요약하는 전문가입니다. 주어진 대화를 간결하고 정확하게 요약해주세요."  # 모델의 역할 정의
 
+  # ===== 학습용 Instruction 포맷 =====
   instruction_format: |
     ### Instruction:
     다음 대화를 3-5문장으로 요약해주세요. 핵심 내용과 중요한 정보를 포함시켜주세요.
@@ -116,6 +141,7 @@ prompt_template:
     ### Response:
     {summary}
 
+  # ===== 추론용 Instruction 포맷 =====
   inference_format: |
     ### Instruction:
     다음 대화를 3-5문장으로 요약해주세요. 핵심 내용과 중요한 정보를 포함시켜주세요.
@@ -125,90 +151,111 @@ prompt_template:
 
     ### Response:
 
-# 평가 설정
+# ----------------------------------------------------------------------------
+# 평가 설정 (Evaluation Configuration)
+# ----------------------------------------------------------------------------
 evaluation:
-  metrics:
-    - "rouge"
-    - "bleu"
-  rouge_types:
-    - "rouge-1"
-    - "rouge-2"
-    - "rouge-l"
+  # ===== 평가 메트릭 =====
+  metrics:  # 사용할 평가 메트릭 목록
+    - "rouge"  # ROUGE 점수 (요약 품질 평가)
+    - "bleu"  # BLEU 점수 (기계 번역 메트릭, 요약에도 사용)
+
+  # ===== ROUGE 타입 =====
+  rouge_types:  # 계산할 ROUGE 타입
+    - "rouge-1"  # ROUGE-1 (단어 단위 겹침)
+    - "rouge-2"  # ROUGE-2 (2-gram 겹침)
+    - "rouge-l"  # ROUGE-L (최장 공통 부분 수열)
+
+  # ===== Generation 설정 (평가 시 생성 파라미터) =====
   generation_config:
-    max_new_tokens: 150
-    num_beams: 4
-    no_repeat_ngram_size: 3
-    temperature: 0.7
-    top_p: 0.9
-    top_k: 50
-    do_sample: true
+    max_new_tokens: 150  # 생성할 최대 토큰 수
+    num_beams: 4  # Beam Search 빔 개수 (다양한 후보 탐색)
+    no_repeat_ngram_size: 3  # 반복 방지 n-gram 크기 (3-gram 반복 금지)
+    temperature: 0.7  # 샘플링 온도 (0.7 = 약간 창의적, 낮을수록 결정적)
+    top_p: 0.9  # Nucleus 샘플링 (누적 확률 90% 이내 토큰 선택)
+    top_k: 50  # Top-K 샘플링 (상위 50개 토큰 중 선택)
+    do_sample: true  # 샘플링 사용 여부 (true: 확률적 생성, false: 탐욕적 생성)
 
-# 추론 설정
+# ----------------------------------------------------------------------------
+# 추론 설정 (Inference Configuration)
+# ----------------------------------------------------------------------------
 inference:
-  batch_size: 8
-  max_new_tokens: 150
-  min_length: 20
-  num_beams: 4
-  no_repeat_ngram_size: 3
-  temperature: 0.7
-  top_p: 0.9
-  top_k: 50
-  do_sample: true
-  early_stopping: true
+  batch_size: 8  # 추론 배치 크기 (학습보다 크게 설정 가능)
+  max_new_tokens: 150  # 생성할 최대 토큰 수
+  min_length: 20  # 생성 최소 길이 (너무 짧은 요약 방지)
+  num_beams: 4  # Beam Search 빔 개수
+  no_repeat_ngram_size: 3  # 반복 방지 n-gram 크기 (3-gram 반복 금지)
+  temperature: 0.7  # 샘플링 온도 (0.7 = 약간 창의적)
+  top_p: 0.9  # Nucleus 샘플링 (누적 확률 90% 이내)
+  top_k: 50  # Top-K 샘플링 (상위 50개 토큰 중 선택)
+  do_sample: true  # 샘플링 사용 여부 (true: 확률적 생성)
+  early_stopping: true  # 조기 종료 활성화 (빔 서치 최적화)
 
+# ----------------------------------------------------------------------------
 # Solar API 설정 (비교용)
+# ----------------------------------------------------------------------------
 solar_api:
-  enabled: false
-  api_key: "up_rMJWNzzBi6YsD47RhwXPWZrZ0JKsT"
-  model: "solar-1-mini-chat"
-  max_tokens: 150
-  temperature: 0.7
-  top_p: 0.9
+  enabled: true  # Solar API 사용 여부 (비교 목적)
+  api_key: "up_rMJWNzzBi6YsD47RhwXPWZrZ0JKsT"  # Solar API 인증 키
+  model: "solar-1-mini-chat"  # 사용할 Solar 모델 (경량 모델)
+  max_tokens: 150  # 생성 최대 토큰 수
+  temperature: 0.7  # 샘플링 온도 (0.7 = 약간 창의적)
+  top_p: 0.9  # Nucleus 샘플링 임계값
 
-# WandB 설정
+# ----------------------------------------------------------------------------
+# WandB 설정 (Weights & Biases)
+# ----------------------------------------------------------------------------
 wandb:
-  project: "nlp-competition"
-  entity: "ieyeppo"
-  name: "single-model-{model_name}"
-  tags:
-    - "single_model"
-    - "llm"
-    - "lora"
-  notes: "단일 LLM 모델 최적화 실험"
-  mode: "online"
+  project: "nlp-competition"  # WandB 프로젝트 이름
+  entity: "ieyeppo"  # WandB 엔티티 (사용자/팀 이름)
+  name: "single-model-{model_name}"  # 실험 이름 (model_name은 자동 치환: single-model-solar)
+  tags:  # 실험 태그 (검색 및 필터링용)
+    - "single_model"  # 단일 모델 실험
+    - "llm"  # Large Language Model
+    - "lora"  # LoRA 파인튜닝
+  notes: "단일 LLM 모델 최적화 실험"  # 실험 설명
+  mode: "online"  # 로깅 모드 (online: 실시간, offline: 로컬)
 
-# 로깅 설정
+# ----------------------------------------------------------------------------
+# 로깅 설정 (Logging Configuration)
+# ----------------------------------------------------------------------------
 logging:
-  level: "INFO"
-  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-  save_to_file: true
-  log_every_n_steps: 50
-  use_notebook_logger: true
-  notebook_logger_path: "../../../src/logging/notebook_logger.py"
+  level: "INFO"  # 로그 레벨 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"  # 로그 포맷
+  save_to_file: true  # 파일로 로그 저장 여부
+  log_every_n_steps: 50  # N 스텝마다 로그 출력
+  use_notebook_logger: true  # 노트북 전용 로거 사용 여부 (Jupyter 환경 최적화)
+  notebook_logger_path: "../../../src/logging/notebook_logger.py"  # 노트북 로거 경로
 
-# GPU 설정
+# ----------------------------------------------------------------------------
+# GPU 설정 (GPU Configuration)
+# ----------------------------------------------------------------------------
 gpu:
-  device: "cuda"
-  cuda_device: 0
-  mixed_precision: true
-  memory_fraction: 0.95
-  empty_cache_steps: 100
-  use_gpu_optimization: true
-  gpu_check_path: "../../../src/utils/gpu_optimization/team_gpu_check.py"
+  device: "cuda"  # 사용할 디바이스 (cuda: GPU, cpu: CPU)
+  cuda_device: 0  # 사용할 CUDA 디바이스 번호 (0번 GPU)
+  mixed_precision: true  # Mixed Precision 학습 활성화 (FP16)
+  memory_fraction: 0.95  # GPU 메모리 사용 비율 (0.95 = 95%, 최대한 활용)
+  empty_cache_steps: 100  # N 스텝마다 GPU 캐시 정리 (메모리 누수 방지)
+  use_gpu_optimization: true  # GPU 최적화 기능 사용 여부
+  gpu_check_path: "../../../src/utils/gpu_optimization/team_gpu_check.py"  # GPU 체크 스크립트 경로
 
-# 실험 추적
+# ----------------------------------------------------------------------------
+# 실험 추적 (Experiment Tracking)
+# ----------------------------------------------------------------------------
 experiment:
-  name: "single_model_{model_name}_lora"
-  description: "단일 LLM 모델 LoRA 파인튜닝"
-  version: "1.0.0"
-  timestamp: true
-  save_config: true
+  name: "single_model_{model_name}_lora"  # 실험 고유 이름 (model_name은 자동 치환)
+  description: "단일 LLM 모델 LoRA 파인튜닝"  # 실험 설명
+  version: "1.0.0"  # 실험 버전
+  timestamp: true  # 타임스탬프 자동 추가 여부 (실험 시작 시간 기록)
+  save_config: true  # 설정 파일 저장 여부 (재현성 보장)
 
-# Optuna 하이퍼파라미터 (나중에 사용)
+# ----------------------------------------------------------------------------
+# Optuna 하이퍼파라미터 최적화 (선택 사항)
+# ----------------------------------------------------------------------------
 optuna:
-  enabled: false
-  n_trials: 20
-  study_name: "single_model_optimization"
-  storage: "sqlite:///optuna_single_model.db"
-  direction: "maximize"
-  metric: "rouge_l"
+  enabled: false  # Optuna 하이퍼파라미터 최적화 비활성화 (나중에 사용 가능)
+  n_trials: 20  # 시도 횟수 (20회 탐색)
+  study_name: "single_model_optimization"  # 연구 이름
+  storage: "sqlite:///optuna_single_model.db"  # 결과 저장 데이터베이스 (SQLite)
+  direction: "maximize"  # 최적화 방향 (maximize: 최대화, minimize: 최소화)
+  metric: "rouge_l"  # 최적화 목표 메트릭 (ROUGE-L 최대화)
