@@ -472,11 +472,13 @@ def setup_environment(args):
     if args.experiment_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         model_name = args.models[0].replace('-', '_') if args.models else 'default'
-        args.experiment_name = f"{args.mode}_{model_name}_{timestamp}"
+        args.experiment_name = f"{timestamp}_{args.mode}_{model_name}"
 
-    # 출력 디렉토리 생성
+    # 출력 디렉토리 생성 (날짜별 분류)
     if args.output_dir is None:
-        output_dir = Path(f"experiments/{args.experiment_name}")
+        # 날짜 폴더 생성
+        date_folder = datetime.now().strftime("%Y%m%d")
+        output_dir = Path(f"experiments/{date_folder}/{args.experiment_name}")
     else:
         output_dir = Path(args.output_dir)
 
@@ -544,6 +546,50 @@ def main():
 
         # 결과 저장
         trainer.save_results(results)
+
+        # 학습 로그 복사 (logs 폴더에도 저장)
+        try:
+            import shutil
+            from src.utils.core.common import now
+
+            # 날짜 폴더 경로
+            date_folder = now('%Y%m%d')
+            log_backup_dir = Path(f"logs/{date_folder}/train")
+            log_backup_dir.mkdir(parents=True, exist_ok=True)
+
+            # 옵션 정보 추출하여 파일명 생성
+            timestamp = now('%Y%m%d_%H%M%S')
+            model_name = args.models[0].replace('-', '_') if args.models else 'default'
+
+            # 옵션 태그 생성
+            options = []
+            if args.batch_size and args.batch_size != 8:
+                options.append(f"bs{args.batch_size}")
+            if args.epochs and args.epochs != 3:
+                options.append(f"ep{args.epochs}")
+            if args.use_augmentation:
+                options.append("aug")
+            if args.use_tta:
+                options.append("tta")
+            if args.ensemble_strategy and args.mode == 'multi_model':
+                options.append(args.ensemble_strategy)
+
+            # 파일명 생성
+            parts = [timestamp, args.mode, model_name]
+            if options:
+                parts.extend(options)
+
+            log_filename = "_".join(parts) + ".log"
+            log_backup_path = log_backup_dir / log_filename
+
+            # 로그 파일 복사
+            source_log = Path(args.output_dir) / "train.log"
+            if source_log.exists():
+                shutil.copy2(source_log, log_backup_path)
+                logger.write(f"\n📋 학습 로그 백업: {log_backup_path}")
+
+        except Exception as e:
+            logger.write(f"\n⚠️ 로그 백업 실패: {e}")
 
         # 추론 최적화 (PRD 17) - 옵션
         if args.optimize_inference:
