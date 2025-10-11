@@ -14,6 +14,7 @@ class Logger:                                    # Logger 클래스 정의
     def __init__(self, log_path: str, print_also: bool = True):
         self.log_path = log_path                 # 로그 파일 경로 저장
         self.print_also = print_also             # 콘솔 출력 여부 저장
+        self.encoding = 'utf-8'                  # 인코딩 명시 (sys.stdout 리디렉션용)
         # 원본 표준 출력을 저장해 둡니다.
         self.original_stdout = sys.stdout        # 원본 표준 출력 저장
         self.original_stderr = sys.stderr        # 원본 표준 에러 저장
