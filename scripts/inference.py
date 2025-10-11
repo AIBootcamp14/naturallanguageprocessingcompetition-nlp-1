@@ -41,8 +41,8 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        required=True,
-        help="제출 파일 출력 경로 (예: submissions/submission.csv)"
+        default=None,
+        help="제출 파일 출력 경로 (미지정 시 자동 생성: {date}_{time}_{mode}_{models}_{options}.csv)"
     )
     parser.add_argument(
         "--test_data",
@@ -98,6 +98,39 @@ def main():
         except:
             logger.write("  ⚠️ Config 로드 실패, 기본 설정 사용")
             config = None
+
+        # -------------- 출력 파일명 자동 생성 -------------- #
+        if args.output is None:
+            # 날짜 및 시간
+            timestamp = now('%Y%m%d_%H%M%S')
+
+            # 모델명 추출
+            model_path = Path(args.model)
+            if 'kobart' in args.model.lower():
+                model_name = 'kobart'
+            elif 'pegasus' in args.model.lower():
+                model_name = 'pegasus'
+            elif 'bart' in args.model.lower():
+                model_name = 'bart'
+            else:
+                model_name = model_path.name
+
+            # 옵션 리스트 구성
+            options = []
+            if args.batch_size != 32:
+                options.append(f"bs{args.batch_size}")
+            if args.num_beams != 4:
+                options.append(f"beam{args.num_beams}")
+
+            # 파일명 생성
+            parts = [timestamp, model_name]
+            if options:
+                parts.extend(options)
+
+            filename = "_".join(parts) + ".csv"
+            args.output = f"submissions/{filename}"
+
+            logger.write(f"  📝 자동 생성된 파일명: {args.output}")
 
         # -------------- 2. 모델 및 토크나이저 로드 -------------- #
         logger.write(f"\n[2/5] 모델 로딩: {args.model}")
