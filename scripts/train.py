@@ -468,6 +468,12 @@ def setup_environment(args):
     # 시드 설정
     set_seed(args.seed)
 
+    # ---------------------- --models all 확장 전 실험명 모델 부분 저장 ---------------------- #
+    # --models all인 경우, 확장 전에 'all'을 사용하기 위해 저장
+    experiment_model_name = None
+    if 'all' in args.models:
+        experiment_model_name = 'all'
+
     # --models all을 실제 모델 리스트로 확장
     if 'all' in args.models:
         args.models = [
@@ -480,10 +486,15 @@ def setup_environment(args):
         ]
         print(f"📋 'all' 확장 → {len(args.models)}개 모델: {', '.join(args.models)}")
 
-    # 실험명 자동 생성
+    # ---------------------- 실험명 자동 생성 ---------------------- #
     if args.experiment_name is None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        model_name = args.models[0].replace('-', '_') if args.models else 'default'
+        # experiment_model_name이 설정되어 있으면 사용 (--models all인 경우)
+        # 그렇지 않으면 첫 번째 모델명 사용
+        if experiment_model_name:
+            model_name = experiment_model_name
+        else:
+            model_name = args.models[0].replace('-', '_') if args.models else 'default'
         args.experiment_name = f"{timestamp}_{args.mode}_{model_name}"
 
     # 출력 디렉토리 생성 (날짜별 분류)
