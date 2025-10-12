@@ -101,8 +101,11 @@ def load_causal_lm(config, logger=None):
         if logger:
             logger.write("  LoRA 설정 적용 중...")
 
-        # K-bit training 준비
-        model = prepare_model_for_kbit_training(model)
+        # K-bit training 준비 (Quantization이 있을 때만)
+        if quantization_config is not None:
+            model = prepare_model_for_kbit_training(model)
+            if logger:
+                logger.write("    K-bit training 준비 완료")
 
         # LoRA Config
         lora_config = LoraConfig(

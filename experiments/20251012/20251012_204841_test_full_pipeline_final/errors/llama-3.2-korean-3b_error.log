@@ -1,0 +1,28 @@
+모델: llama-3.2-korean-3b
+오류 타입: ValueError
+오류 메시지: Attempting to unscale FP16 gradients.
+
+상세 트레이스백:
+Traceback (most recent call last):
+  File "/home/ieyeppo/AI_Lab/natural-language-processing-competition/src/trainers/full_pipeline_trainer.py", line 225, in _train_multiple_models
+    train_result = trainer.train()
+                   ^^^^^^^^^^^^^^^
+  File "/home/ieyeppo/AI_Lab/natural-language-processing-competition/src/training/trainer.py", line 261, in train
+    train_result = self.trainer.train()             # 학습 실행
+                   ^^^^^^^^^^^^^^^^^^^^
+  File "/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/transformers/trainer.py", line 2325, in train
+    return inner_training_loop(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/transformers/trainer.py", line 2715, in _inner_training_loop
+    _grad_norm = self.accelerator.clip_grad_norm_(
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/accelerate/accelerator.py", line 2890, in clip_grad_norm_
+    self.unscale_gradients()
+  File "/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/accelerate/accelerator.py", line 2828, in unscale_gradients
+    self.scaler.unscale_(opt)
+  File "/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/torch/amp/grad_scaler.py", line 346, in unscale_
+    optimizer_state["found_inf_per_device"] = self._unscale_grads_(
+                                              ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/torch/amp/grad_scaler.py", line 264, in _unscale_grads_
+    raise ValueError("Attempting to unscale FP16 gradients.")
+ValueError: Attempting to unscale FP16 gradients.
