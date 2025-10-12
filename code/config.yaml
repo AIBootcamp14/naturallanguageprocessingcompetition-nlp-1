@@ -1,7 +1,7 @@
 general:
-  data_path: ../data/
+  data_path: /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/data
   model_name: digit82/kobart-summarization
-  output_dir: ./
+  output_dir: /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/submission
 inference:
   batch_size: 32
   ckt_path: model ckt path
@@ -54,6 +54,6 @@ training:
   warmup_ratio: 0.1
   weight_decay: 0.01
 wandb:
-  entity: wandb_repo
-  name: run_name
-  project: project_name
+  entity: bkan-ai
+  name: kobart-augmented-v1
+  project: dialogue-summarization-competition
