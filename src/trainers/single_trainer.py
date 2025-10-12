@@ -93,7 +93,7 @@ class SingleModelTrainer(BaseTrainer):
             tokenizer=tokenizer,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
-            use_wandb=getattr(self.args, 'use_wandb', False),
+            use_wandb=getattr(self.args, 'use_wandb', True),
             logger=self.logger
         )
 
