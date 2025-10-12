@@ -155,74 +155,130 @@ class FullPipelineTrainer(BaseTrainer):
         """
         model_results = []
         model_paths = []
+        failed_models = []
 
         for idx, model_name in enumerate(self.args.models):
             self.log(f"\n{'='*50}")
             self.log(f"모델 {idx+1}/{len(self.args.models)}: {model_name}")
             self.log(f"{'='*50}")
 
-            # Config 로드
-            config = load_model_config(model_name)
-            self._override_config(config)
+            try:
+                # Config 로드
+                config = load_model_config(model_name)
+                self._override_config(config)
 
-            # 모델 및 토크나이저 로드
-            model, tokenizer = load_model_and_tokenizer(config, logger=self.logger)
+                # 모델 및 토크나이저 로드
+                model, tokenizer = load_model_and_tokenizer(config, logger=self.logger)
 
-            # Dataset 생성
-            model_type = config.model.get('type', 'encoder_decoder')
+                # Dataset 생성
+                model_type = config.model.get('type', 'encoder_decoder')
 
-            train_dataset = DialogueSummarizationDataset(
-                dialogues=train_df['dialogue'].tolist(),
-                summaries=train_df['summary'].tolist(),
-                tokenizer=tokenizer,
-                encoder_max_len=config.tokenizer.encoder_max_len,
-                decoder_max_len=config.tokenizer.decoder_max_len,
-                preprocess=True,
-                model_type=model_type
-            )
+                train_dataset = DialogueSummarizationDataset(
+                    dialogues=train_df['dialogue'].tolist(),
+                    summaries=train_df['summary'].tolist(),
+                    tokenizer=tokenizer,
+                    encoder_max_len=config.tokenizer.encoder_max_len,
+                    decoder_max_len=config.tokenizer.decoder_max_len,
+                    preprocess=True,
+                    model_type=model_type
+                )
 
-            eval_dataset = DialogueSummarizationDataset(
-                dialogues=eval_df['dialogue'].tolist(),
-                summaries=eval_df['summary'].tolist(),
-                tokenizer=tokenizer,
-                encoder_max_len=config.tokenizer.encoder_max_len,
-                decoder_max_len=config.tokenizer.decoder_max_len,
-                preprocess=True,
-                model_type=model_type
-            )
+                eval_dataset = DialogueSummarizationDataset(
+                    dialogues=eval_df['dialogue'].tolist(),
+                    summaries=eval_df['summary'].tolist(),
+                    tokenizer=tokenizer,
+                    encoder_max_len=config.tokenizer.encoder_max_len,
+                    decoder_max_len=config.tokenizer.decoder_max_len,
+                    preprocess=True,
+                    model_type=model_type
+                )
 
-            # Trainer 생성 및 학습
-            model_output_dir = self.output_dir / f"model_{idx}_{model_name.replace('-', '_')}"
-            model_output_dir.mkdir(parents=True, exist_ok=True)
+                # Trainer 생성 및 학습
+                model_output_dir = self.output_dir / f"model_{idx}_{model_name.replace('-', '_')}"
+                model_output_dir.mkdir(parents=True, exist_ok=True)
 
-            config.training.output_dir = str(model_output_dir)
+                config.training.output_dir = str(model_output_dir)
 
-            trainer = create_trainer(
-                config=config,
-                model=model,
-                tokenizer=tokenizer,
-                train_dataset=train_dataset,
-                eval_dataset=eval_dataset,
-                use_wandb=False,
-                logger=self.logger
-            )
+                trainer = create_trainer(
+                    config=config,
+                    model=model,
+                    tokenizer=tokenizer,
+                    train_dataset=train_dataset,
+                    eval_dataset=eval_dataset,
+                    use_wandb=False,
+                    logger=self.logger
+                )
 
-            # 학습 수행
-            train_result = trainer.train()
+                # 학습 수행
+                train_result = trainer.train()
 
-            # Get model path from training result (model already saved by train())
-            final_model_path = train_result.get('final_model_path', str(model_output_dir / 'final_model'))
-            model_paths.append(final_model_path)
+                # Get model path from training result (model already saved by train())
+                final_model_path = train_result.get('final_model_path', str(model_output_dir / 'final_model'))
+                model_paths.append(final_model_path)
 
-            # Get evaluation metrics from training result
-            eval_metrics = train_result.get('eval_metrics', {})
-            model_results.append({
-                'model_name': model_name,
-                'model_path': final_model_path,
-                'eval_metrics': eval_metrics
-            })
+                # Get evaluation metrics from training result
+                eval_metrics = train_result.get('eval_metrics', {})
+                model_results.append({
+                    'model_name': model_name,
+                    'model_path': final_model_path,
+                    'eval_metrics': eval_metrics,
+                    'status': 'success'
+                })
 
-            # FIXME: Corrupted log message
+                self.log(f"\n✅ {model_name} 학습 완료")
+
+            except Exception as e:
+                # 오류 발생 시 로깅하고 다음 모델로 계속
+                error_msg = f"❌ {model_name} 학습 실패: {type(e).__name__}: {str(e)}"
+                self.log(f"\n{error_msg}")
+
+                # 오류 상세 로그 저장
+                import traceback
+                error_log_dir = self.output_dir / "errors"
+                error_log_dir.mkdir(parents=True, exist_ok=True)
+                error_log_path = error_log_dir / f"{model_name}_error.log"
+
+                with open(error_log_path, 'w', encoding='utf-8') as f:
+                    f.write(f"모델: {model_name}\n")
+                    f.write(f"오류 타입: {type(e).__name__}\n")
+                    f.write(f"오류 메시지: {str(e)}\n\n")
+                    f.write("상세 트레이스백:\n")
+                    f.write(traceback.format_exc())
+
+                self.log(f"  오류 로그 저장: {error_log_path}")
+
+                # 실패 모델 기록
+                failed_models.append({
+                    'model_name': model_name,
+                    'error_type': type(e).__name__,
+                    'error_message': str(e),
+                    'status': 'failed'
+                })
+
+                model_results.append({
+                    'model_name': model_name,
+                    'model_path': None,
+                    'eval_metrics': {},
+                    'status': 'failed',
+                    'error': str(e)
+                })
+
+                # 다음 모델로 계속
+                continue
+
+        # 최종 결과 요약
+        self.log(f"\n{'='*50}")
+        self.log("모델 학습 결과 요약")
+        self.log(f"{'='*50}")
+        success_count = sum(1 for r in model_results if r.get('status') == 'success')
+        failed_count = len(model_results) - success_count
+        self.log(f"✅ 성공: {success_count}/{len(self.args.models)} 모델")
+        self.log(f"❌ 실패: {failed_count}/{len(self.args.models)} 모델")
+
+        if failed_models:
+            self.log("\n실패한 모델 목록:")
+            for failed in failed_models:
+                self.log(f"  - {failed['model_name']}: {failed['error_type']}")
 
         return model_results, model_paths
 
