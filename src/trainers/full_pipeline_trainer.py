@@ -40,6 +40,7 @@ class FullPipelineTrainer(BaseTrainer):
                 - models: 사용된 모델 리스트
                 - ensemble_results: 앙상블 결과
                 - solar_results: Solar API 결과 (선택)
+                - inference_results: 추론 및 제출 파일 결과
                 - final_metrics: 최종 평가 지표
         """
         self.log("=" * 60)
@@ -50,15 +51,15 @@ class FullPipelineTrainer(BaseTrainer):
         self.log("=" * 60)
 
         # 1. 데이터 로드
-        self.log("\n[1/5] 데이터 로딩...")
+        self.log("\n[1/6] 데이터 로딩...")
         train_df, eval_df = self.load_data()
 
         # 2. 모델 학습 (다중 모델)
-        self.log(f"\n[2/5] 다중 모델 학습 ({len(self.args.models)} 모델)...")
+        self.log(f"\n[2/6] 다중 모델 학습 ({len(self.args.models)} 모델)...")
         model_results, model_paths = self._train_multiple_models(train_df, eval_df)
 
         # 3. 앙상블 생성
-        self.log(f"\n[3/5] 앙상블 생성...")
+        self.log(f"\n[3/6] 앙상블 생성...")
         ensemble_results = self._create_and_evaluate_ensemble(
             model_paths=model_paths,
             eval_df=eval_df
@@ -67,7 +68,7 @@ class FullPipelineTrainer(BaseTrainer):
         # 4. Solar API 통합 (선택)
         solar_results = {}
         try:
-            self.log(f"\n[4/5] Solar API 통합...")
+            self.log(f"\n[4/6] Solar API 통합...")
             solar_results = self._integrate_solar_api(eval_df)
         except Exception as e:
             self.log(f"    Solar API 통합 오류: {e}")
@@ -75,8 +76,12 @@ class FullPipelineTrainer(BaseTrainer):
         # 5. TTA 적용 (선택)
         tta_results = {}
         if self.args.use_tta:
-            self.log(f"\n[5/5] TTA 적용...")
+            self.log(f"\n[5/6] TTA 적용...")
             tta_results = self._apply_tta(model_paths, eval_df)
+
+        # 6. 추론 및 제출 파일 생성
+        self.log(f"\n[6/6] 추론 및 제출 파일 생성...")
+        inference_results = self._create_submission(model_paths)
 
         # 결과 수집
         results = {
@@ -87,7 +92,8 @@ class FullPipelineTrainer(BaseTrainer):
             'model_results': model_results,
             'ensemble_results': ensemble_results,
             'solar_results': solar_results,
-            'tta_results': tta_results
+            'tta_results': tta_results,
+            'inference_results': inference_results
         }
 
         self.log("\n" + "=" * 60)
@@ -134,13 +140,19 @@ class FullPipelineTrainer(BaseTrainer):
             'model_results': results['model_results'],
             'ensemble_results': results.get('ensemble_results', {}),
             'solar_results': results.get('solar_results', {}),
-            'tta_results': results.get('tta_results', {})
+            'tta_results': results.get('tta_results', {}),
+            'inference_results': results.get('inference_results', {})
         }
 
         with open(result_path, 'w', encoding='utf-8') as f:
             json.dump(saveable_results, f, indent=2, ensure_ascii=False)
 
         self.log(f"\n=저장 결과 저장: {result_path}")
+
+        # 제출 파일 경로 출력
+        inference_results = results.get('inference_results', {})
+        if inference_results.get('submission_path'):
+            self.log(f"=저장 제출 파일: {inference_results['submission_path']}")
 
     def _train_multiple_models(self, train_df, eval_df):
         """
@@ -425,6 +437,126 @@ class FullPipelineTrainer(BaseTrainer):
         except Exception as e:
             self.log(f"    TTA 적용 오류 발생: {e}")
             return {}
+
+    def _create_submission(self, model_paths):
+        """
+        추론 및 제출 파일 생성
+
+        Args:
+            model_paths: 학습된 모델 경로 리스트
+
+        Returns:
+            dict: 추론 결과
+                - submission_path: 제출 파일 경로
+                - num_predictions: 예측 개수
+                - best_model_used: 사용된 최적 모델
+        """
+        try:
+            import pandas as pd
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+            import torch
+
+            # 테스트 데이터 로드
+            test_data_path = getattr(self.args, 'test_data', 'data/raw/test.csv')
+            self.log(f"  테스트 데이터 로드: {test_data_path}")
+            test_df = pd.read_csv(test_data_path)
+            self.log(f"  테스트 샘플 수: {len(test_df)}")
+
+            # 성공한 모델 중 첫 번째 모델 사용 (가장 먼저 학습 완료된 모델)
+            if not model_paths:
+                self.log("    ❌ 사용 가능한 모델이 없습니다.")
+                return {
+                    'submission_path': None,
+                    'num_predictions': 0,
+                    'error': '사용 가능한 모델 없음'
+                }
+
+            best_model_path = model_paths[0]
+            self.log(f"  사용 모델: {best_model_path}")
+
+            # 모델 및 토크나이저 로드
+            model = AutoModelForSeq2SeqLM.from_pretrained(best_model_path)
+            tokenizer = AutoTokenizer.from_pretrained(best_model_path)
+
+            if torch.cuda.is_available():
+                model = model.cuda()
+            model.eval()
+
+            # 배치 추론
+            predictions = []
+            batch_size = getattr(self.args, 'inference_batch_size', 32)
+            self.log(f"  배치 크기: {batch_size}")
+
+            dialogues = test_df['dialogue'].tolist()
+
+            for i in range(0, len(dialogues), batch_size):
+                batch_dialogues = dialogues[i:i+batch_size]
+
+                # 토크나이징
+                inputs = tokenizer(
+                    batch_dialogues,
+                    max_length=512,
+                    padding=True,
+                    truncation=True,
+                    return_tensors='pt'
+                )
+
+                if torch.cuda.is_available():
+                    inputs = {k: v.cuda() for k, v in inputs.items()}
+
+                # 생성
+                with torch.no_grad():
+                    outputs = model.generate(
+                        **inputs,
+                        max_length=getattr(self.args, 'max_length', 100),
+                        num_beams=getattr(self.args, 'num_beams', 4),
+                        early_stopping=True,
+                        no_repeat_ngram_size=getattr(self.args, 'no_repeat_ngram_size', 2)
+                    )
+
+                # 디코딩
+                batch_predictions = tokenizer.batch_decode(
+                    outputs,
+                    skip_special_tokens=True
+                )
+                predictions.extend(batch_predictions)
+
+                if (i // batch_size + 1) % 10 == 0:
+                    self.log(f"    진행: {i+len(batch_predictions)}/{len(dialogues)}")
+
+            # 제출 파일 생성
+            submission_df = pd.DataFrame({
+                'id': test_df['id'],
+                'summary': predictions
+            })
+
+            # 제출 파일 저장
+            submission_dir = self.output_dir / "submissions"
+            submission_dir.mkdir(parents=True, exist_ok=True)
+
+            experiment_name = getattr(self.args, 'experiment_name', 'full_pipeline')
+            submission_path = submission_dir / f"{experiment_name}_submission.csv"
+
+            submission_df.to_csv(submission_path, index=False)
+
+            self.log(f"  ✅ 제출 파일 생성 완료: {submission_path}")
+            self.log(f"  예측 개수: {len(predictions)}")
+
+            return {
+                'submission_path': str(submission_path),
+                'num_predictions': len(predictions),
+                'best_model_used': best_model_path
+            }
+
+        except Exception as e:
+            import traceback
+            self.log(f"    ❌ 추론 오류 발생: {e}")
+            self.log(f"    상세: {traceback.format_exc()}")
+            return {
+                'submission_path': None,
+                'num_predictions': 0,
+                'error': str(e)
+            }
 
     def _override_config(self, config):
         """Config 오버라이드"""
