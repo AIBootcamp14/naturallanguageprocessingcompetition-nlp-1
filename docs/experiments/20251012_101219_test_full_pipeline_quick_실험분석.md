@@ -61,6 +61,33 @@ graph TB
     W --> X[INT8 양자화]
     X --> Y[배치 크기 최적화]
     Y --> Z[최종 결과 저장]
+
+    style A fill:#bbdefb,stroke:#01579b,color:#000
+    style B fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style C fill:#ffccbc,stroke:#bf360c,color:#000
+    style D fill:#ffccbc,stroke:#bf360c,color:#000
+    style E fill:#ffccbc,stroke:#bf360c,color:#000
+    style F fill:#ffccbc,stroke:#bf360c,color:#000
+    style G fill:#ffccbc,stroke:#bf360c,color:#000
+    style H fill:#fff9c4,stroke:#f57f17,color:#000
+    style I fill:#fff9c4,stroke:#f57f17,color:#000
+    style J fill:#fff9c4,stroke:#f57f17,color:#000
+    style K fill:#fff9c4,stroke:#f57f17,color:#000
+    style L fill:#fff9c4,stroke:#f57f17,color:#000
+    style M fill:#fff9c4,stroke:#f57f17,color:#000
+    style N fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style O fill:#ffcdd2,stroke:#c62828,color:#000
+    style P fill:#ffcdd2,stroke:#c62828,color:#000
+    style Q fill:#ffcdd2,stroke:#c62828,color:#000
+    style R fill:#ffcdd2,stroke:#c62828,color:#000
+    style S fill:#ffcdd2,stroke:#c62828,color:#000
+    style T fill:#e1bee7,stroke:#4a148c,color:#000
+    style U fill:#fff9c4,stroke:#f57f17,color:#000
+    style V fill:#ffcdd2,stroke:#c62828,color:#000
+    style W fill:#ffe0b2,stroke:#e65100,color:#000
+    style X fill:#ffe0b2,stroke:#e65100,color:#000
+    style Y fill:#ffe0b2,stroke:#e65100,color:#000
+    style Z fill:#c8e6c9,stroke:#2e7d32,color:#000
 ```
 
 ---
@@ -313,10 +340,12 @@ graph LR
     D --> E[배치 크기 4-64 테스트<br/>각 2-5초]
     E --> F[✅ 최적화 완료<br/>10:52:25]
 
-    style B fill:#90EE90
-    style C fill:#FFD700
-    style D fill:#90EE90
-    style F fill:#90EE90
+    style A fill:#ffe0b2,stroke:#e65100,color:#000
+    style B fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style C fill:#fff9c4,stroke:#f57f17,color:#000
+    style D fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style E fill:#ffe0b2,stroke:#e65100,color:#000
+    style F fill:#c8e6c9,stroke:#2e7d32,color:#000
 ```
 
 **상세 분석**:
@@ -398,8 +427,17 @@ graph TD
     I -->|❌ No| J[NotImplementedError 발생<br/>학습 중단]
     I -->|✅ Yes| K[정상 학습 진행]
 
-    style J fill:#FF6B6B
-    style K fill:#90EE90
+    style A fill:#e1bee7,stroke:#4a148c,color:#000
+    style B fill:#ffccbc,stroke:#bf360c,color:#000
+    style C fill:#ffe0b2,stroke:#e65100,color:#000
+    style D fill:#fff9c4,stroke:#f57f17,color:#000
+    style E fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style F fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style G fill:#ffe0b2,stroke:#e65100,color:#000
+    style H fill:#ffe0b2,stroke:#e65100,color:#000
+    style I fill:#fff9c4,stroke:#f57f17,color:#000
+    style J fill:#ffcdd2,stroke:#c62828,color:#000
+    style K fill:#c8e6c9,stroke:#2e7d32,color:#000
 ```
 
 **기술적 배경**:
