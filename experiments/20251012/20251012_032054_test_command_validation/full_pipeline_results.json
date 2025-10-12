@@ -1,0 +1,33 @@
+{
+  "mode": "full",
+  "models": [
+    "kobart"
+  ],
+  "ensemble_strategy": "stacking",
+  "use_tta": false,
+  "model_results": [
+    {
+      "model_name": "kobart",
+      "model_path": "experiments/test_command_validation/model_0_kobart/default/final_model",
+      "eval_metrics": {
+        "eval_loss": 1.4561959505081177,
+        "eval_rouge1": 0.4138213640258233,
+        "eval_rouge2": 0.25483372511434554,
+        "eval_rougeL": 0.4066970480962809,
+        "eval_rouge_sum": 1.0753521372364496,
+        "eval_runtime": 84.7207,
+        "eval_samples_per_second": 5.89,
+        "eval_steps_per_second": 0.744,
+        "epoch": 1.0
+      }
+    }
+  ],
+  "ensemble_results": {},
+  "solar_results": {
+    "solar_rouge_1_f1": 0.22721529000252147,
+    "solar_rouge_2_f1": 0.07650273711618417,
+    "solar_rouge_l_f1": 0.21771327705012092,
+    "n_samples": 50
+  },
+  "tta_results": {}
+}
