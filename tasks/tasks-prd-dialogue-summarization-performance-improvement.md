@@ -62,34 +62,46 @@
 
 ### Phase 1: Baseline 재현 및 실험 인프라 구축
 
-- [ ] 1.0 Phase 1: Baseline 재현 및 실험 인프라 구축
+- [x] 1.0 Phase 1: Baseline 재현 및 실험 인프라 구축
   - [x] 1.1 환경 검증 및 사전 준비
     - [x] 디스크 용량 확인 (`du -sh / 2>/dev/null`, 150GB 미만 확인)
     - [x] GPU 상태 확인 (`nvidia-smi`, RTX 3090 24GB 확인)
     - [x] 데이터 파일 존재 확인 (train.csv, dev.csv, test.csv, sample_submission.csv)
     - [x] baseline.ipynb 파일 존재 확인
-  - [ ] 1.2 Baseline 실행 (수정 금지!)
-    - [ ] `code/baseline.ipynb` 열기
-    - [ ] 모든 셀 순차 실행 (어떤 코드도 수정하지 말 것!)
-    - [ ] 학습 완료 대기 (~20분)
-    - [ ] `prediction/output.csv` 생성 확인
-  - [ ] 1.3 CSV 검증
-    - [ ] `head -5 prediction/output.csv`로 포맷 확인 (`,fname,summary`)
-    - [ ] `wc -l prediction/output.csv`로 샘플 수 확인 (500 = header + 499)
-    - [ ] Index 컬럼 존재 확인
-    - [ ] 5개 샘플 수동 확인
-  - [ ] 1.4 Test 제출 및 Baseline 검증
-    - [ ] 대회 플랫폼에 `prediction/output.csv` 제출
-    - [ ] 점수 확인: 46-48점 (공식: 47.1244) 달성 여부
-    - [ ] 실패 시 중단하고 원인 분석
-  - [ ] 1.5 실험 로그 시스템 구축
-    - [ ] `/Competition/NLP/docs/experiment_logs.md` 생성
-    - [ ] 실험 #0 (Baseline) 기록 작성
-    - [ ] 템플릿 작성: 날짜, 변경사항, 설정, 결과, 판단, 다음 단계
-  - [ ] 1.6 Git 커밋 (Baseline 재현 완료)
-    - [ ] `experiment_logs.md` Git에 추가
-    - [ ] 커밋 메시지: "Experiment #0: Baseline reproduction - XX.XX points"
-    - [ ] GitHub 푸시
+  - [x] 1.2 Baseline 실행 (수정 금지!)
+    - [x] `code/baseline.ipynb` 열기
+    - [x] 모든 셀 순차 실행 (어떤 코드도 수정하지 말 것!)
+    - [x] 학습 완료 대기 (~20분)
+    - [x] `prediction/output.csv` 생성 확인
+  - [x] 1.3 CSV 검증
+    - [x] `head -5 prediction/output.csv`로 포맷 확인 (`,fname,summary`)
+    - [x] `wc -l prediction/output.csv`로 샘플 수 확인 (500 = header + 499)
+    - [x] Index 컬럼 존재 확인
+    - [x] 5개 샘플 수동 확인
+  - [x] 1.4 Test 제출 및 Baseline 검증
+    - [x] 대회 플랫폼에 `prediction/output.csv` 제출
+    - [x] 점수 확인: 46-48점 (공식: 47.1244) 달성 여부
+    - [x] 실패 시 중단하고 원인 분석
+  - [x] 1.5 실험 로그 시스템 구축
+    - [x] `/Competition/NLP/docs/experiment_logs.md` 생성
+    - [x] 실험 #0 (Baseline) 기록 작성
+    - [x] 템플릿 작성: 날짜, 변경사항, 설정, 결과, 판단, 다음 단계
+  - [x] 1.6 Git 커밋 (Baseline 재현 완료)
+    - [x] `experiment_logs.md` Git에 추가
+    - [x] 커밋 메시지: "Experiment #0: Baseline reproduction - XX.XX points"
+    - [x] GitHub 푸시
+
+### Completed Experiments
+
+- [x] Experiment #0: Baseline 재현
+  - 결과: 46.9426점
+  - 날짜: 2025-10-12
+  - 상태: ✅ 성공
+
+- [x] Experiment #1: 증강 데이터 학습
+  - 결과: 42.7807점 (Baseline 대비 -4.16점)
+  - 날짜: 2025-10-12
+  - 상태: ❌ 실패 (Baseline으로 롤백)
 
 ---
 
