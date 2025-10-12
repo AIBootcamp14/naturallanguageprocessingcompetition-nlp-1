@@ -55,10 +55,16 @@ def load_causal_lm(config, logger=None):
     if logger:
         logger.write("  모델 로딩 중...")
 
+    # offload_folder 설정 (대형 모델 로딩 시 디스크 오프로드를 위해 필요)
+    from pathlib import Path
+    offload_dir = Path(config.experiment.get('output_dir', 'outputs')) / 'offload'
+    offload_dir.mkdir(parents=True, exist_ok=True)
+
     model = AutoModelForCausalLM.from_pretrained(
         config.model.checkpoint,
         quantization_config=quantization_config,
         device_map="auto",
+        offload_folder=str(offload_dir),
         torch_dtype=torch.bfloat16 if config.training.get('bf16', True) else torch.float16,
         trust_remote_code=True
     )

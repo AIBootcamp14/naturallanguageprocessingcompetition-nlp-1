@@ -501,6 +501,10 @@ class FullPipelineTrainer(BaseTrainer):
                     return_tensors='pt'
                 )
 
+                # token_type_ids 제거 (Causal LM과 일부 Seq2Seq 모델은 사용하지 않음)
+                if 'token_type_ids' in inputs:
+                    del inputs['token_type_ids']
+
                 if torch.cuda.is_available():
                     inputs = {k: v.cuda() for k, v in inputs.items()}
 
