@@ -293,9 +293,9 @@ def parse_arguments():
 
     # ==================== 로깅 및 모니터링 ====================
     parser.add_argument(
-        '--use_wandb',
+        '--no_wandb',
         action='store_true',
-        help='WandB 사용'
+        help='WandB 비활성화 (기본값: 활성화)'
     )
 
     parser.add_argument(
@@ -465,6 +465,9 @@ def parse_arguments():
 # ==================== 환경 설정 ====================
 def setup_environment(args):
     """환경 설정"""
+    # WandB 플래그 변환 (--no_wandb -> use_wandb)
+    args.use_wandb = not args.no_wandb
+
     # 시드 설정
     set_seed(args.seed)
 
