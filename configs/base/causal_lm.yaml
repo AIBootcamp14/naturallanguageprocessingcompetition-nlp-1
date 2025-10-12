@@ -5,7 +5,8 @@ model:
   type: causal_lm
   checkpoint: "Bllossom/llama-3.2-Korean-Bllossom-3B"  # 기본 모델
 
-  # LoRA 설정 (PRD 08: QLoRA 파인튜닝)
+  # LoRA 설정 (PRD 08: LoRA 파인튜닝)
+  # 주의: bitsandbytes가 설치되어 있지 않아 QLoRA(4-bit) 대신 일반 LoRA 사용
   lora:
     r: 16  # LoRA rank
     lora_alpha: 32  # LoRA alpha (일반적으로 r * 2)
@@ -20,13 +21,6 @@ model:
       - "gate_proj"
       - "up_proj"
       - "down_proj"
-
-  # Quantization 설정 (QLoRA용 4-bit 양자화)
-  quantization:
-    load_in_4bit: true
-    bnb_4bit_compute_dtype: "float16"  # AMP 호환성을 위해 float16 사용
-    bnb_4bit_quant_type: "nf4"
-    bnb_4bit_use_double_quant: true
 
 # 토크나이저 설정 (PRD 08: Prompt truncation 방지)
 tokenizer:
