@@ -44,10 +44,20 @@
 |-----|------|----------|
 | 계층적 Config 시스템 | ✅ 완료 | `src/config/loader.py` |
 | Config 병합 메커니즘 | ✅ 완료 | `src/config/loader.py` |
+| **다중 패턴 파일명 매칭** | ✅ 완료 | `src/config/loader.py:80-124, 237-290` |
+| **상세 에러 메시지 생성** | ✅ 완료 | `src/config/loader.py:237-290` |
 | base/default.yaml | ✅ 완료 | `configs/base/default.yaml` |
 | base/encoder_decoder.yaml | ✅ 완료 | `configs/base/encoder_decoder.yaml` |
 | models/kobart.yaml | ✅ 완료 | `configs/models/kobart.yaml` |
 | experiments/baseline_kobart.yaml | ✅ 완료 | `configs/experiments/baseline_kobart.yaml` |
+
+**2025-10-12 업데이트:**
+- ✅ **다중 패턴 파일명 매칭** 기능 추가 (`load_model()` 메서드)
+  - 5가지 패턴 자동 시도: 원본/하이픈→언더스코어/언더스코어→하이픈/점→언더스코어/소문자
+  - 모델명 형식 유연성 향상 (예: `llama-3.2-korean-3b`, `solar_10.7b`, `Qwen3-4B`)
+- ✅ **상세 에러 메시지** 기능 추가 (`load_model_config()` 함수)
+  - 시도한 모든 경로 표시
+  - 해결 방법 제시
 
 ### 2. **데이터 처리** (PRD 16 - 데이터 품질 검증 시스템)
 
