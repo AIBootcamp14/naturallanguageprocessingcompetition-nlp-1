@@ -538,7 +538,7 @@ class FullPipelineTrainer(BaseTrainer):
             submission_dir = self.output_dir / "submissions"
             submission_dir.mkdir(parents=True, exist_ok=True)
             submission_path_1 = submission_dir / f"{folder_name}.csv"
-            submission_df.to_csv(submission_path_1, index=False)
+            submission_df.to_csv(submission_path_1, index=False, encoding='utf-8')
             self.log(f"  ✅ 제출 파일 저장 (1): {submission_path_1}")
 
             # 2. submissions/{날짜}/{실행폴더명}.csv 저장
@@ -548,7 +548,7 @@ class FullPipelineTrainer(BaseTrainer):
             global_submission_dir = Path('submissions') / date_str
             global_submission_dir.mkdir(parents=True, exist_ok=True)
             submission_path_2 = global_submission_dir / f"{folder_name}.csv"
-            submission_df.to_csv(submission_path_2, index=False)
+            submission_df.to_csv(submission_path_2, index=False, encoding='utf-8')
             self.log(f"  ✅ 제출 파일 저장 (2): {submission_path_2}")
 
             self.log(f"  예측 개수: {len(predictions)}")

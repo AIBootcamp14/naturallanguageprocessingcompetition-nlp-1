@@ -315,7 +315,7 @@ class Predictor:
         output_path = Path(output_path)                 # Path 객체로 변환
         ensure_dir(output_path.parent)                  # 부모 디렉토리 생성
 
-        submission_df.to_csv(output_path, index=False)  # CSV로 저장
+        submission_df.to_csv(output_path, index=False, encoding='utf-8')  # CSV로 저장
 
         msg = f"\n✅ 제출 파일 저장 완료: {output_path}"
         if self.logger:
