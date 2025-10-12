@@ -1,0 +1,46 @@
+2025-10-12 21:00:58 | >> 표준 출력 및 오류를 로그 파일로 리디렉션 시작
+2025-10-12 21:01:01 | 📊 SINGLE 모드 실행 중...
+2025-10-12 21:01:01 | ============================================================
+2025-10-12 21:01:01 | 🚀 SINGLE MODEL 모드 학습 시작
+2025-10-12 21:01:01 | 📋 모델: llama-3.2-korean-3b
+2025-10-12 21:01:01 | ============================================================
+2025-10-12 21:01:01 | [1/5] 데이터 로딩...
+2025-10-12 21:01:01 | ⚠️ 디버그 모드: 학습 100개, 검증 20개
+2025-10-12 21:01:01 | [2/5] Config 로딩...
+2025-10-12 21:01:01 | ⚙️ Epochs 오버라이드: 1
+2025-10-12 21:01:01 | ⚙️ Batch size 오버라이드: 4
+2025-10-12 21:01:01 | ✅ Config 로드 완료: llama-3.2-korean-3b
+2025-10-12 21:01:01 | [3/5] 모델 로딩...
+2025-10-12 21:01:01 | 모델 타입: causal_lm
+2025-10-12 21:01:01 | Loading Causal LM: Bllossom/llama-3.2-Korean-Bllossom-3B
+2025-10-12 21:01:01 | 모델 로딩 중...
+2025-10-12 21:01:01 | `torch_dtype` is deprecated! Use `dtype` instead!
+2025-10-12 21:01:02 | Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+2025-10-12 21:01:16 | Loading checkpoint shards:  50%|█████     | 1/2 [00:14<00:14, 14.11s/it]
+2025-10-12 21:01:21 | Loading checkpoint shards: 100%|██████████| 2/2 [00:18<00:00,  8.66s/it]
+2025-10-12 21:01:21 | 토크나이저 로딩 중...
+2025-10-12 21:01:22 | 패딩 토큰 설정: <|eot_id|>
+2025-10-12 21:01:22 | LoRA 설정 적용 중...
+2025-10-12 21:01:23 | ✅ LoRA 적용 완료
+2025-10-12 21:01:23 | 학습 가능 파라미터: 24,313,856 (0.75%)
+2025-10-12 21:01:23 | 전체 파라미터: 3,237,063,680
+2025-10-12 21:01:23 | ✅ Gradient Checkpointing 활성화
+2025-10-12 21:01:23 | ✅ Causal LM 로드 완료
+2025-10-12 21:01:23 | ✅ 모델 로드 완료
+2025-10-12 21:01:23 | [4/5] Dataset 생성...
+2025-10-12 21:01:23 | ✅ 학습 Dataset: 100개
+2025-10-12 21:01:23 | ✅ 검증 Dataset: 20개
+2025-10-12 21:01:23 | [5/5] 학습 시작...
+2025-10-12 21:01:23 | ============================================================
+2025-10-12 21:01:23 | 모델 학습 시작
+2025-10-12 21:01:23 | ============================================================
+2025-10-12 21:01:23 | /home/ieyeppo/AI_Lab/natural-language-processing-competition/src/training/trainer.py:217: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `Seq2SeqTrainer.__init__`. Use `processing_class` instead.
+  trainer = Seq2SeqTrainer(
+2025-10-12 21:01:23 | The model is already on multiple devices. Skipping the move to device specified in `args`.
+2025-10-12 21:01:23 | 학습 진행 중...
+2025-10-12 21:01:23 | The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'eos_token_id': 128009, 'pad_token_id': 128009}.
+2025-10-12 21:01:23 | 0%|          | 0/25 [00:00<?, ?it/s]
+2025-10-12 21:01:23 | /home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/torch/utils/checkpoint.py:85: UserWarning: None of the inputs have requires_grad=True. Gradients will be None
+  warnings.warn(
+2025-10-12 21:01:25 | ❌ 오류 발생: element 0 of tensors does not require grad and does not have a grad_fn
+2025-10-12 21:01:25 | >> 로그 리디렉션 중료.
