@@ -9,6 +9,7 @@ class Logger:                                    # Logger 클래스 정의
     """
     로그를 파일에 저장하고, 표준 출력(stdout)과 표준 에러(stderr)를
     로그 파일로 리디렉션하는 기능이 추가된 Logger 클래스
+    진행률 표시줄(tqdm)의 중복 출력을 방지하는 필터링 기능 포함
     """
     # 초기화 함수 정의
     def __init__(self, log_path: str, print_also: bool = True):
@@ -20,24 +21,51 @@ class Logger:                                    # Logger 클래스 정의
         self.original_stderr = sys.stderr        # 원본 표준 에러 저장
         # 로그 파일을 열고, 라인 버퍼링을 사용합니다.
         self.log_file = open(log_path, 'a', encoding='utf-8', buffering=1)  # 로그 파일 열기
+        # 진행률 표시줄 중복 방지를 위한 변수
+        self.last_progress_line = None           # 마지막 진행률 라인 저장
 
     
+    # ---------------------- 진행률 라인 확인 함수 ---------------------- #
+    def _is_progress_line(self, message: str) -> bool:
+        """
+        메시지가 tqdm 진행률 표시줄인지 확인
+        퍼센티지(%), it/s, s/it 등이 포함된 라인을 감지
+        """
+        progress_indicators = ['%|', 'it/s', 's/it', '/s]']
+        return any(indicator in message for indicator in progress_indicators)
+
     # 로그 기록 함수 정의
     def write(self, message: str, print_also: bool = True, print_error: bool = False):
         """
         로그 메시지를 파일에 기록하고,
         print_also=True일 경우 콘솔에도 출력합니다.
+        진행률 표시줄의 중복 출력을 방지합니다.
         """
         # 메시지 앞뒤 공백을 제거하고, 개행 문자가 없으면 추가합니다.
         message = message.strip()                # 메시지 공백 제거
         if not message:                          # 메시지가 비어있으면
             return                               # 함수 종료
-            
+
+        # ---------------------- 진행률 라인 중복 방지 ---------------------- #
+        # 진행률 라인인지 확인
+        is_progress = self._is_progress_line(message)
+
+        # 진행률 라인이고, 이전 진행률 라인과 동일한 경우 건너뛰기
+        if is_progress and self.last_progress_line == message:
+            return                               # 중복 진행률 라인은 기록하지 않음
+
+        # 진행률 라인인 경우 마지막 진행률 라인 업데이트
+        if is_progress:
+            self.last_progress_line = message
+        else:
+            # 진행률이 아닌 일반 메시지가 오면 진행률 라인 초기화
+            self.last_progress_line = None
+
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 현재 시간 타임스탬프 생성
         line = f"{timestamp} | {message}\n"      # 타임스탬프와 메시지 결합
-        
+
         self.log_file.write(line)                # 로그 파일에 기록
-        
+
         # 콘솔 출력 옵션이 활성화된 경우
         if self.print_also and print_also:
             # 에러 메시지인 경우
