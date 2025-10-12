@@ -82,31 +82,43 @@ class ConfigLoader:
         모델별 설정 로드 (models/{model_name}.yaml)
 
         _base_ 필드를 지원하여 base 설정 상속 가능
+        다양한 파일명 패턴을 시도하여 로드
 
         Args:
-            model_name: 모델 이름 (kobart, llama_3.2_3b 등)
+            model_name: 모델 이름 (kobart, llama-3.2-korean-3b 등)
 
         Returns:
             DictConfig: 모델별 설정 (없으면 빈 설정)
         """
-        path = self.config_root / "models" / f"{model_name}.yaml"  # 모델 설정 경로
+        # 시도할 파일명 패턴들 (우선순위 순)
+        patterns = [
+            model_name,                          # 원본 그대로
+            model_name.replace('-', '_'),        # 하이픈 → 언더스코어
+            model_name.replace('_', '-'),        # 언더스코어 → 하이픈
+            model_name.replace('.', '_'),        # 점 → 언더스코어
+            model_name.lower(),                  # 소문자 변환
+        ]
 
-        # 파일이 존재하면 로드
-        if path.exists():
-            config = OmegaConf.load(path)                   # YAML 파일 로드
+        # 각 패턴 시도
+        for pattern in patterns:
+            path = self.config_root / "models" / f"{pattern}.yaml"
 
-            # _base_ 상속 처리 (PRD 19)
-            if '_base_' in config:
-                base_path = self.config_root / config['_base_']
-                if base_path.exists():
-                    base_config = OmegaConf.load(base_path)
-                    # base config와 병합 (현재 config가 우선)
-                    config = OmegaConf.merge(base_config, config)
-                    # _base_ 키 제거
-                    if '_base_' in config:
-                        del config['_base_']
+            # 파일이 존재하면 로드
+            if path.exists():
+                config = OmegaConf.load(path)                   # YAML 파일 로드
 
-            return config
+                # _base_ 상속 처리 (PRD 19)
+                if '_base_' in config:
+                    base_path = self.config_root / config['_base_']
+                    if base_path.exists():
+                        base_config = OmegaConf.load(base_path)
+                        # base config와 병합 (현재 config가 우선)
+                        config = OmegaConf.merge(base_config, config)
+                        # _base_ 키 제거
+                        if '_base_' in config:
+                            del config['_base_']
+
+                return config
 
         # 파일이 없으면 빈 설정 반환
         return OmegaConf.create({})                         # 빈 설정 생성
@@ -226,6 +238,8 @@ def load_model_config(model_name: str, config_root: str = "configs") -> DictConf
     """
     모델 이름으로 직접 Config 로드 (PRD 08, 14)
 
+    다양한 파일명 패턴을 자동으로 시도하여 로드
+
     Args:
         model_name: 모델 이름 (kobart, llama-3.2-korean-3b 등)
         config_root: config 루트 디렉토리
@@ -240,18 +254,30 @@ def load_model_config(model_name: str, config_root: str = "configs") -> DictConf
     """
     loader = ConfigLoader(config_root)
 
-    # 모델명 정규화 (하이픈 → 언더스코어)
-    normalized_name = model_name.replace('-', '_')
-
     # 1. 기본 설정 로드
     configs = [loader.load_base()]
 
-    # 2. 모델 설정 로드
-    model_config = loader.load_model(normalized_name)
+    # 2. 모델 설정 로드 (다양한 패턴 시도)
+    model_config = loader.load_model(model_name)
 
     if not model_config:
+        # 시도한 패턴들 표시
+        patterns = [
+            model_name,
+            model_name.replace('-', '_'),
+            model_name.replace('_', '-'),
+            model_name.replace('.', '_'),
+            model_name.lower(),
+        ]
+        attempted_paths = [f"configs/models/{p}.yaml" for p in patterns]
+
         raise FileNotFoundError(
-            f"모델 설정 파일을 찾을 수 없습니다: configs/models/{normalized_name}.yaml"
+            f"모델 설정 파일을 찾을 수 없습니다: {model_name}\n\n"
+            f"시도한 경로들:\n" +
+            "\n".join([f"  ❌ {path}" for path in attempted_paths]) +
+            f"\n\n해결 방법:\n"
+            f"  1. 위 경로 중 하나에 설정 파일 생성\n"
+            f"  2. 기존 모델 설정 파일 참고: configs/models/kobart.yaml"
         )
 
     # 3. 모델 타입별 설정 로드
