@@ -1,0 +1,83 @@
+{
+  "mode": "full",
+  "models": [
+    "kobart",
+    "llama-3.2-korean-3b",
+    "qwen3-4b",
+    "solar-10.7b",
+    "polyglot-ko-12.8b",
+    "kullm-v2"
+  ],
+  "ensemble_strategy": "stacking",
+  "use_tta": true,
+  "model_results": [
+    {
+      "model_name": "kobart",
+      "model_path": "experiments/20251012/test_full_pipeline_quick/model_0_kobart/default/final_model",
+      "eval_metrics": {
+        "eval_loss": 1.4561599493026733,
+        "eval_rouge1": 0.41310943195643945,
+        "eval_rouge2": 0.25415561992194863,
+        "eval_rougeL": 0.405985116026897,
+        "eval_rouge_sum": 1.073250167905285,
+        "eval_runtime": 70.2777,
+        "eval_samples_per_second": 7.1,
+        "eval_steps_per_second": 0.896,
+        "epoch": 1.0
+      },
+      "status": "success"
+    },
+    {
+      "model_name": "llama-3.2-korean-3b",
+      "model_path": null,
+      "eval_metrics": {},
+      "status": "failed",
+      "error": "\"_amp_foreach_non_finite_check_and_unscale_cuda\" not implemented for 'BFloat16'"
+    },
+    {
+      "model_name": "qwen3-4b",
+      "model_path": null,
+      "eval_metrics": {},
+      "status": "failed",
+      "error": "\"_amp_foreach_non_finite_check_and_unscale_cuda\" not implemented for 'BFloat16'"
+    },
+    {
+      "model_name": "solar-10.7b",
+      "model_path": null,
+      "eval_metrics": {},
+      "status": "failed",
+      "error": "모델 설정 파일을 찾을 수 없습니다: configs/models/solar_10.7b.yaml"
+    },
+    {
+      "model_name": "polyglot-ko-12.8b",
+      "model_path": null,
+      "eval_metrics": {},
+      "status": "failed",
+      "error": "모델 설정 파일을 찾을 수 없습니다: configs/models/polyglot_ko_12.8b.yaml"
+    },
+    {
+      "model_name": "kullm-v2",
+      "model_path": null,
+      "eval_metrics": {},
+      "status": "failed",
+      "error": "모델 설정 파일을 찾을 수 없습니다: configs/models/kullm_v2.yaml"
+    }
+  ],
+  "ensemble_results": {},
+  "solar_results": {
+    "solar_rouge_1_f1": 0.22721529000252147,
+    "solar_rouge_2_f1": 0.07650273711618417,
+    "solar_rouge_l_f1": 0.21771327705012092,
+    "n_samples": 50
+  },
+  "tta_results": {
+    "tta_applied": false,
+    "strategies": [
+      "paraphrase",
+      "reorder",
+      "synonym",
+      "mask"
+    ],
+    "num_aug": 2
+  }
+}
