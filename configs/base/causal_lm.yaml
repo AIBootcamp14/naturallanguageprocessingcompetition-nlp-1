@@ -13,14 +13,7 @@ model:
     lora_dropout: 0.05
     bias: "none"
     task_type: "CAUSAL_LM"
-    target_modules:
-      - "q_proj"
-      - "k_proj"
-      - "v_proj"
-      - "o_proj"
-      - "gate_proj"
-      - "up_proj"
-      - "down_proj"
+    # target_modules는 자동 탐지됨 (모델별로 다른 레이어 이름 지원)
 
 # 토크나이저 설정 (PRD 08: Prompt truncation 방지)
 tokenizer:
