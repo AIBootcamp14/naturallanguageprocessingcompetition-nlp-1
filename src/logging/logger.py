@@ -23,6 +23,7 @@ class Logger:                                    # Logger 클래스 정의
         self.log_file = open(log_path, 'a', encoding='utf-8', buffering=1)  # 로그 파일 열기
         # 진행률 표시줄 중복 방지를 위한 변수
         self.last_progress_line = None           # 마지막 진행률 라인 저장
+        self.last_progress_percent = None        # 마지막 진행률 퍼센티지 저장
 
     
     # ---------------------- 진행률 라인 확인 함수 ---------------------- #
@@ -41,6 +42,22 @@ class Logger:                                    # Logger 클래스 정의
         has_digit = any(c.isdigit() for c in clean_message)
         return has_indicator and has_digit
 
+    # ---------------------- 퍼센티지 추출 함수 ---------------------- #
+    def _extract_percentage(self, message: str) -> float:
+        """
+        메시지에서 진행률 퍼센티지를 추출
+        예: "Training:  50%|█████     | 100/200" -> 50.0
+        """
+        import re
+        # ANSI 이스케이프 시퀀스 제거
+        clean_message = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', message)
+
+        # 퍼센티지 패턴 찾기: 숫자 + %
+        match = re.search(r'(\d+)%', clean_message)
+        if match:
+            return float(match.group(1))
+        return None
+
     # 로그 기록 함수 정의
     def write(self, message: str, print_also: bool = True, print_error: bool = False):
         """
@@ -53,20 +70,35 @@ class Logger:                                    # Logger 클래스 정의
         if not message:                          # 메시지가 비어있으면
             return                               # 함수 종료
 
-        # ---------------------- 진행률 라인 중복 방지 ---------------------- #
+        # ---------------------- 진행률 라인 중복 방지 (1% 단위) ---------------------- #
         # 진행률 라인인지 확인
         is_progress = self._is_progress_line(message)
 
-        # 진행률 라인이고, 이전 진행률 라인과 동일한 경우 건너뛰기
-        if is_progress and self.last_progress_line == message:
-            return                               # 중복 진행률 라인은 기록하지 않음
-
-        # 진행률 라인인 경우 마지막 진행률 라인 업데이트
         if is_progress:
-            self.last_progress_line = message
+            # 현재 진행률 퍼센티지 추출
+            current_percent = self._extract_percentage(message)
+
+            # 퍼센티지를 추출할 수 있는 경우
+            if current_percent is not None:
+                # 이전 퍼센티지가 있고, 1% 미만 차이인 경우 건너뛰기
+                if self.last_progress_percent is not None:
+                    percent_diff = abs(current_percent - self.last_progress_percent)
+                    if percent_diff < 1.0:
+                        return               # 1% 미만 차이는 기록하지 않음
+
+                # 1% 이상 차이가 나거나 첫 진행률인 경우 기록
+                self.last_progress_percent = current_percent
+                self.last_progress_line = message
+            else:
+                # 퍼센티지를 추출할 수 없지만 진행률 라인인 경우 (예: "0/100")
+                # 이전 라인과 완전히 동일하면 건너뛰기
+                if self.last_progress_line == message:
+                    return
+                self.last_progress_line = message
         else:
-            # 진행률이 아닌 일반 메시지가 오면 진행률 라인 초기화
+            # 진행률이 아닌 일반 메시지가 오면 진행률 상태 초기화
             self.last_progress_line = None
+            self.last_progress_percent = None
 
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 현재 시간 타임스탬프 생성
         line = f"{timestamp} | {message}\n"      # 타임스탬프와 메시지 결합
