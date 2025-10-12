@@ -163,21 +163,9 @@ nosetests.xml # Test results
 *.code-workspace
 
 # Large model files (>100MB)
+*.safetensors
 *.pt
 *.bin
-*.safetensors
-*.h5
-*.ckpt
-*.pth
-*.onnx
-*.pb
-*.tflite
-*.msgpack
-
-# Model checkpoint directories
-**/checkpoint-*/
-**/best_model/
-**/final_model/
 
 # Docs 특정 파일만 제외
 /docs/*.md
