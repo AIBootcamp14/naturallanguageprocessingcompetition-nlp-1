@@ -530,20 +530,32 @@ class FullPipelineTrainer(BaseTrainer):
                 'summary': predictions
             })
 
-            # 제출 파일 저장
+            # 파일명 생성 (실행되는 폴더명과 동일하게)
+            # output_dir 예시: experiments/20251012/20251012_101219_test_full_pipeline_quick
+            folder_name = self.output_dir.name  # 예: 20251012_101219_test_full_pipeline_quick
+
+            # 1. experiments/{날짜}/{실행폴더명}/submissions/{실행폴더명}.csv 저장
             submission_dir = self.output_dir / "submissions"
             submission_dir.mkdir(parents=True, exist_ok=True)
+            submission_path_1 = submission_dir / f"{folder_name}.csv"
+            submission_df.to_csv(submission_path_1, index=False)
+            self.log(f"  ✅ 제출 파일 저장 (1): {submission_path_1}")
 
-            experiment_name = getattr(self.args, 'experiment_name', 'full_pipeline')
-            submission_path = submission_dir / f"{experiment_name}_submission.csv"
+            # 2. submissions/{날짜}/{실행폴더명}.csv 저장
+            from pathlib import Path
+            import datetime
+            date_str = datetime.datetime.now().strftime('%Y%m%d')
+            global_submission_dir = Path('submissions') / date_str
+            global_submission_dir.mkdir(parents=True, exist_ok=True)
+            submission_path_2 = global_submission_dir / f"{folder_name}.csv"
+            submission_df.to_csv(submission_path_2, index=False)
+            self.log(f"  ✅ 제출 파일 저장 (2): {submission_path_2}")
 
-            submission_df.to_csv(submission_path, index=False)
-
-            self.log(f"  ✅ 제출 파일 생성 완료: {submission_path}")
             self.log(f"  예측 개수: {len(predictions)}")
 
             return {
-                'submission_path': str(submission_path),
+                'submission_path': str(submission_path_1),
+                'submission_path_2': str(submission_path_2),
                 'num_predictions': len(predictions),
                 'best_model_used': best_model_path
             }
