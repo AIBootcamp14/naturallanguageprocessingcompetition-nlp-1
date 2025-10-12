@@ -153,10 +153,11 @@ __pycache__/  # Python cache files
 nosetests.xml # Test results
 *.log         # Log files
 
-# 예외: logs, notebooks, wandb 폴더 내의 .log 파일은 추적
+# 예외: logs, notebooks, wandb, experiments 폴더 내의 .log 파일은 추적
 !logs/**/*.log
 !notebooks/**/*.log
 !wandb/**/*.log
+!experiments/**/*.log
 
 # Personal VS Code workspace files
 *.code-workspace
