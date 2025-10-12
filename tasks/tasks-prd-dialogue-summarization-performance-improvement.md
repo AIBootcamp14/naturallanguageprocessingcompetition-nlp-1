@@ -63,11 +63,11 @@
 ### Phase 1: Baseline 재현 및 실험 인프라 구축
 
 - [ ] 1.0 Phase 1: Baseline 재현 및 실험 인프라 구축
-  - [ ] 1.1 환경 검증 및 사전 준비
-    - [ ] 디스크 용량 확인 (`du -sh / 2>/dev/null`, 150GB 미만 확인)
-    - [ ] GPU 상태 확인 (`nvidia-smi`, RTX 3090 24GB 확인)
-    - [ ] 데이터 파일 존재 확인 (train.csv, dev.csv, test.csv, sample_submission.csv)
-    - [ ] baseline.ipynb 파일 존재 확인
+  - [x] 1.1 환경 검증 및 사전 준비
+    - [x] 디스크 용량 확인 (`du -sh / 2>/dev/null`, 150GB 미만 확인)
+    - [x] GPU 상태 확인 (`nvidia-smi`, RTX 3090 24GB 확인)
+    - [x] 데이터 파일 존재 확인 (train.csv, dev.csv, test.csv, sample_submission.csv)
+    - [x] baseline.ipynb 파일 존재 확인
   - [ ] 1.2 Baseline 실행 (수정 금지!)
     - [ ] `code/baseline.ipynb` 열기
     - [ ] 모든 셀 순차 실행 (어떤 코드도 수정하지 말 것!)
