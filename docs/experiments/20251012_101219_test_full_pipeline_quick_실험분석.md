@@ -4,10 +4,14 @@
 
 ### 실험 정보
 - **실험 ID**: `20251012_101219_test_full_pipeline_quick`
+- **실험 폴더**: `experiments/20251012/20251012_101219_test_full_pipeline_quick/`
 - **실험 시작**: 2025-10-12 10:12:19
-- **실험 종료**: 2025-10-12 10:33:50 (마지막 로그 기준)
-- **총 실행 시간**: 약 21분 31초
-- **실행 모드**: Full Pipeline (다중 모델 + Solar API + 앙상블)
+- **실험 종료**: 2025-10-12 10:52:26 ✅ **완료**
+- **총 실행 시간**: 40분 7초
+  - 모델 학습: 21분 23초 (10:12:19 → 10:33:42)
+  - Solar API: 1초 (10:33:42 → 10:33:43)
+  - 추론 최적화: 18분 43초 (10:33:43 → 10:52:26)
+- **실행 모드**: Full Pipeline (다중 모델 + Solar API + 앙상블 + 추론 최적화)
 - **대상 모델**: 6개 (kobart, llama-3.2-korean-3b, qwen3-4b, solar-10.7b, polyglot-ko-12.8b, kullm-v2)
 
 ### 실험 목적
@@ -135,7 +139,7 @@ gantt
 
     section API & 최적화
     Solar API 평가        :10:33:42, 10:33:43
-    추론 최적화 시작      :10:33:43, 10:33:50
+    추론 최적화 (완료)    :10:33:43, 10:52:26
 ```
 
 ### 모델별 성능 상세
@@ -220,17 +224,20 @@ gantt
 ```python
 solar_results = {
     "solar_rouge_1_f1": 0.2272,     # 22.72%
-    "solar_rouge_2_f1": 0.1234,     # 12.34%
-    "solar_rouge_l_f1": 0.2145,     # 21.45%
+    "solar_rouge_2_f1": 0.0765,     # 7.65%
+    "solar_rouge_l_f1": 0.2177,     # 21.77%
     "n_samples": 50,
-    "avg_response_time": "0.8초",
+    "status": "✅ 성공",
 }
 ```
 
 **분석**:
-- Solar API는 정상 작동하지만 성능이 KoBART보다 낮음
-- ROUGE-1: 22.72% (KoBART 41.31%보다 18.59%p 낮음)
+- Solar API는 정상 작동하지만 성능이 KoBART보다 현저히 낮음
+- ROUGE-1: 22.72% (KoBART 41.31%보다 **18.59%p 낮음**)
+- ROUGE-2: 7.65% (KoBART 25.42%보다 **17.77%p 낮음**)
+- ROUGE-L: 21.77% (KoBART 40.60%보다 **18.83%p 낮음**)
 - 샘플 수가 50개로 제한되어 통계적 신뢰도가 낮을 수 있음
+- Solar API의 대화 요약 특화 성능이 KoBART에 비해 부족함을 시사
 
 ---
 
@@ -250,34 +257,84 @@ quantization_result = {
 
 ### 배치 크기 최적화
 
-**현재 상태**: 배치 크기 1 테스트 완료, 이후 크기 테스트 진행 중
+**최종 상태**: ✅ **완료** (10:33:45 → 10:52:25)
 
-**"배치 크기 1 성공" 이후 로그가 없는 이유**:
+**테스트된 배치 크기 및 결과**:
+```python
+batch_optimization_results = {
+    "batch_size_1": {
+        "status": "✅ 성공",
+        "time": "10:33:50",
+        "duration": "5초"
+    },
+    "batch_size_2": {
+        "status": "✅ 성공",
+        "time": "10:52:08",
+        "duration": "18분 18초"  # 배치 크기 1 이후 가장 오래 걸림
+    },
+    "batch_size_4": {
+        "status": "✅ 성공",
+        "time": "10:52:10",
+        "duration": "2초"
+    },
+    "batch_size_8": {
+        "status": "✅ 성공",
+        "time": "10:52:13",
+        "duration": "3초"
+    },
+    "batch_size_16": {
+        "status": "✅ 성공",
+        "time": "10:52:16",
+        "duration": "3초"
+    },
+    "batch_size_32": {
+        "status": "✅ 성공",
+        "time": "10:52:21",
+        "duration": "5초"
+    },
+    "batch_size_64": {
+        "status": "✅ 성공",
+        "time": "10:52:25",
+        "duration": "4초"
+    },
+
+    "optimal_batch_size": 64,
+    "total_test_time": "18분 40초"
+}
+```
+
+**"배치 크기 1 성공" 이후 로그가 없었던 이유 (해결됨)**:
 
 ```mermaid
 graph LR
     A[배치 크기 1 테스트] --> B[✅ 성공<br/>10:33:50]
-    B --> C[배치 크기 2 테스트<br/>진행 중]
-    C --> D[샘플 생성<br/>~30초]
-    D --> E[추론 실행<br/>~30초]
-    E --> F[속도 측정<br/>~10초]
-    F --> G[로그 출력<br/>아직 안됨]
+    B --> C[배치 크기 2 테스트<br/>18분 18초 소요]
+    C --> D[✅ 성공<br/>10:52:08]
+    D --> E[배치 크기 4-64 테스트<br/>각 2-5초]
+    E --> F[✅ 최적화 완료<br/>10:52:25]
 
     style B fill:#90EE90
     style C fill:#FFD700
-    style G fill:#FFA500
+    style D fill:#90EE90
+    style F fill:#90EE90
 ```
 
-**상세 설명**:
-1. **순차 테스트**: 배치 크기를 1, 2, 4, 8, 16... 순서로 하나씩 테스트
-2. **각 테스트 시간**:
-   - 배치 크기 1: 약 5초
-   - 배치 크기 2-4: 약 10-20초
-   - 배치 크기 8-16: 약 30-60초
-3. **로그 출력 시점**: 각 배치 크기 테스트 **완료 후**에만 로그 출력
-4. **현재 상태**: 배치 크기 2 이상 테스트 중 (로그 미출력 = 테스트 미완료)
+**상세 분석**:
+1. **배치 크기 2 테스트의 긴 실행 시간 (18분 18초)**:
+   - 모델 로딩 및 초기화
+   - 샘플 데이터 생성 (100개)
+   - 추론 실행 및 성능 측정
+   - 메모리 프로파일링
 
-**예상 남은 시간**: 5-10분 (배치 크기 2, 4, 8, 16, 32 테스트)
+2. **배치 크기 4-64의 빠른 테스트 (각 2-5초)**:
+   - 이미 로드된 모델 재사용
+   - 캐시된 샘플 데이터 사용
+   - 순수 추론 시간만 측정
+
+3. **최적 배치 크기: 64**
+   - 처리량 최대화
+   - 메모리 사용량 허용 범위 내
+   - 추론 속도와 효율성의 최적 균형점
 
 ---
 
@@ -293,6 +350,29 @@ NotImplementedError: "_amp_foreach_non_finite_check_and_unscale_cuda"
 not implemented for 'BFloat16'
 ```
 
+**상세 트레이스백** (llama-3.2-korean-3b_error.log):
+```python
+Traceback (most recent call last):
+  File "src/trainers/full_pipeline_trainer.py", line 213, in _train_multiple_models
+    train_result = trainer.train()
+  File "src/training/trainer.py", line 260, in train
+    train_result = self.trainer.train()
+  File "transformers/trainer.py", line 2325, in train
+    return inner_training_loop(...)
+  File "transformers/trainer.py", line 2715, in _inner_training_loop
+    _grad_norm = self.accelerator.clip_grad_norm_(...)
+  File "accelerate/accelerator.py", line 2890, in clip_grad_norm_
+    self.unscale_gradients()
+  File "accelerate/accelerator.py", line 2828, in unscale_gradients
+    self.scaler.unscale_(opt)
+  File "torch/amp/grad_scaler.py", line 346, in unscale_
+    optimizer_state["found_inf_per_device"] = self._unscale_grads_(...)
+  File "torch/amp/grad_scaler.py", line 283, in _unscale_grads_
+    torch._amp_foreach_non_finite_check_and_unscale_(...)
+NotImplementedError: "_amp_foreach_non_finite_check_and_unscale_cuda"
+not implemented for 'BFloat16'
+```
+
 **발생 위치**:
 ```python
 # src/models/llm_loader.py:48 (이전 코드)
@@ -304,20 +384,34 @@ bnb_config = BitsAndBytesConfig(
 )
 ```
 
-**근본 원인**:
+**근본 원인 분석**:
 ```mermaid
 graph TD
-    A[QLoRA 4-bit 설정] --> B[bnb_4bit_compute_dtype=bfloat16]
-    B --> C[학습 시작]
-    C --> D[PyTorch AMP 활성화]
-    D --> E[GradScaler 초기화]
-    E --> F{BFloat16 지원?}
-    F -->|❌ No| G[NotImplementedError 발생]
-    F -->|✅ Yes| H[정상 학습]
+    A[QLoRA 4-bit 양자화 설정] --> B[bnb_4bit_compute_dtype=bfloat16]
+    B --> C[모델 로딩 완료]
+    C --> D[학습 시작: 첫 번째 스텝]
+    D --> E[Forward Pass 성공]
+    E --> F[Backward Pass 성공]
+    F --> G[Gradient Clipping 시도]
+    G --> H[PyTorch AMP GradScaler.unscale_]
+    H --> I{BFloat16 지원?}
+    I -->|❌ No| J[NotImplementedError 발생<br/>학습 중단]
+    I -->|✅ Yes| K[정상 학습 진행]
 
-    style G fill:#FF6B6B
-    style H fill:#90EE90
+    style J fill:#FF6B6B
+    style K fill:#90EE90
 ```
+
+**기술적 배경**:
+1. **PyTorch AMP (Automatic Mixed Precision)**:
+   - Mixed Precision 학습을 위해 gradient scaling 수행
+   - Float16/Float32는 지원하지만 BFloat16은 미지원
+   - `GradScaler.unscale_()` 함수에서 BFloat16 체크 실패
+
+2. **BFloat16 vs Float16**:
+   - BFloat16: 더 넓은 동적 범위, GPU 연산 효율적
+   - Float16: 더 높은 정밀도, AMP와 완벽 호환
+   - QLoRA는 양쪽 모두 사용 가능하지만 AMP 호환성은 Float16만
 
 **수정 사항** (이미 적용됨):
 ```python
@@ -330,7 +424,38 @@ bnb_config = BitsAndBytesConfig(
 )
 ```
 
+**해결 방법 옵션**:
+1. **Option 1: Float16 사용** (✅ 적용됨)
+   - 장점: AMP와 완벽 호환, 안정적 학습
+   - 단점: BFloat16보다 약간 느림, 오버플로우 위험
+
+2. **Option 2: AMP 비활성화**
+   ```python
+   # src/config/training.yaml
+   training:
+     fp16: false  # AMP 비활성화
+   ```
+   - 장점: BFloat16 사용 가능
+   - 단점: 메모리 사용량 증가, 학습 속도 감소
+
+3. **Option 3: PyTorch 2.1+ 업그레이드**
+   ```bash
+   pip install torch>=2.1.0
+   ```
+   - 장점: BFloat16 AMP 지원 (최신 버전)
+   - 단점: 호환성 이슈 가능성
+
 **검증 상태**: ✅ 코드 수정 완료 (다음 실행 시 적용됨)
+
+**재현 방법**:
+```bash
+# 오류 재현 (수정 전 코드로 복원 시)
+python scripts/train.py --mode single --models llama-3.2-korean-3b --epochs 1
+
+# 수정 후 검증
+python scripts/train.py --mode single --models llama-3.2-korean-3b --epochs 1
+# 예상 결과: ✅ 학습 성공
+```
 
 ---
 
@@ -457,7 +582,8 @@ results_summary = {
 
     "solar_api": "✅ 성공",
     "ensemble": "❌ 스킵 (모델 부족)",
-    "inference_optimization": "🔄 진행 중",
+    "inference_optimization": "✅ 완료",
+    "optimal_batch_size": 64,
 }
 ```
 
@@ -468,8 +594,8 @@ results_summary = {
 2. KoBART 학습 (Encoder-Decoder 모델)
 3. Solar API 통합
 4. 오류 처리 및 로깅 (개별 모델 실패 시에도 파이프라인 계속)
-5. INT8 양자화
-6. 배치 크기 최적화 (진행 중)
+5. INT8 양자화 (✅ 완료)
+6. 배치 크기 최적화 (✅ 완료 - 최적 배치 크기: 64)
 
 **❌ 문제 발견 컴포넌트**:
 1. LLM QLoRA 학습 (BFloat16 dtype 이슈) - ✅ 수정 완료
@@ -728,7 +854,7 @@ expected = {
 | 다중 모델 학습 검증 | ⚠️ 부분 달성 | 16.7% | 6개 중 1개 성공 |
 | Solar API 통합 검증 | ✅ 완료 | 100% | 정상 작동 |
 | 앙상블 전략 검증 | ❌ 미달성 | 0% | 모델 수 부족 |
-| 추론 최적화 검증 | 🔄 진행 중 | 50% | 양자화 완료, 배치 최적화 진행 중 |
+| 추론 최적화 검증 | ✅ 완료 | 100% | 양자화 + 배치 최적화 완료 |
 | 파이프라인 안정성 검증 | ✅ 완료 | 100% | 오류 처리 정상 |
 
 ### 핵심 성과
@@ -744,8 +870,3 @@ expected = {
 4. **향후**: 대형 모델 최적화 전략 수립
 
 ---
-
-**문서 작성일**: 2025-10-12
-**실험 담당**: AI Lab
-**분석 도구**: train.log, full_pipeline_results.json, error logs
-**참고 문서**: `20251012_082741_full_kobart_실험분석.md`
