@@ -135,7 +135,8 @@ class ModelTrainer:
             generation_num_beams=self.config.get('inference', {}).get('num_beams', 4),  # Beam 개수
 
             # ---------- 기타 ---------- #
-            fp16=torch.cuda.is_available(),             # GPU 있으면 FP16 사용
+            fp16=train_cfg.get('fp16', False),          # Config에서 FP16 설정 (기본값: False, QLoRA와 호환성 문제 방지)
+            bf16=train_cfg.get('bf16', False),          # Config에서 BFloat16 설정 (기본값: False)
             dataloader_num_workers=train_cfg.get('num_workers', 4),  # 데이터로더 워커 수
             remove_unused_columns=True,                 # 사용하지 않는 컬럼 제거
             push_to_hub=False,                          # HuggingFace Hub 업로드 안 함
