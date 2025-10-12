@@ -131,9 +131,8 @@ class ModelTrainer:
 
             # ---------- Seq2Seq 특화 설정 ---------- #
             predict_with_generate=True,                 # 생성 모드로 평가
-            # Causal LM (decoder-only)은 max_new_tokens 사용, Seq2Seq는 generation_max_length 사용
-            generation_max_length=self.config.get('tokenizer', {}).get('decoder_max_len', 100) if model_cfg.type != 'causal_lm' else None,
-            max_new_tokens=self.config.get('tokenizer', {}).get('decoder_max_len', 100) if model_cfg.type == 'causal_lm' else None,
+            # Causal LM의 경우 input_length + decoder_max_len을 고려하여 충분히 큰 값 설정
+            generation_max_length=2048 if model_cfg.type == 'causal_lm' else self.config.get('tokenizer', {}).get('decoder_max_len', 100),
             generation_num_beams=self.config.get('inference', {}).get('num_beams', 4),  # Beam 개수
 
             # ---------- 기타 ---------- #
