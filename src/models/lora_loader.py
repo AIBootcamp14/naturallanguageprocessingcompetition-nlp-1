@@ -104,13 +104,9 @@ class LoRALoader:
         """QLoRA용 BitsAndBytes 설정 생성"""
         self._log("QLoRA 4-bit 양자화 설정 생성")
 
-        # dtype 결정 (Llama: bf16, Qwen: fp16)
-        compute_dtype = torch.bfloat16
-        if 'qwen' in self.config.model.checkpoint.lower():
-            compute_dtype = torch.float16
-            self._log("  - Qwen 모델: fp16 사용")
-        else:
-            self._log("  - Llama 모델: bf16 사용")
+        # PyTorch AMP GradScaler는 BFloat16을 지원하지 않으므로 모든 모델에 Float16 사용
+        compute_dtype = torch.float16
+        self._log("  - QLoRA compute dtype: fp16 (AMP 호환)")
 
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
