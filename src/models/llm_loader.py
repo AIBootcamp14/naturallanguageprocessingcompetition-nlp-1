@@ -137,6 +137,13 @@ def load_causal_lm(config, logger=None):
     if config.training.get('gradient_checkpointing', True):
         model.gradient_checkpointing_enable()
         model.config.use_cache = False  # Gradient checkpointing과 함께 사용 시 필수
+
+        # LoRA와 Gradient Checkpointing 함께 사용 시 필요
+        if hasattr(config.model, 'lora') and config.model.lora:
+            model.enable_input_require_grads()
+            if logger:
+                logger.write("    Input require grads 활성화 (LoRA + Gradient Checkpointing)")
+
         if logger:
             logger.write("  ✅ Gradient Checkpointing 활성화")
 
