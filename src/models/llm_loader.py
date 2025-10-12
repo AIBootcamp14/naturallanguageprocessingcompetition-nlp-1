@@ -65,7 +65,7 @@ def load_causal_lm(config, logger=None):
         quantization_config=quantization_config,
         device_map="auto",
         offload_folder=str(offload_dir),
-        torch_dtype=torch.bfloat16 if config.training.get('bf16', True) else torch.float16,
+        torch_dtype=torch.float16,  # AMP GradScaler 호환성을 위해 Float16 고정
         trust_remote_code=True
     )
 
