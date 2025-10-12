@@ -162,7 +162,13 @@ def main():
         model = AutoModelForSeq2SeqLM.from_pretrained(args.model)
         tokenizer = AutoTokenizer.from_pretrained(args.model)
 
+        # GPU 사용 가능하면 모델을 GPU로 이동
+        import torch
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        model = model.to(device)
+
         logger.write(f"  ✅ 모델 로드 완료")
+        logger.write(f"  디바이스: {device}")
         logger.write(f"  모델 파라미터: {sum(p.numel() for p in model.parameters()):,}")
 
         # -------------- 3. 테스트 데이터 로드 -------------- #
@@ -176,6 +182,7 @@ def main():
             model=model,
             tokenizer=tokenizer,
             config=config,
+            device=device,
             logger=logger
         )
 
