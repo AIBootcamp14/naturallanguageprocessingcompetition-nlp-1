@@ -109,6 +109,131 @@ def postprocess_summaries(summaries: List[str], remove_tokens: List[str]) -> Lis
     return cleaned
 
 
+def normalize_whitespace(text: str) -> str:
+    """
+    텍스트의 공백을 정규화합니다.
+
+    여러 개의 연속된 공백(스페이스, 탭, 개행 등)을 하나의 스페이스로 통합하고,
+    문자열 앞뒤의 공백을 제거합니다. ROUGE 평가에서 불필요한 공백이
+    점수에 부정적 영향을 주는 것을 방지합니다.
+
+    Args:
+        text: 정규화할 텍스트
+
+    Returns:
+        str: 공백이 정규화된 텍스트
+
+    Example:
+        >>> normalize_whitespace("안녕하세요    세상  ")
+        '안녕하세요 세상'
+        >>> normalize_whitespace("  텍스트\\n\\n정규화  ")
+        '텍스트 정규화'
+    """
+    import re
+    # 모든 공백 문자(\s: space, tab, newline 등)를 하나의 스페이스로 치환
+    text = re.sub(r'\s+', ' ', text)
+    # 앞뒤 공백 제거
+    return text.strip()
+
+
+def remove_duplicate_sentences(text: str) -> str:
+    """
+    텍스트에서 중복된 문장을 제거합니다.
+
+    생성 모델이 동일한 문장을 반복하는 경우가 있어 ROUGE 점수가 하락할 수 있습니다.
+    이 함수는 문장 부호(. ! ?)를 기준으로 문장을 분리한 후, 중복된 문장을
+    제거하면서 원래 순서를 유지합니다.
+
+    Args:
+        text: 중복 제거할 텍스트
+
+    Returns:
+        str: 중복 문장이 제거된 텍스트
+
+    Example:
+        >>> text = "오늘 날씨가 좋습니다. 오늘 날씨가 좋습니다. 내일도 좋을 것 같습니다."
+        >>> remove_duplicate_sentences(text)
+        '오늘 날씨가 좋습니다. 내일도 좋을 것 같습니다.'
+    """
+    import re
+
+    # 문장 부호를 기준으로 분리 (구두점과 텍스트를 함께 캡처)
+    # 예: "안녕하세요. 반갑습니다!" → ["안녕하세요", ".", " 반갑습니다", "!"]
+    sentences = re.split(r'([.!?])\s*', text)
+
+    # 문장과 구두점을 다시 결합
+    # 예: ["안녕하세요", "."] → "안녕하세요."
+    merged = []
+    for i in range(0, len(sentences)-1, 2):
+        if i+1 < len(sentences):
+            sentence = sentences[i] + sentences[i+1]
+            merged.append(sentence)
+
+    # 마지막 요소가 홀수 위치에 있는 경우 (구두점 없는 문장)
+    if len(sentences) % 2 == 1 and sentences[-1].strip():
+        merged.append(sentences[-1])
+
+    # 중복 제거 (순서 유지)
+    seen = set()
+    unique = []
+    for sent in merged:
+        sent_clean = sent.strip()
+        # 빈 문장이 아니고, 아직 보지 못한 문장인 경우에만 추가
+        if sent_clean and sent_clean not in seen:
+            seen.add(sent_clean)
+            unique.append(sent)
+
+    # 문장들을 공백으로 연결
+    return ' '.join(unique)
+
+
+def postprocess_summaries_v2(summaries: List[str], remove_tokens: List[str]) -> List[str]:
+    """
+    생성된 요약문에 대한 고급 후처리를 수행합니다 (v2).
+
+    Experiment #2에서 도입된 개선된 후처리 파이프라인입니다.
+    기존 postprocess_summaries의 특수 토큰 제거 기능에 더해,
+    공백 정규화와 중복 문장 제거를 추가하여 ROUGE 점수를 향상시킵니다.
+
+    처리 단계:
+    1. 특수 토큰 제거 ('<s>', '</s>', '<pad>' 등)
+    2. 공백 정규화 (연속된 공백 → 단일 스페이스, 앞뒤 공백 제거)
+    3. 중복 문장 제거 (동일한 문장이 반복되는 경우 제거)
+
+    Args:
+        summaries: 원본 요약문 리스트 (특수 토큰 포함)
+        remove_tokens: 제거할 토큰 리스트
+                      (예: ['<usr>', '<s>', '</s>', '<pad>'])
+
+    Returns:
+        List[str]: 후처리된 요약문 리스트
+
+    Example:
+        >>> summaries = ['<s>오늘  날씨가 좋습니다.  오늘 날씨가 좋습니다.</s>']
+        >>> remove_tokens = ['<s>', '</s>']
+        >>> cleaned = postprocess_summaries_v2(summaries, remove_tokens)
+        >>> print(cleaned[0])
+        '오늘 날씨가 좋습니다.'
+
+    Note:
+        - Experiment #2 (2025-10-13)에서 도입
+        - 예상 효과: +0.5~1.2점
+        - 리스크: Low (기존 로직 유지, 추가 처리만 수행)
+    """
+    # 1. 특수 토큰 제거 (기존 postprocess_summaries와 동일)
+    cleaned = summaries.copy()
+    for token in remove_tokens:
+        cleaned = [s.replace(token, " ") for s in cleaned]
+
+    # 2. 공백 정규화
+    cleaned = [normalize_whitespace(s) for s in cleaned]
+
+    # 3. 중복 문장 제거
+    cleaned = [remove_duplicate_sentences(s) for s in cleaned]
+
+    return cleaned
+
+
 def save_predictions(fnames: List[str], summaries: List[str],
                     output_dir: str, filename: str = "output.csv") -> str:
     """
