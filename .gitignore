@@ -161,9 +161,28 @@ nosetests.xml # Test results
 
 # Personal VS Code workspace files
 *.code-workspace
+
 # Large model files (>100MB)
 *.pt
 *.bin
+*.safetensors
+*.h5
+*.ckpt
+*.pth
+*.onnx
+*.pb
+*.tflite
+*.msgpack
 
-/docs/*.md
+# Model checkpoint directories
+**/checkpoint-*/
+**/best_model/
+**/final_model/
+
+# Experiment outputs (학습 결과, 로그, 제출 파일)
+experiments/
+logs/
+submissions/
+
+# Docs 특정 파일만 제외
 /docs/참고
