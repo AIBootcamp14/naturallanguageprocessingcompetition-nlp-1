@@ -123,6 +123,15 @@ class Logger:                                    # Logger 클래스 정의
         """
         self.log_file.flush()   # 로그 파일 버퍼 플러시
 
+    # isatty 함수 정의
+    def isatty(self):
+        """
+        스트림이 터미널인지 확인하는 메서드
+        로그 파일은 터미널이 아니므로 항상 False 반환
+        WandB 등 일부 라이브러리가 sys.stderr.isatty()를 호출할 때 필요
+        """
+        return False            # 로그 파일은 터미널이 아님
+
 
     # 리다이렉션 시작 함수 정의
     def start_redirect(self):
