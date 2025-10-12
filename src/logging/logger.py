@@ -31,8 +31,15 @@ class Logger:                                    # Logger 클래스 정의
         메시지가 tqdm 진행률 표시줄인지 확인
         퍼센티지(%), it/s, s/it 등이 포함된 라인을 감지
         """
-        progress_indicators = ['%|', 'it/s', 's/it', '/s]']
-        return any(indicator in message for indicator in progress_indicators)
+        # ANSI 이스케이프 시퀀스 제거
+        import re
+        clean_message = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', message)
+
+        progress_indicators = ['%|', 'it/s', 's/it', '/s]', '|', '[00:']
+        # 진행률 지표가 포함되어 있고, 숫자가 포함된 경우만 진행률로 간주
+        has_indicator = any(indicator in clean_message for indicator in progress_indicators)
+        has_digit = any(c.isdigit() for c in clean_message)
+        return has_indicator and has_digit
 
     # 로그 기록 함수 정의
     def write(self, message: str, print_also: bool = True, print_error: bool = False):
