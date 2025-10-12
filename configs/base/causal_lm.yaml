@@ -39,6 +39,8 @@ training:
   save_total_limit: 2
   logging_steps: 10
   num_workers: 4
+  fp16: false  # QLoRA와 AMP GradScaler 호환성 문제로 비활성화
+  bf16: false  # QLoRA와 AMP GradScaler 호환성 문제로 비활성화
 
 # 추론 설정
 inference:
