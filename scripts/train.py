@@ -487,21 +487,26 @@ def setup_environment(args):
         print(f"📋 'all' 확장 → {len(args.models)}개 모델: {', '.join(args.models)}")
 
     # ---------------------- 실험명 자동 생성 ---------------------- #
+    # 타임스탬프는 항상 생성 (폴더명 접두사용)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     if args.experiment_name is None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         # experiment_model_name이 설정되어 있으면 사용 (--models all인 경우)
         # 그렇지 않으면 첫 번째 모델명 사용
         if experiment_model_name:
             model_name = experiment_model_name
         else:
             model_name = args.models[0].replace('-', '_') if args.models else 'default'
-        args.experiment_name = f"{timestamp}_{args.mode}_{model_name}"
+        args.experiment_name = f"{args.mode}_{model_name}"
+
+    # 최종 폴더명 = 날짜_시간_ + 실험명
+    folder_name = f"{timestamp}_{args.experiment_name}"
 
     # 출력 디렉토리 생성 (날짜별 분류)
     if args.output_dir is None:
         # 날짜 폴더 생성
         date_folder = datetime.now().strftime("%Y%m%d")
-        output_dir = Path(f"experiments/{date_folder}/{args.experiment_name}")
+        output_dir = Path(f"experiments/{date_folder}/{folder_name}")
     else:
         output_dir = Path(args.output_dir)
 
