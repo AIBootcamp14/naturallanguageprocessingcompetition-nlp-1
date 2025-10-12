@@ -1,0 +1,28 @@
+2025-10-12 22:22:53 | wandb: Detected [openai] in use.
+2025-10-12 22:22:53 | wandb: Use W&B Weave for improved LLM call tracing. Install Weave with `pip install weave` then add `import weave` to the top of your script.
+2025-10-12 22:22:53 | wandb: For more information, check out the docs at: https://weave-docs.wandb.ai/
+2025-10-12 22:22:53 | 📋 실험명: 1012-2222-llama_3.2_3b_qlora
+2025-10-12 22:22:53 | 🔗 WandB URL: https://wandb.ai/ieyeppo/nlp-competition/runs/9z9kt5rc
+2025-10-12 22:22:53 | /home/ieyeppo/AI_Lab/natural-language-processing-competition/src/training/trainer.py:218: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `Seq2SeqTrainer.__init__`. Use `processing_class` instead.
+  trainer = Seq2SeqTrainer(
+2025-10-12 22:22:53 | The model is already on multiple devices. Skipping the move to device specified in `args`.
+2025-10-12 22:22:53 | 학습 진행 중...
+2025-10-12 22:22:53 | The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'eos_token_id': 128009, 'pad_token_id': 128009}.
+2025-10-12 22:22:53 | 0%|          | 0/779 [00:00<?, ?it/s]
+2025-10-12 22:23:36 | 1%|          | 4/779 [00:42<2:04:06,  9.61s/it]
+2025-10-12 22:24:23 | {'loss': 1.5992, 'grad_norm': 1.5635446310043335, 'learning_rate': 9e-08, 'epoch': 0.01}
+2025-10-12 22:24:23 | 1%|▏         | 10/779 [01:29<1:42:59,  8.04s/it]
+2025-10-12 22:24:38 | 2%|▏         | 12/779 [01:45<1:40:57,  7.90s/it]
+2025-10-12 22:25:42 | 3%|▎         | 20/779 [02:48<1:39:09,  7.84s/it]
+2025-10-12 22:25:42 | {'loss': 1.6342, 'grad_norm': 1.586462140083313, 'learning_rate': 1.9e-07, 'epoch': 0.03}
+2025-10-12 22:25:42 | 3%|▎         | 20/779 [02:48<1:39:09,  7.84s/it]
+2025-10-12 22:26:45 | 4%|▎         | 28/779 [03:51<1:37:47,  7.81s/it]
+2025-10-12 22:27:01 | {'loss': 1.6011, 'grad_norm': 1.480494499206543, 'learning_rate': 2.9000000000000003e-07, 'epoch': 0.04}
+2025-10-12 22:27:01 | 4%|▍         | 30/779 [04:08<1:38:58,  7.93s/it]
+2025-10-12 22:27:48 | 5%|▍         | 36/779 [04:55<1:37:13,  7.85s/it]
+2025-10-12 22:28:20 | {'loss': 1.6386, 'grad_norm': 2.0113680362701416, 'learning_rate': 3.9e-07, 'epoch': 0.05}
+2025-10-12 22:28:20 | 5%|▌         | 40/779 [05:26<1:36:34,  7.84s/it]
+2025-10-12 22:28:44 | 6%|▌         | 43/779 [05:51<1:37:36,  7.96s/it]
+2025-10-12 22:29:40 | {'loss': 1.6184, 'grad_norm': 1.5652515888214111, 'learning_rate': 4.900000000000001e-07, 'epoch': 0.06}
+2025-10-12 22:29:40 | 6%|▋         | 50/779 [06:46<1:37:34,  8.03s/it]
+2025-10-12 22:29:47 | 7%|▋         | 51/779 [06:54<1:36:20,  7.94s/it]
