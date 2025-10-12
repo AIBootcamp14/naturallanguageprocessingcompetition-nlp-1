@@ -92,6 +92,12 @@ class BaseTrainer(ABC):
             self.log(f"✅ 학습 데이터: {len(train_df)}개")
             self.log(f"✅ 검증 데이터: {len(eval_df)}개")
 
+        # max_train_samples 옵션 적용 (빠른 테스트용)
+        if hasattr(self.args, 'max_train_samples') and self.args.max_train_samples is not None:
+            if self.args.max_train_samples < len(train_df):
+                train_df = train_df.head(self.args.max_train_samples)
+                self.log(f"⚙️ max_train_samples 적용: 학습 데이터 {len(train_df)}개로 제한")
+
         return train_df, eval_df
 
     def get_config_path(self, model_name: str) -> str:

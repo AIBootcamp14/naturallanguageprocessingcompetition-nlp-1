@@ -451,6 +451,13 @@ def parse_arguments():
         help='검증 데이터 경로'
     )
 
+    parser.add_argument(
+        '--max_train_samples',
+        type=int,
+        default=None,
+        help='학습 데이터 샘플 수 제한 (빠른 테스트용, None: 전체 데이터 사용)'
+    )
+
     # ==================== 출력 경로 ====================
     parser.add_argument(
         '--output_dir',
