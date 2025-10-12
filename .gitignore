@@ -179,10 +179,6 @@ nosetests.xml # Test results
 **/best_model/
 **/final_model/
 
-# Experiment outputs (학습 결과, 로그, 제출 파일)
-experiments/
-logs/
-submissions/
-
 # Docs 특정 파일만 제외
+/docs/*.md
 /docs/참고
