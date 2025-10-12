@@ -9,7 +9,7 @@ model:
   type: causal_lm                                       # 모델 타입: Causal Language Model
   checkpoint: "upstage/solar-10.7b-instruct-v1.0"       # HuggingFace 모델 체크포인트
   size: "10.7B"                                         # 모델 파라미터 크기
-  dtype: "bf16"                                         # 데이터 타입: bfloat16 사용
+  dtype: "fp16"                                         # 데이터 타입: float16 사용 (PyTorch AMP 호환)
   chat_template: "solar"                                # 채팅 템플릿 형식
 
 # ---------------------- LoRA 설정 (Solar 최적화) ---------------------- #

@@ -7,7 +7,7 @@ model:
   type: causal_lm
   checkpoint: "Bllossom/llama-3.2-Korean-Bllossom-3B"
   size: "3B"
-  dtype: "bf16"  # Llama는 bf16 사용
+  dtype: "fp16"  # PyTorch AMP 호환성을 위해 FP16 사용
   chat_template: "llama"
 
 # LoRA 설정 (Llama 최적화)
