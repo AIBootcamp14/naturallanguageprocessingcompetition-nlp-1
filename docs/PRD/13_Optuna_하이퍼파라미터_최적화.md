@@ -656,7 +656,7 @@ search_ranges = {
     # 생성 파라미터
     'num_beams': [3, 4, 5],
     'repetition_penalty': [1.0, 1.1, 1.2],
-    'max_new_tokens': [100, 150, 200],
+    'max_new_tokens': [80, 100, 120],  # 최적값 100 기준 ±20 범위
 
     # ⚠️ 고정 권장 (검증된 값)
     'encoder_max_len': 1024,  # 절대 512로 하지 말것!
