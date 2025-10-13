@@ -184,25 +184,6 @@ class MultiModelEnsembleTrainer(BaseTrainer):
 
         self.log(f"\n📂 결과 저장: {result_path}")
 
-    def _override_config(self, config):
-        """
-        명령행 인자로 Config 오버라이드
-
-        Args:
-            config: Config 객체
-        """
-        # Epochs
-        if hasattr(self.args, 'epochs') and self.args.epochs is not None:
-            config.training.epochs = self.args.epochs
-
-        # Batch size
-        if hasattr(self.args, 'batch_size') and self.args.batch_size is not None:
-            config.training.batch_size = self.args.batch_size
-
-        # Learning rate
-        if hasattr(self.args, 'learning_rate') and self.args.learning_rate is not None:
-            config.training.learning_rate = self.args.learning_rate
-
     def _extract_eval_metrics(self, log_history):
         """
         학습 로그에서 평가 지표 추출

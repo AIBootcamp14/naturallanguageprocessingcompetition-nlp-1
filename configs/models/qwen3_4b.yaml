@@ -29,7 +29,7 @@ lora:
 training:
   epochs: 3
   batch_size: 6  # 4B 모델은 배치 크기 약간 줄임
-  gradient_accumulation_steps: 10  # effective batch = 6 * 10 = 60
+  gradient_accumulation_steps: 1  # 명령행 인자로 조정 권장
   learning_rate: 2e-5
   lr_scheduler_type: "cosine"
   warmup_ratio: 0.1
