@@ -60,6 +60,11 @@ graph TB
     I --> J
     J --> K
 
+    style Input fill:#e3f2fd,stroke:#1976d2,color:#000
+    style Training fill:#e8f5e9,stroke:#388e3c,color:#000
+    style Evaluation fill:#f3e5f5,stroke:#7b1fa2,color:#000
+    style Output fill:#c8e6c9,stroke:#2e7d32,color:#000
+
     style A fill:#90caf9,stroke:#1976d2,color:#000
     style B fill:#90caf9,stroke:#1976d2,color:#000
     style C fill:#90caf9,stroke:#1976d2,color:#000
@@ -69,7 +74,7 @@ graph TB
     style G fill:#ce93d8,stroke:#7b1fa2,color:#000
     style H fill:#ce93d8,stroke:#7b1fa2,color:#000
     style I fill:#fff9c4,stroke:#f57f17,color:#000
-    style J fill:#a5d6a7,stroke:#2e7d32,color:#000
+    style J fill:#aed581,stroke:#2e7d32,color:#000
     style K fill:#ffccbc,stroke:#d84315,color:#000
 ```
 
@@ -99,6 +104,19 @@ python scripts/train.py \
 ### 1.4 실험 결과 요약
 
 ```mermaid
+%%{init: {
+  "theme": "default",
+  "themeVariables": {
+    "pie1": "#A8E6CF",   /* 민트 파스텔 */
+    "pie2": "#FFD3B6",   /* 살구 파스텔 */
+    "pie3": "#FFAAA5",   /* 코랄 핑크 파스텔 */
+    "pie4": "#D1C4E9",   /* 연보라 파스텔 */
+    "textColor": "#333333",              /* 제목, 범례, 수치 등 전체 텍스트 색상 */
+    "pieSectionTextColor": "#333333",    /* 파이 조각 위에 표시되는 퍼센트 텍스트 색상 */
+    "pieTitleTextSize": "20px",          /* 제목 크기 (선택 사항) */
+    "pieSectionTextSize": "16px"         /* 조각 내부 텍스트 크기 (선택 사항) */
+  }
+}}%%
 pie title 파이프라인 단계별 성공 현황
     "학습 성공" : 1
     "평가 성공" : 1
@@ -119,13 +137,13 @@ graph LR
 
     style A fill:#90caf9,stroke:#1976d2,color:#000
     style B fill:#fff9c4,stroke:#f57f17,color:#000
-    style C fill:#a5d6a7,stroke:#2e7d32,color:#000
+    style C fill:#c8e6c9,stroke:#2e7d32,color:#000
     style D fill:#fff9c4,stroke:#f57f17,color:#000
-    style E fill:#a5d6a7,stroke:#2e7d32,color:#000
+    style E fill:#c8e6c9,stroke:#2e7d32,color:#000
     style F fill:#fff9c4,stroke:#f57f17,color:#000
-    style G fill:#a5d6a7,stroke:#2e7d32,color:#000
+    style G fill:#c8e6c9,stroke:#2e7d32,color:#000
     style H fill:#fff9c4,stroke:#f57f17,color:#000
-    style I fill:#ffccbc,stroke:#d84315,color:#000
+    style I fill:#ffcdd2,stroke:#c62828,color:#fff
 ```
 
 | 항목 | 결과 |
@@ -229,14 +247,14 @@ graph LR
     F --> G[Epoch 7<br/>Loss: 1.50<br/>ROUGE-Sum: 1.20]
     G --> H[Epoch 8<br/>Loss: 1.52<br/>ROUGE-Sum: 1.20<br/>🛑 Early Stop]
 
-    style A fill:#ffccbc,stroke:#d84315,color:#000
+    style A fill:#ef9a9a,stroke:#c62828,color:#000
     style B fill:#fff9c4,stroke:#f57f17,color:#000
     style C fill:#fff9c4,stroke:#f57f17,color:#000
     style D fill:#c5e1a5,stroke:#558b2f,color:#000
-    style E fill:#a5d6a7,stroke:#2e7d32,color:#000
+    style E fill:#c8e6c9,stroke:#2e7d32,color:#000
     style F fill:#fff9c4,stroke:#f57f17,color:#000
     style G fill:#fff9c4,stroke:#f57f17,color:#000
-    style H fill:#ffccbc,stroke:#d84315,color:#000
+    style H fill:#ef9a9a,stroke:#c62828,color:#000
 ```
 
 #### 3.1.2 ROUGE 점수 비교 (주요 Epoch)
@@ -267,6 +285,10 @@ graph TB
     Epoch1 --> Epoch5
     Epoch5 --> Epoch8
 
+    style Epoch1 fill:#e3f2fd,stroke:#1976d2,color:#000
+    style Epoch5 fill:#e8f5e9,stroke:#388e3c,color:#000
+    style Epoch8 fill:#fff3e0,stroke:#f57c00,color:#000
+
     style E1R1 fill:#90caf9,stroke:#1976d2,color:#000
     style E1R2 fill:#90caf9,stroke:#1976d2,color:#000
     style E1RL fill:#90caf9,stroke:#1976d2,color:#000
@@ -293,9 +315,9 @@ graph LR
     D --> E[완료<br/>10분 40초]
 
     style A fill:#90caf9,stroke:#1976d2,color:#000
-    style B fill:#a5d6a7,stroke:#2e7d32,color:#000
-    style C fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style D fill:#fff9c4,stroke:#f57f17,color:#000
+    style B fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style C fill:#a5d6a7,stroke:#2e7d32,color:#000
+    style D fill:#fff59d,stroke:#f57f17,color:#000
     style E fill:#ce93d8,stroke:#7b1fa2,color:#000
 ```
 
@@ -438,6 +460,9 @@ graph TB
     MIN --> AVG --> MAX
     AVG --> STD --> EVAL
 
+    style GradRange fill:#e8f5e9,stroke:#388e3c,color:#000
+    style Stability fill:#e3f2fd,stroke:#1976d2,color:#000
+
     style MIN fill:#c8e6c9,stroke:#2e7d32,color:#000
     style AVG fill:#a5d6a7,stroke:#2e7d32,color:#000
     style MAX fill:#fff9c4,stroke:#f57f17,color:#000
@@ -454,11 +479,11 @@ graph LR
     C --> D[Epoch 6<br/>약 1.25e-5<br/>25%]
     D --> E[최종 학습률<br/>2.88e-7<br/>0.6%]
 
-    style A fill:#ffccbc,stroke:#d84315,color:#000
-    style B fill:#fff9c4,stroke:#f57f17,color:#000
+    style A fill:#ef9a9a,stroke:#c62828,color:#000
+    style B fill:#fff59d,stroke:#f57f17,color:#000
     style C fill:#c8e6c9,stroke:#2e7d32,color:#000
     style D fill:#90caf9,stroke:#1976d2,color:#000
-    style E fill:#90caf9,stroke:#1976d2,color:#000
+    style E fill:#bbdefb,stroke:#1976d2,color:#000
 ```
 
 ### 3.4 학습 곡선 특징
@@ -482,6 +507,10 @@ graph TB
     end
 
     Phase1 --> Phase2 --> Phase3
+
+    style Phase1 fill:#e8f5e9,stroke:#388e3c,color:#000
+    style Phase2 fill:#fff3e0,stroke:#f57c00,color:#000
+    style Phase3 fill:#ffebee,stroke:#c62828,color:#000
 
     style A1 fill:#a5d6a7,stroke:#2e7d32,color:#000
     style A2 fill:#a5d6a7,stroke:#2e7d32,color:#000
@@ -583,6 +612,9 @@ graph TB
     R2 --> A2
     RL --> A3
 
+    style Metrics fill:#e8f5e9,stroke:#388e3c,color:#000
+    style Analysis fill:#e3f2fd,stroke:#1976d2,color:#000
+
     style R1 fill:#a5d6a7,stroke:#2e7d32,color:#000
     style R2 fill:#c8e6c9,stroke:#2e7d32,color:#000
     style RL fill:#a5d6a7,stroke:#2e7d32,color:#000
@@ -614,6 +646,10 @@ graph TB
     Solar --> KoBART
     KoBART --> Result
 
+    style KoBART fill:#e8f5e9,stroke:#388e3c,color:#000
+    style Solar fill:#ffebee,stroke:#c62828,color:#000
+    style Result fill:#e3f2fd,stroke:#1976d2,color:#000
+
     style KB_R1 fill:#a5d6a7,stroke:#2e7d32,color:#000
     style KB_R2 fill:#a5d6a7,stroke:#2e7d32,color:#000
     style KB_RL fill:#a5d6a7,stroke:#2e7d32,color:#000
@@ -622,7 +658,7 @@ graph TB
     style SOL_R2 fill:#ffccbc,stroke:#d84315,color:#000
     style SOL_RL fill:#ffccbc,stroke:#d84315,color:#000
 
-    style WIN fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style WIN fill:#90caf9,stroke:#1976d2,color:#000
 ```
 
 #### 4.3.3 학습 효율성 시각화
@@ -636,10 +672,10 @@ graph LR
     E --> F[완료<br/>10분 40초<br/>✅ 효율적]
 
     style A fill:#90caf9,stroke:#1976d2,color:#000
-    style B fill:#ffb74d,stroke:#f57c00,color:#000
-    style C fill:#a5d6a7,stroke:#2e7d32,color:#000
-    style D fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style E fill:#fff9c4,stroke:#f57f17,color:#000
+    style B fill:#ffcc80,stroke:#f57c00,color:#000
+    style C fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style D fill:#a5d6a7,stroke:#2e7d32,color:#000
+    style E fill:#fff59d,stroke:#f57f17,color:#000
     style F fill:#ce93d8,stroke:#7b1fa2,color:#000
 ```
 
@@ -665,12 +701,12 @@ graph TB
     E -->|No| F[KeyError 발생<br/>id]
     F --> G[❌ 제출 파일<br/>생성 실패]
 
-    style A fill:#a5d6a7,stroke:#2e7d32,color:#000
-    style B fill:#fff9c4,stroke:#f57f17,color:#000
-    style C fill:#ffb74d,stroke:#f57c00,color:#000
-    style D fill:#fff9c4,stroke:#f57f17,color:#000
-    style E fill:#fff9c4,stroke:#f57f17,color:#000
-    style F fill:#ffccbc,stroke:#d84315,color:#000
+    style A fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style B fill:#fff59d,stroke:#f57f17,color:#000
+    style C fill:#ffcc80,stroke:#f57c00,color:#000
+    style D fill:#fff59d,stroke:#f57f17,color:#000
+    style E fill:#fff59d,stroke:#f57f17,color:#000
+    style F fill:#ef9a9a,stroke:#c62828,color:#000
     style G fill:#ffcdd2,stroke:#c62828,color:#fff
 ```
 
@@ -1170,6 +1206,11 @@ graph TB
 
     P0 --> P1 --> P2 --> P3
 
+    style P0 fill:#ffebee,stroke:#c62828,color:#000
+    style P1 fill:#fff3e0,stroke:#f57c00,color:#000
+    style P2 fill:#e8f5e9,stroke:#388e3c,color:#000
+    style P3 fill:#e3f2fd,stroke:#1976d2,color:#000
+
     style A1 fill:#ffccbc,stroke:#d84315,color:#000
     style A2 fill:#ffccbc,stroke:#d84315,color:#000
     style B1 fill:#fff9c4,stroke:#f57f17,color:#000
@@ -1254,18 +1295,18 @@ graph TB
     G1 --> G
 
     style A fill:#90caf9,stroke:#1976d2,color:#000
-    style B fill:#fff9c4,stroke:#f57f17,color:#000
-    style C fill:#ffb74d,stroke:#f57c00,color:#000
-    style D fill:#fff9c4,stroke:#f57f17,color:#000
-    style E fill:#81c784,stroke:#388e3c,color:#000
-    style F fill:#fff9c4,stroke:#f57f17,color:#000
+    style B fill:#fff59d,stroke:#f57f17,color:#000
+    style C fill:#ffcc80,stroke:#f57c00,color:#000
+    style D fill:#fff59d,stroke:#f57f17,color:#000
+    style E fill:#a5d6a7,stroke:#388e3c,color:#000
+    style F fill:#fff59d,stroke:#f57f17,color:#000
     style G fill:#ce93d8,stroke:#7b1fa2,color:#000
-    style H fill:#fff9c4,stroke:#f57f17,color:#000
-    style I fill:#a5d6a7,stroke:#2e7d32,color:#000
-    style A1 fill:#ffccbc,stroke:#d84315,color:#000
-    style C1 fill:#ffccbc,stroke:#d84315,color:#000
-    style E1 fill:#ffccbc,stroke:#d84315,color:#000
-    style G1 fill:#ffccbc,stroke:#d84315,color:#000
+    style H fill:#fff59d,stroke:#f57f17,color:#000
+    style I fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style A1 fill:#ef9a9a,stroke:#c62828,color:#000
+    style C1 fill:#ef9a9a,stroke:#c62828,color:#000
+    style E1 fill:#ef9a9a,stroke:#c62828,color:#000
+    style G1 fill:#ef9a9a,stroke:#c62828,color:#000
 ```
 
 ### 7.2 검증 단계
