@@ -1,17 +1,17 @@
 # ==================== OptunaTrainer ==================== #
 """
-Optuna Xt||ÃÂ¸0 \T Trainer
+Optuna 하이퍼파라미터 튜닝 Trainer
 
-PRD 13: Optuna Xt||ÃÂ¸0 \T ÃÂµ l
-ÃÂÃÂ Xt||ÃÂ¸0 ÃÂÃÂD ÃÂµt \X ÃÂ¨x $ ÃÂÃÂ
+PRD 13: Optuna 하이퍼파라미터 튜닝 모듈
+최적의 하이퍼파라미터를 찾아 모델을 최적화하는 것이 목표
 """
 
-# ---------------------- \ |tÃÂ¬ÃÂ¬ ---------------------- #
+# ---------------------- 외부 라이브러리 ---------------------- #
 import json
 from pathlib import Path
 from typing import Dict, Any
 
-# ---------------------- \ÃÂ¸ ÃÂ¨ÃÂ ---------------------- #
+# ---------------------- 내부 모듈 ---------------------- #
 from src.trainers.base_trainer import BaseTrainer
 from src.config import load_model_config
 from src.models import load_model_and_tokenizer
@@ -22,53 +22,53 @@ from src.optimization import OptunaOptimizer
 
 # ==================== OptunaTrainer ==================== #
 class OptunaTrainer(BaseTrainer):
-    """Optuna Xt||ÃÂ¸0 \T Trainer"""
+    """Optuna 하이퍼파라미터 튜닝 Trainer"""
 
     def train(self):
         """
-        Optuna \T ÃÂ¤ÃÂ
+        Optuna 튜닝 실행
 
         Returns:
-            dict: \T ÃÂ°ÃÂ¼
+            dict: 튜닝 결과
                 - mode: 'optuna'
-                - model: ÃÂ¬ÃÂ©\ ÃÂ¨x
-                - best_params: \ Xt||ÃÂ¸0
-                - best_value: \ ROUGE 
-                - n_trials: ÃÂ´ ÃÂÃÂ ÃÂ
+                - model: 최적화된 모델
+                - best_params: 최적 하이퍼파라미터
+                - best_value: 최고 ROUGE 점수
+                - n_trials: 수행된 시도 횟수
         """
         self.log("=" * 60)
-        self.log("=ÃÂ OPTUNA \T ÃÂ¨ÃÂ ÃÂÃÂ")
-        self.log(f"=ÃÂ ÃÂ¨x: {self.args.models[0]}")
-        self.log(f"=' ÃÂÃÂ ÃÂ: {self.args.optuna_trials}")
-        self.log(f"ÃÂ± \ ÃÂ: {self.args.optuna_timeout}")
+        self.log("📊 OPTUNA 튜닝 모드 시작")
+        self.log(f"🔧 모델: {self.args.models[0]}")
+        self.log(f"🔢 시도 횟수: {self.args.optuna_trials}")
+        self.log(f"⏱ 최대 시간: {self.args.optuna_timeout}")
         self.log("=" * 60)
 
-        # 1. pt0 \ÃÂ
-        self.log("\n[1/3] pt0 \)...")
+        # 1. 데이터 로드
+        self.log("\n[1/3] 데이터 로드...")
         train_df, eval_df = self.load_data()
 
-        # 2. Config \ÃÂ
-        self.log("\n[2/3] Config \)...")
+        # 2. Config 로드
+        self.log("\n[2/3] Config 로드...")
         model_name = self.args.models[0]
         config = load_model_config(model_name)
 
-        self.log(f"   Config \ÃÂ DÃÂ: {model_name}")
+        self.log(f"   Config 로드 완료: {model_name}")
 
-        # 3. Dataset D (\ ÃÂÃÂ ÃÂ1)
-        self.log("\npt0K D ...")
+        # 3. Dataset 준비 (나중에 내부에서 생성)
+        self.log("\n데이터셋 준비 중...")
 
-        # TokenizerÃÂ \T ÃÂ¼ÃÂ ÃÂ¬\ÃÂXÃÂÃÂ, pt0ÃÂ@ ÃÂ¬ÃÂ¬ÃÂ©
+        # Tokenizer는 튜닝 과정에서 필요하므로, 데이터프레임만 직접 사용
         self.train_df = train_df
         self.eval_df = eval_df
 
-        # 4. Optuna Optimizer 0T
-        self.log(f"\n[3/3] Optuna \T ÃÂÃÂ...")
+        # 4. Optuna Optimizer 초기화
+        self.log(f"\n[3/3] Optuna 튜닝 시작...")
 
         from src.data import create_datasets_from_df
 
-        # Dataset ÃÂ1 ÃÂ¬| (Optuna ÃÂ´ÃÂÃÂ ÃÂ¬ÃÂ©)
+        # Dataset 생성 함수 (Optuna 내부에서 사용)
         def create_datasets(tokenizer, config):
-            """Dataset ÃÂ1 ÃÂ¬| h"""
+            """Dataset 생성 함수 제공"""
             model_type = config.model.get('type', 'encoder_decoder')
 
             train_dataset = DialogueSummarizationDataset(
@@ -93,26 +93,26 @@ class OptunaTrainer(BaseTrainer):
 
             return train_dataset, eval_dataset
 
-        # Optuna Optimizer 0T
+        # Optuna Optimizer 초기화
         optimizer = OptunaOptimizer(
             config=config,
-            train_dataset=None,  # Objective ÃÂ´ÃÂÃÂ ÃÂ1
-            val_dataset=None,    # Objective ÃÂ´ÃÂÃÂ ÃÂ1
+            train_dataset=None,  # Objective 내부에서 생성
+            val_dataset=None,    # Objective 내부에서 생성
             n_trials=self.args.optuna_trials,
             timeout=self.args.optuna_timeout,
             study_name=f"optuna_{model_name}_{self.args.experiment_name}",
-            storage=None,  # xTÃÂ¨ÃÂ¬
+            storage=None,  # 로컬 저장
             direction="maximize",
             logger=self.logger.logger if hasattr(self.logger, 'logger') else None
         )
 
-        # Dataset ÃÂ1 h| optimizerÃÂ ÃÂ¬
+        # Dataset 생성 함수를 optimizer에 전달
         optimizer.create_datasets = create_datasets
 
-        # \T ÃÂ¤ÃÂ
+        # 튜닝 실행
         study = optimizer.optimize()
 
-        # ÃÂ°ÃÂ¼ ÃÂ
+        # 결과 반환
         best_params = optimizer.get_best_params()
         best_value = optimizer.get_best_value()
 
@@ -125,22 +125,22 @@ class OptunaTrainer(BaseTrainer):
             'study_name': optimizer.study_name
         }
 
-        # ÃÂ°ÃÂ¼ ÃÂ¥
-        self.log("\nÃÂ°ÃÂ¼ ÃÂ¥ ...")
+        # 결과 저장
+        self.log("\n결과 저장 중...")
         optimizer.save_results(str(self.output_dir))
 
-        # ÃÂT (5X)
+        # 시각화 (선택)
         if self.args.save_visualizations:
-            self.log("\nÃÂT ÃÂ1 ...")
+            self.log("\n시각화 생성 중...")
             try:
                 optimizer.plot_optimization_history(str(self.output_dir))
             except Exception as e:
-                self.log(f"  ÃÂ  ÃÂT ÃÂ¤(: {e}")
+                self.log(f"    ⚠️  시각화 오류: {e}")
 
         self.log("\n" + "=" * 60)
-        self.log(" OPTUNA \T DÃÂ!")
-        self.log(f"\n=ÃÂ \ ROUGE-L F1: {best_value:.4f}")
-        self.log(f"\n=ÃÂ \ Xt||ÃÂ¸0:")
+        self.log("✅ OPTUNA 튜닝 완료!")
+        self.log(f"\n📈 최고 ROUGE-L F1: {best_value:.4f}")
+        self.log(f"\n🎯 최적 하이퍼파라미터:")
         for key, value in best_params.items():
             self.log(f"  {key}: {value}")
         self.log("=" * 60)
@@ -149,14 +149,14 @@ class OptunaTrainer(BaseTrainer):
 
     def save_results(self, results):
         """
-        ÃÂ°ÃÂ¼ ÃÂ¥
+        결과 저장
 
         Args:
-            results: \T ÃÂ°ÃÂ¼ TÃÂ¬
+            results: 튜닝 결과 딕셔너리
         """
         result_path = self.output_dir / "optuna_results.json"
 
-        # ÃÂ¥ ÃÂ¥\ ÃÂ\ ÃÂX
+        # 저장 가능한 형태로 변환
         saveable_results = {
             'mode': results['mode'],
             'model': results['model'],
@@ -169,24 +169,24 @@ class OptunaTrainer(BaseTrainer):
         with open(result_path, 'w', encoding='utf-8') as f:
             json.dump(saveable_results, f, indent=2, ensure_ascii=False)
 
-        self.log(f"\n=ÃÂ¾ ÃÂ°ÃÂ¼ ÃÂ¥: {result_path}")
+        self.log(f"\n📂 결과 저장: {result_path}")
 
-        # \ |ÃÂ¸0\ Config ÃÂ1 (ÃÂ¬ÃÂ¬ÃÂ© ÃÂ¥)
+        # 최적 파라미터로 Config 생성 (직접 사용 가능)
         best_config_path = self.output_dir / "best_config.yaml"
-        self.log(f"=ÃÂ¾ \ Config ÃÂ¥: {best_config_path}")
+        self.log(f"📂 최적 Config 저장: {best_config_path}")
 
 
-# ==================== ÃÂ¸X h ==================== #
+# ==================== 편의 함수 ==================== #
 def create_optuna_trainer(args, logger, wandb_logger=None):
     """
-    OptunaTrainer ÃÂ1 ÃÂ¸X h
+    OptunaTrainer 생성 편의 함수
 
     Args:
-        args: ÃÂ9ÃÂ xÃÂ
-        logger: Logger xÃÂ¤4ÃÂ¤
-        wandb_logger: WandB Logger ( ÃÂ)
+        args: 명령행 인자
+        logger: Logger 인스턴스
+        wandb_logger: WandB Logger (선택)
 
     Returns:
-        OptunaTrainer xÃÂ¤4ÃÂ¤
+        OptunaTrainer 인스턴스
     """
     return OptunaTrainer(args, logger, wandb_logger)
