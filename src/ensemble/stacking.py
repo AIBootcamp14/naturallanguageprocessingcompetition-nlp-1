@@ -84,7 +84,9 @@ class StackingEnsemble:
         self,
         train_dialogues: List[str],
         train_summaries: List[str],
-        max_length: int = 200,
+        max_new_tokens: int = 200,
+
+        min_new_tokens: int = 30,
         num_beams: int = 4
     ):
         """
@@ -93,7 +95,8 @@ class StackingEnsemble:
         Args:
             train_dialogues: 학습용 대화 리스트
             train_summaries: 학습용 요약 리스트 (정답)
-            max_length: 최대 생성 길이
+            max_new_tokens: 생성할 최대 토큰 수
+            min_new_tokens: 생성할 최소 토큰 수
             num_beams: Beam search 크기
         """
         self._log("\n메타 학습기 학습 시작...")
@@ -102,7 +105,8 @@ class StackingEnsemble:
         # 1단계: 베이스 모델들의 예측 수집
         base_predictions = self._get_base_predictions(
             train_dialogues,
-            max_length=max_length,
+            max_new_tokens=max_new_tokens,
+                        min_new_tokens=min_new_tokens,
             num_beams=num_beams
         )
 
@@ -146,7 +150,9 @@ class StackingEnsemble:
     def _get_base_predictions(
         self,
         dialogues: List[str],
-        max_length: int = 200,
+        max_new_tokens: int = 200,
+
+        min_new_tokens: int = 30,
         num_beams: int = 4
     ) -> List[List[str]]:
         """베이스 모델들의 예측 수집"""
@@ -177,7 +183,8 @@ class StackingEnsemble:
                     outputs = model.generate(
                         inputs['input_ids'],
                         attention_mask=inputs['attention_mask'],
-                        max_length=max_length,
+                        max_new_tokens=max_new_tokens,
+                        min_new_tokens=min_new_tokens,
                         num_beams=num_beams,
                         early_stopping=True
                     )
@@ -192,7 +199,9 @@ class StackingEnsemble:
     def predict(
         self,
         dialogues: List[str],
-        max_length: int = 200,
+        max_new_tokens: int = 200,
+
+        min_new_tokens: int = 30,
         num_beams: int = 4,
         batch_size: int = 8
     ) -> List[str]:
@@ -201,7 +210,8 @@ class StackingEnsemble:
 
         Args:
             dialogues: 대화 리스트
-            max_length: 최대 생성 길이
+            max_new_tokens: 생성할 최대 토큰 수
+            min_new_tokens: 생성할 최소 토큰 수
             num_beams: Beam search 크기
             batch_size: 배치 크기
 
@@ -214,7 +224,8 @@ class StackingEnsemble:
         # 1단계: 베이스 모델 예측
         base_predictions = self._get_base_predictions(
             dialogues,
-            max_length=max_length,
+            max_new_tokens=max_new_tokens,
+                        min_new_tokens=min_new_tokens,
             num_beams=num_beams
         )
 

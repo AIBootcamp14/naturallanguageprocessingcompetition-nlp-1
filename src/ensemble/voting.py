@@ -49,7 +49,8 @@ class VotingEnsemble:
     def predict(
         self,
         dialogues: List[str],
-        max_length: int = 200,
+        max_new_tokens: int = 200,
+        min_new_tokens: int = 30,
         num_beams: int = 4,
         batch_size: int = 8
     ) -> List[str]:
@@ -58,7 +59,8 @@ class VotingEnsemble:
 
         Args:
             dialogues: 입력 대화 리스트
-            max_length: 최대 생성 길이
+            max_new_tokens: 생성할 최대 토큰 수
+            min_new_tokens: 생성할 최소 토큰 수
             num_beams: Beam search 빔 개수
             batch_size: 배치 크기
 
@@ -97,7 +99,8 @@ class VotingEnsemble:
                 # 예측
                 outputs = model.generate(
                     **inputs,
-                    max_length=max_length,
+                    max_new_tokens=max_new_tokens,
+                    min_new_tokens=min_new_tokens,
                     num_beams=num_beams,
                     early_stopping=True,
                     no_repeat_ngram_size=3
