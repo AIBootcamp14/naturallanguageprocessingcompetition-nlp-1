@@ -1579,7 +1579,8 @@ qwen_representative_log = [
     {'timestamp': '00:14:33', 'epoch': 1.4,  'loss': 0.8425, 'grad_norm': 1.246, 'lr': 1.396e-05},
     {'timestamp': '00:28:32', 'epoch': 1.48, 'loss': 0.8612, 'grad_norm': 1.299, 'lr': 1.476e-05},
     {'timestamp': '01:59:22', 'epoch': 2.0,  'loss': 0.7881, 'grad_norm': 1.419, 'lr': 1.996e-05},
-    {'timestamp': '03:46:53', 'epoch': 2.0,  'eval_loss': 0.8513, 'eval_rouge1': 0.1450, 'eval_rouge2': 0.0980, 'eval_rougeL': 0.1450, 'eval_rouge_sum': 0.3880, 'status': '✅ 완료'}
+    {'timestamp': '03:46:53', 'epoch': 2.0,  'eval_loss': 0.8513, 'eval_rouge1': 0.1450, 'eval_rouge2': 0.0980, 'eval_rougeL': 0.1450, 'eval_rouge_sum': 0.3880},
+    {'timestamp': '02:44:22', 'train_runtime': 30185.2064, 'train_samples_per_second': 0.166, 'train_loss': 1.1681, 'status': '✅ 완료'}
 ]
 ```
 
