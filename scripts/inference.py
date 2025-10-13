@@ -98,6 +98,60 @@ def main():
         default=None,
         help="출력 디렉토리 (None: 자동 생성 experiments/날짜/추론폴더)"
     )
+
+    # ==================== Solar API 옵션 (PRD 09) ====================
+    parser.add_argument(
+        "--use_solar_api",
+        action="store_true",
+        help="Solar API 앙상블 사용"
+    )
+    parser.add_argument(
+        "--solar_weight",
+        type=float,
+        default=0.3,
+        help="Solar API 가중치 (0.0~1.0, 기본값: 0.3)"
+    )
+    parser.add_argument(
+        "--kobart_weight",
+        type=float,
+        default=0.7,
+        help="KoBART 가중치 (0.0~1.0, 기본값: 0.7)"
+    )
+    parser.add_argument(
+        "--ensemble_strategy",
+        type=str,
+        default="weighted_avg",
+        choices=["weighted_avg", "quality_based", "voting"],
+        help="앙상블 전략"
+    )
+
+    # ==================== HuggingFace 보정 옵션 (PRD 04, 12) ====================
+    parser.add_argument(
+        "--use_pretrained_correction",
+        action="store_true",
+        help="HuggingFace 사전학습 모델 보정 사용"
+    )
+    parser.add_argument(
+        "--correction_models",
+        type=str,
+        nargs="+",
+        default=["gogamza/kobart-base-v2", "digit82/kobart-summarization"],
+        help="보정에 사용할 HuggingFace 모델 리스트"
+    )
+    parser.add_argument(
+        "--correction_strategy",
+        type=str,
+        default="quality_based",
+        choices=["quality_based", "threshold", "voting", "weighted"],
+        help="보정 전략 (quality_based 추천)"
+    )
+    parser.add_argument(
+        "--correction_threshold",
+        type=float,
+        default=0.3,
+        help="품질 임계값 (0.0~1.0)"
+    )
+
     args = parser.parse_args()
 
     # -------------- 출력 디렉토리 설정 -------------- #
@@ -129,6 +183,10 @@ def main():
         options.append(f"rep{args.repetition_penalty}")
     if args.no_repeat_ngram_size is not None:
         options.append(f"ngram{args.no_repeat_ngram_size}")
+    if args.use_solar_api:
+        options.append("solar")
+    if args.use_pretrained_correction:
+        options.append("hf")
 
     # 출력 디렉토리 자동 생성 (지정되지 않은 경우)
     if args.output_dir is None:
@@ -234,22 +292,55 @@ def main():
         if args.no_repeat_ngram_size is not None:
             generation_kwargs['no_repeat_ngram_size'] = args.no_repeat_ngram_size
 
-        submission_df = predictor.create_submission(
-            test_df=test_df,
-            output_path=args.output,
+        # HuggingFace 보정 옵션 추가
+        if args.use_pretrained_correction:
+            logger.write("\n🔧 HuggingFace 사전학습 모델 보정 활성화")
+            logger.write(f"  - 보정 모델: {', '.join(args.correction_models)}")
+            logger.write(f"  - 보정 전략: {args.correction_strategy}")
+            logger.write(f"  - 품질 임계값: {args.correction_threshold}")
+
+        # Solar API 옵션 확인 (현재 미구현 - config를 통해 설정 필요)
+        if args.use_solar_api:
+            logger.write("\n⚠️  Solar API 앙상블은 현재 config 파일을 통해서만 지원됩니다")
+            logger.write(f"  - --use_solar_api 플래그는 무시됩니다")
+            logger.write(f"  - config 파일에서 solar_api 섹션을 설정하세요")
+
+        # 대화 추출
+        dialogues = test_df['dialogue'].tolist()
+
+        # 배치 예측 수행 (HF 보정 포함)
+        summaries = predictor.predict_batch(
+            dialogues=dialogues,
             batch_size=args.batch_size,
             show_progress=True,
+            use_pretrained_correction=args.use_pretrained_correction,
+            correction_models=args.correction_models if args.use_pretrained_correction else None,
+            correction_strategy=args.correction_strategy,
+            correction_threshold=args.correction_threshold,
             **generation_kwargs  # 생성 파라미터 오버라이드
         )
 
-        # 전역 submissions 폴더에도 저장
-        submission_df.to_csv(global_submission_path, index=False, encoding='utf-8')
-        logger.write(f"  ✅ 제출 파일 추가 저장: {global_submission_path}")
+        # 제출 DataFrame 생성
+        submission_df = test_df[['fname']].copy()
+        submission_df['summary'] = summaries
 
-        # -------------- 5. 결과 출력 -------------- #
-        logger.write("\n[5/5] 추론 완료!")
+        # -------------- 5. 파일 저장 -------------- #
+        logger.write("\n[5/5] 제출 파일 저장 중...")
+
+        # 출력 경로 디렉토리 생성
+        from src.utils.core.common import ensure_dir
+        ensure_dir(Path(args.output).parent)
+
+        # 1) 실험 폴더에 저장
+        submission_df.to_csv(args.output, index=False, encoding='utf-8')
         logger.write(f"  ✅ 제출 파일 생성 (1): {args.output}")
+
+        # 2) 전역 submissions 폴더에도 저장
+        submission_df.to_csv(global_submission_path, index=False, encoding='utf-8')
         logger.write(f"  ✅ 제출 파일 생성 (2): {global_submission_path}")
+
+        # -------------- 6. 결과 출력 -------------- #
+        logger.write("\n추론 완료!")
         logger.write(f"  샘플 수: {len(submission_df)}")
 
         # 샘플 출력

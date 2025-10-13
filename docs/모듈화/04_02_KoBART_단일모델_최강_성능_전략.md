@@ -346,49 +346,10 @@ KoBART로 빠르게 학습 → 추론 시 Solar API + HuggingFace 보정 동시 
 
 #### 구현 방법
 
-```bash
-# ==================== Solar API + HuggingFace 통합 추론 ==================== #
-python scripts/inference.py \
-  --model experiments/.../kobart/final_model \
-  --test_data data/raw/test.csv \
-  --use_solar_api \
-  --solar_weight 0.3 \
-  --kobart_weight 0.7 \
-  --ensemble_strategy weighted_avg \
-  --use_pretrained_correction \
-  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
-  --correction_strategy quality_based \
-  --correction_threshold 0.3 \
-  --max_new_tokens 100 \
-  --min_new_tokens 30 \
-  --num_beams 5 \
-  --repetition_penalty 1.5 \
-  --batch_size 16 \
-  --output submissions/kobart_solar_hf_ultimate.csv
-```
-
-| 옵션 | 값 | 설명 |
-|------|-----|------|
-| `--use_solar_api` | - | Solar API 활성화 |
-| `--solar_weight` | 0.3 | Solar API 가중치 30% |
-| `--kobart_weight` | 0.7 | KoBART 가중치 70% |
-| `--ensemble_strategy` | weighted_avg | 가중 평균 앙상블 |
-| `--use_pretrained_correction` | - | HuggingFace 보정 활성화 |
-| `--correction_models` | gogamza/kobart-base-v2 digit82/kobart-summarization | HF 보정 모델 |
-| `--correction_strategy` | quality_based | 품질 기반 보정 전략 |
-| `--correction_threshold` | 0.3 | 품질 임계값 |
-
-### 4.2 HuggingFace 사전학습 모델 보정 전략 (PRD 04, 12)
-
-> **✅ 사용 가능**: `--use_pretrained_correction` 옵션으로 HuggingFace 사전학습 모델 보정 기능을 활성화할 수 있습니다.
-
-#### 개념
-KoBART 학습 → 추론 시 HuggingFace 사전학습 모델들로 보정
-
-#### 구현 방법
+**⚠️ 주의**: Solar API는 현재 명령행 옵션으로 지원되지 않습니다. Config 파일을 통해 설정해야 합니다.
 
 ```bash
-# ==================== HuggingFace 보정 추론 ==================== #
+# ==================== HuggingFace 보정 추론 (추천) ==================== #
 python scripts/inference.py \
   --model experiments/.../kobart/final_model \
   --test_data data/raw/test.csv \
@@ -407,14 +368,34 @@ python scripts/inference.py \
 | 옵션 | 값 | 설명 |
 |------|-----|------|
 | `--use_pretrained_correction` | - | HuggingFace 보정 활성화 |
-| `--correction_models` | gogamza/kobart-base-v2 digit82/kobart-summarization | 보정에 사용할 HF 모델 리스트 |
-| `--correction_strategy` | quality_based | 보정 전략 (quality_based, threshold, voting, weighted) |
-| `--correction_threshold` | 0.3 | 품질 임계값 (0.0~1.0, 낮을수록 엄격) |
+| `--correction_models` | gogamza/kobart-base-v2 digit82/kobart-summarization | HF 보정 모델 |
+| `--correction_strategy` | quality_based | 품질 기반 보정 전략 |
+| `--correction_threshold` | 0.3 | 품질 임계값 |
+
+**Solar API 사용 방법**:
+- Config 파일(`configs/train_config.yaml` 또는 모델별 config)의 `inference.solar_api` 섹션에서 설정
+- 학습 시 `--use_solar_api` 플래그 사용 (추론 시 자동 적용)
+
+### 4.2 HuggingFace 사전학습 모델 보정 전략 (PRD 04, 12)
+
+> **✅ 사용 가능**: `--use_pretrained_correction` 옵션으로 HuggingFace 사전학습 모델 보정 기능을 활성화할 수 있습니다.
+
+#### 개념
+KoBART 학습 → 추론 시 HuggingFace 사전학습 모델들로 보정
+
+#### 보정 전략 설명
+
+| 전략 | 설명 | 추천 상황 |
+|------|------|----------|
+| `quality_based` | 품질 점수 기반 선택 (KoBART vs 참조 모델) | **추천** - 균형잡힌 품질 |
+| `threshold` | 합의도 임계값 기반 선택 | 보수적 보정 필요 시 |
+| `voting` | 모든 모델 투표 | 다양한 의견 반영 |
+| `weighted` | 가중 평균 (quality_based와 동일) | - |
 
 **현재 가능한 추론 고도화:**
-- ✅ Solar API 앙상블 (섹션 4.1)
-- ✅ HuggingFace 사전학습 모델 보정 (섹션 4.2)
-- ✅ 강화된 후처리 (섹션 4.3)
+- ✅ Solar API 앙상블 (학습 시 `--use_solar_api`, config 설정 필요)
+- ✅ HuggingFace 사전학습 모델 보정 (명령행 옵션 지원)
+- ✅ 강화된 후처리 (자동 적용)
 
 ### 4.3 후처리 고도화
 
