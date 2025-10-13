@@ -165,27 +165,49 @@ class ModelTrainer:
         labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
 
         # 유효하지 않은 토큰 ID 필터링 (OverflowError 방지)
-        vocab_size = len(self.tokenizer)
-        predictions = np.where(
-            (predictions >= 0) & (predictions < vocab_size),
-            predictions,
-            self.tokenizer.pad_token_id
-        )
-        labels = np.where(
-            (labels >= 0) & (labels < vocab_size),
-            labels,
-            self.tokenizer.pad_token_id
-        )
+        # Llama 등 일부 모델은 vocab_size를 명시적으로 가져와야 함
+        vocab_size = getattr(self.tokenizer, 'vocab_size', len(self.tokenizer))
 
-        # 디코딩
-        decoded_preds = self.tokenizer.batch_decode(    # 예측 디코딩
-            predictions,
-            skip_special_tokens=True                    # 특수 토큰 제외
-        )
-        decoded_labels = self.tokenizer.batch_decode(   # 레이블 디코딩
-            labels,
-            skip_special_tokens=True
-        )
+        # 음수 값과 vocab_size 이상 값을 필터링
+        predictions = np.clip(predictions, 0, vocab_size - 1).astype(np.int64)
+        labels = np.clip(labels, 0, vocab_size - 1).astype(np.int64)
+
+        # 디코딩 시도 (try-except로 안전하게 처리)
+        try:
+            decoded_preds = self.tokenizer.batch_decode(    # 예측 디코딩
+                predictions,
+                skip_special_tokens=True                    # 특수 토큰 제외
+            )
+        except (OverflowError, ValueError) as e:
+            # 오류 발생 시 각 토큰을 개별적으로 디코딩
+            decoded_preds = []
+            for pred in predictions:
+                try:
+                    # 유효한 토큰만 남기고 디코딩
+                    valid_tokens = [int(t) for t in pred if 0 <= t < vocab_size]
+                    decoded_preds.append(
+                        self.tokenizer.decode(valid_tokens, skip_special_tokens=True)
+                    )
+                except:
+                    decoded_preds.append("")  # 실패 시 빈 문자열
+
+        try:
+            decoded_labels = self.tokenizer.batch_decode(   # 레이블 디코딩
+                labels,
+                skip_special_tokens=True
+            )
+        except (OverflowError, ValueError) as e:
+            # 오류 발생 시 각 토큰을 개별적으로 디코딩
+            decoded_labels = []
+            for label in labels:
+                try:
+                    # 유효한 토큰만 남기고 디코딩
+                    valid_tokens = [int(t) for t in label if 0 <= t < vocab_size]
+                    decoded_labels.append(
+                        self.tokenizer.decode(valid_tokens, skip_special_tokens=True)
+                    )
+                except:
+                    decoded_labels.append("")  # 실패 시 빈 문자열
 
         # 앞뒤 공백 제거
         decoded_preds = [pred.strip() for pred in decoded_preds]
