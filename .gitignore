@@ -169,4 +169,5 @@ nosetests.xml # Test results
 
 # Docs 특정 파일만 제외
 /docs/*.md
+!/docs/experiments_style.md
 /docs/참고
