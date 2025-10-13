@@ -150,6 +150,20 @@ def parse_arguments():
 
     # ==================== 생성 파라미터 ====================
     parser.add_argument(
+        '--max_new_tokens',
+        type=int,
+        default=None,
+        help='생성할 최대 토큰 수 (None: config 파일 값 사용, 권장: 200)'
+    )
+
+    parser.add_argument(
+        '--min_new_tokens',
+        type=int,
+        default=None,
+        help='생성할 최소 토큰 수 (None: config 파일 값 사용, 권장: 30)'
+    )
+
+    parser.add_argument(
         '--num_beams',
         type=int,
         default=None,
@@ -585,50 +599,6 @@ def main():
         # 결과 저장
         trainer.save_results(results)
 
-        # 학습 로그 복사 (logs 폴더에도 저장)
-        try:
-            import shutil
-            from src.utils.core.common import now
-
-            # 날짜 폴더 경로
-            date_folder = now('%Y%m%d')
-            log_backup_dir = Path(f"logs/{date_folder}/train")
-            log_backup_dir.mkdir(parents=True, exist_ok=True)
-
-            # 옵션 정보 추출하여 파일명 생성
-            timestamp = now('%Y%m%d_%H%M%S')
-            model_name = args.models[0].replace('-', '_') if args.models else 'default'
-
-            # 옵션 태그 생성
-            options = []
-            if args.batch_size and args.batch_size != 8:
-                options.append(f"bs{args.batch_size}")
-            if args.epochs and args.epochs != 3:
-                options.append(f"ep{args.epochs}")
-            if args.use_augmentation:
-                options.append("aug")
-            if args.use_tta:
-                options.append("tta")
-            if args.ensemble_strategy and args.mode == 'multi_model':
-                options.append(args.ensemble_strategy)
-
-            # 파일명 생성
-            parts = [timestamp, args.mode, model_name]
-            if options:
-                parts.extend(options)
-
-            log_filename = "_".join(parts) + ".log"
-            log_backup_path = log_backup_dir / log_filename
-
-            # 로그 파일 복사
-            source_log = Path(args.output_dir) / "train.log"
-            if source_log.exists():
-                shutil.copy2(source_log, log_backup_path)
-                logger.write(f"\n📋 학습 로그 백업: {log_backup_path}")
-
-        except Exception as e:
-            logger.write(f"\n⚠️ 로그 백업 실패: {e}")
-
         # 추론 최적화 (PRD 17) - 옵션
         if args.optimize_inference:
             logger.write("\n🔧 추론 최적화 시작 (PRD 17)...")
@@ -700,6 +670,8 @@ def main():
 
     except Exception as e:
         logger.write(f"\n❌ 오류 발생: {e}", print_error=True)
+        # 오류 발생 시 마지막 진행률 기록
+        logger.write_last_progress()
         raise
 
     finally:
