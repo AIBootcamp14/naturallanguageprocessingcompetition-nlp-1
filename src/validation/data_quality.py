@@ -1,6 +1,6 @@
 # ==================== pt0   ==================== #
 """
-pt0   ܤ\
+pt0   ÃÂ¤\
 
 PRD 11: pt0   
 - lp  (, D D)
@@ -61,7 +61,7 @@ class DataQualityValidator:
               T
         """
         self._log("\n" + "="*60)
-        self._log("pt0   ܑ")
+        self._log("pt0   ÃÂ")
         self._log("="*60)
 
         results = {
@@ -304,7 +304,7 @@ class DataQualityValidator:
                 mean_len = lengths.mean()
                 std_len = lengths.std()
 
-                # Z-score İ
+                # Z-score ÃÂ°
                 z_scores = np.abs((lengths - mean_len) / std_len)
                 anomaly_mask = z_scores > z_threshold
 
@@ -369,7 +369,7 @@ class DataQualityValidator:
             output_path:  \
         """
         if not self.validation_results:
-            self._log("`   Ƶ.")
+            self._log("`   ÃÂµ.")
             return
 
         output_file = Path(output_path)

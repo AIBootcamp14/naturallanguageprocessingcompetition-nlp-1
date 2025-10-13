@@ -1,19 +1,19 @@
-# ==================== l  ==================== #
+# ==================== 프롬프트 관리자 ==================== #
 """
-l ȴ 
+프롬프트 엔지니어링 관리자
 
-PRD 10: l ȴ  l
-- \   
--  l 1
-- A/B L 
+PRD 10: 프롬프트 엔지니어링 모듈
+- 템플릿 관리
+- 동적 프롬프트 생성
+- A/B 테스트 지원
 """
 
-# ---------------------- \ |t ---------------------- #
+# ---------------------- 외부 라이브러리 ---------------------- #
 from typing import List, Dict, Optional, Any
 from pathlib import Path
 import json
 
-# ---------------------- \  ---------------------- #
+# ---------------------- 내부 모듈 ---------------------- #
 from .templates import (
     PromptTemplate,
     TEMPLATE_REGISTRY,
@@ -23,9 +23,9 @@ from .templates import (
 )
 
 
-# ==================== PromptManager t ==================== #
+# ==================== PromptManager 클래스 ==================== #
 class PromptManager:
-    """l  - \    1"""
+    """프롬프트 관리자 - 템플릿 관리 및 프롬프트 생성"""
 
     def __init__(
         self,
@@ -34,22 +34,22 @@ class PromptManager:
     ):
         """
         Args:
-            default_template: 0 \ t
-            logger: Logger x4
+            default_template: 기본 템플릿 이름
+            logger: Logger 인스턴스
         """
         self.default_template = default_template
         self.logger = logger
 
-        #  \
+        # 현재 템플릿
         self.current_template = get_template(default_template)
 
-        # l  (A/B L)
+        # 프롬프트 히스토리 (A/B 테스트)
         self.prompt_history: List[Dict[str, Any]] = []
 
-        self._log(f"PromptManager 0T (\: {default_template})")
+        self._log(f"PromptManager 초기화 (템플릿: {default_template})")
 
     def _log(self, msg: str):
-        """\E |"""
+        """로그 출력"""
         if self.logger:
             self.logger.write(msg)
         else:
@@ -57,20 +57,20 @@ class PromptManager:
 
     def set_template(self, template_name: str):
         """
-        \ 
+        템플릿 변경
 
         Args:
-            template_name:  \ t
+            template_name: 새로운 템플릿 이름
         """
         self.current_template = get_template(template_name)
-        self._log(f"\ : {template_name}")
+        self._log(f"템플릿 변경: {template_name}")
 
     def get_current_template(self) -> PromptTemplate:
         """
-         \ X
+        현재 템플릿 가져오기
 
         Returns:
-             PromptTemplate 
+            현재 PromptTemplate 객체
         """
         return self.current_template
 
@@ -81,26 +81,26 @@ class PromptManager:
         **kwargs
     ) -> str:
         """
-        l 
+        프롬프트 생성
 
         Args:
-            dialogue: T M
-            template_name: ` \ t (Nonett  \)
-            **kwargs:   x
+            dialogue: 대화 문자열
+            template_name: 사용할 템플릿 이름 (None이면 현재 템플릿)
+            **kwargs: 추가 인자
 
         Returns:
-             l
+            완성된 프롬프트
         """
-        # \  
+        # 템플릿 선택
         if template_name is not None:
             template = get_template(template_name)
         else:
             template = self.current_template
 
-        # l 
+        # 프롬프트 생성
         prompt = template.template.format(dialogue=dialogue, **kwargs)
 
-        #  0]
+        # 히스토리 기록
         self.prompt_history.append({
             'template_name': template.name,
             'dialogue': dialogue,
@@ -117,15 +117,15 @@ class PromptManager:
         **kwargs
     ) -> List[str]:
         """
-        0X l 
+        배치 프롬프트 생성
 
         Args:
-            dialogues: T 
-            template_name: \ t
-            **kwargs:  x
+            dialogues: 대화 목록
+            template_name: 템플릿 이름
+            **kwargs: 추가 인자
 
         Returns:
-             l 
+            완성된 프롬프트 목록
         """
         prompts = []
 
@@ -146,15 +146,15 @@ class PromptManager:
         description: str = ""
     ) -> PromptTemplate:
         """
-        @ \ 1
+        커스텀 템플릿 생성
 
         Args:
-            name: \ t
-            template: \ 8 ({dialogue} t@T h)
-            description: $
+            name: 템플릿 이름
+            template: 템플릿 문자열 ({dialogue} 플레이스홀더 포함)
+            description: 설명
 
         Returns:
-            1 PromptTemplate 
+            생성된 PromptTemplate 객체
         """
         custom_template = PromptTemplate(
             name=name,
@@ -162,10 +162,10 @@ class PromptManager:
             description=description
         )
 
-        #  
+        # 레지스트리에 추가
         TEMPLATE_REGISTRY[name] = custom_template
 
-        self._log(f"@ \ 1: {name}")
+        self._log(f"커스텀 템플릿 생성: {name}")
 
         return custom_template
 
@@ -175,14 +175,14 @@ class PromptManager:
         template_names: List[str]
     ) -> Dict[str, str]:
         """
-         \<\ |\ T| X DP
+        여러 템플릿으로 프롬프트 생성하여 비교
 
         Args:
-            dialogue: T M
-            template_names: DP` \ t 
+            dialogue: 대화 문자열
+            template_names: 비교할 템플릿 이름 목록
 
         Returns:
-            \   T
+            템플릿별 프롬프트 딕셔너리
         """
         results = {}
 
@@ -197,13 +197,13 @@ class PromptManager:
 
     def get_template_info(self, template_name: Optional[str] = None) -> Dict[str, Any]:
         """
-        \  p
+        템플릿 정보 조회
 
         Args:
-            template_name: \ t (Nonett  \)
+            template_name: 템플릿 이름 (None이면 현재 템플릿)
 
         Returns:
-            \  T
+            템플릿 정보 딕셔너리
         """
         if template_name is not None:
             template = get_template(template_name)
@@ -220,13 +220,13 @@ class PromptManager:
 
     def list_available_templates(self, category: Optional[str] = None) -> List[str]:
         """
-         \ \ ]
+        사용 가능한 템플릿 목록 조회
 
         Args:
-            category: tL D0 (Nonett )
+            category: 카테고리 필터링 (None이면 전체)
 
         Returns:
-            \ t 
+            템플릿 이름 목록
         """
         if category is None:
             return list_templates()
@@ -236,10 +236,10 @@ class PromptManager:
 
     def save_history(self, output_path: str):
         """
-        l  
+        프롬프트 히스토리 저장
 
         Args:
-            output_path:  \
+            output_path: 저장 경로
         """
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
@@ -247,24 +247,24 @@ class PromptManager:
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(self.prompt_history, f, indent=2, ensure_ascii=False)
 
-        self._log(f"l  : {output_path}")
+        self._log(f"프롬프트 히스토리 저장: {output_path}")
 
     def clear_history(self):
-        """ 0T"""
+        """히스토리 초기화"""
         self.prompt_history = []
-        self._log("l  0T")
+        self._log("프롬프트 히스토리 초기화")
 
     def get_statistics(self) -> Dict[str, Any]:
         """
-         
+        사용 통계 조회
 
         Returns:
-              T
+            통계 정보 딕셔너리
         """
         if not self.prompt_history:
             return {'total': 0}
 
-        # \  
+        # 템플릿별 사용 횟수
         template_counts = {}
         for entry in self.prompt_history:
             template_name = entry['template_name']
@@ -277,20 +277,20 @@ class PromptManager:
         }
 
 
-# ==================== X h ==================== #
+# ==================== 편의 함수 ==================== #
 def create_prompt_manager(
     default_template: str = "zero_shot_simple",
     logger=None
 ) -> PromptManager:
     """
-    PromptManager 1 X h
+    PromptManager 생성 편의 함수
 
     Args:
-        default_template: 0 \
-        logger: Logger x4
+        default_template: 기본 템플릿
+        logger: Logger 인스턴스
 
     Returns:
-        PromptManager x4
+        PromptManager 인스턴스
     """
     return PromptManager(
         default_template=default_template,
@@ -303,14 +303,14 @@ def quick_format(
     template_name: str = "zero_shot_simple"
 ) -> str:
     """
-    `x l  ( t)
+    빠른 프롬프트 생성 (단일 사용)
 
     Args:
-        dialogue: T M
-        template_name: \ t
+        dialogue: 대화 문자열
+        template_name: 템플릿 이름
 
     Returns:
-         l
+        완성된 프롬프트
     """
     template = get_template(template_name)
     return template.template.format(dialogue=dialogue)
