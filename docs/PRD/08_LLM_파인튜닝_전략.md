@@ -248,7 +248,9 @@ class LLMFineTuner:
         inputs = self.tokenizer(prompt, return_tensors="pt")
         outputs = self.model.generate(
             **inputs,
-            max_new_tokens=100,
+            max_new_tokens=100,          # 최적값: 100 (적정 길이 유지)
+            repetition_penalty=1.5,       # 최적값: 1.5 (적절한 억제)
+            no_repeat_ngram_size=3,       # 최적값: 3 (반복 방지)
             temperature=0.7,
             do_sample=True,
             top_p=0.9
