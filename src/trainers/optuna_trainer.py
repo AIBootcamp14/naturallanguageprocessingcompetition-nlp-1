@@ -1,17 +1,17 @@
 # ==================== OptunaTrainer ==================== #
 """
-Optuna Xt||ø0 \T Trainer
+Optuna Xt||ÃÂ¸0 \T Trainer
 
-PRD 13: Optuna Xt||ø0 \T µ l
-Ù Xt||ø0 ÝD µt \X ¨x $ ÐÉ
+PRD 13: Optuna Xt||ÃÂ¸0 \T ÃÂµ l
+ÃÂÃÂ Xt||ÃÂ¸0 ÃÂÃÂD ÃÂµt \X ÃÂ¨x $ ÃÂÃÂ
 """
 
-# ---------------------- \ |tì¬ ---------------------- #
+# ---------------------- \ |tÃÂ¬ÃÂ¬ ---------------------- #
 import json
 from pathlib import Path
 from typing import Dict, Any
 
-# ---------------------- \¸ ¨È ---------------------- #
+# ---------------------- \ÃÂ¸ ÃÂ¨ÃÂ ---------------------- #
 from src.trainers.base_trainer import BaseTrainer
 from src.config import load_model_config
 from src.models import load_model_and_tokenizer
@@ -22,53 +22,53 @@ from src.optimization import OptunaOptimizer
 
 # ==================== OptunaTrainer ==================== #
 class OptunaTrainer(BaseTrainer):
-    """Optuna Xt||ø0 \T Trainer"""
+    """Optuna Xt||ÃÂ¸0 \T Trainer"""
 
     def train(self):
         """
-        Optuna \T ä
+        Optuna \T ÃÂ¤ÃÂ
 
         Returns:
-            dict: \T °ü
+            dict: \T ÃÂ°ÃÂ¼
                 - mode: 'optuna'
-                - model: ¬©\ ¨x
-                - best_params: \ Xt||ø0
+                - model: ÃÂ¬ÃÂ©\ ÃÂ¨x
+                - best_params: \ Xt||ÃÂ¸0
                 - best_value: \ ROUGE 
-                - n_trials: ´ ÜÄ 
+                - n_trials: ÃÂ´ ÃÂÃÂ ÃÂ
         """
         self.log("=" * 60)
-        self.log("= OPTUNA \T ¨Ü Ü")
-        self.log(f"=Ë ¨x: {self.args.models[0]}")
-        self.log(f"=' ÜÄ : {self.args.optuna_trials}")
-        self.log(f"ñ \ Ü: {self.args.optuna_timeout}")
+        self.log("=ÃÂ OPTUNA \T ÃÂ¨ÃÂ ÃÂÃÂ")
+        self.log(f"=ÃÂ ÃÂ¨x: {self.args.models[0]}")
+        self.log(f"=' ÃÂÃÂ ÃÂ: {self.args.optuna_trials}")
+        self.log(f"ÃÂ± \ ÃÂ: {self.args.optuna_timeout}")
         self.log("=" * 60)
 
-        # 1. pt0 \Ü
+        # 1. pt0 \ÃÂ
         self.log("\n[1/3] pt0 \)...")
         train_df, eval_df = self.load_data()
 
-        # 2. Config \Ü
+        # 2. Config \ÃÂ
         self.log("\n[2/3] Config \)...")
         model_name = self.args.models[0]
         config = load_model_config(model_name)
 
-        self.log(f"   Config \Ü DÌ: {model_name}")
+        self.log(f"   Config \ÃÂ DÃÂ: {model_name}")
 
-        # 3. Dataset D (\ Ì Ý1)
+        # 3. Dataset D (\ ÃÂÃÂ ÃÂ1)
         self.log("\npt0K D ...")
 
-        # Tokenizer \T üÐ ¬\ÜXÀÌ, pt0@ ¬¬©
+        # TokenizerÃÂ \T ÃÂ¼ÃÂ ÃÂ¬\ÃÂXÃÂÃÂ, pt0ÃÂ@ ÃÂ¬ÃÂ¬ÃÂ©
         self.train_df = train_df
         self.eval_df = eval_df
 
         # 4. Optuna Optimizer 0T
-        self.log(f"\n[3/3] Optuna \T Ü...")
+        self.log(f"\n[3/3] Optuna \T ÃÂÃÂ...")
 
         from src.data import create_datasets_from_df
 
-        # Dataset Ý1 ì| (Optuna ´Ð ¬©)
+        # Dataset ÃÂ1 ÃÂ¬| (Optuna ÃÂ´ÃÂÃÂ ÃÂ¬ÃÂ©)
         def create_datasets(tokenizer, config):
-            """Dataset Ý1 ì| h"""
+            """Dataset ÃÂ1 ÃÂ¬| h"""
             model_type = config.model.get('type', 'encoder_decoder')
 
             train_dataset = DialogueSummarizationDataset(
@@ -96,23 +96,23 @@ class OptunaTrainer(BaseTrainer):
         # Optuna Optimizer 0T
         optimizer = OptunaOptimizer(
             config=config,
-            train_dataset=None,  # Objective ´Ð Ý1
-            val_dataset=None,    # Objective ´Ð Ý1
+            train_dataset=None,  # Objective ÃÂ´ÃÂÃÂ ÃÂ1
+            val_dataset=None,    # Objective ÃÂ´ÃÂÃÂ ÃÂ1
             n_trials=self.args.optuna_trials,
             timeout=self.args.optuna_timeout,
             study_name=f"optuna_{model_name}_{self.args.experiment_name}",
-            storage=None,  # xT¨¬
+            storage=None,  # xTÃÂ¨ÃÂ¬
             direction="maximize",
             logger=self.logger.logger if hasattr(self.logger, 'logger') else None
         )
 
-        # Dataset Ý1 h| optimizerÐ ì
+        # Dataset ÃÂ1 h| optimizerÃÂ ÃÂ¬
         optimizer.create_datasets = create_datasets
 
-        # \T ä
+        # \T ÃÂ¤ÃÂ
         study = optimizer.optimize()
 
-        # °ü Ñ
+        # ÃÂ°ÃÂ¼ ÃÂ
         best_params = optimizer.get_best_params()
         best_value = optimizer.get_best_value()
 
@@ -125,22 +125,22 @@ class OptunaTrainer(BaseTrainer):
             'study_name': optimizer.study_name
         }
 
-        # °ü ¥
-        self.log("\n°ü ¥ ...")
+        # ÃÂ°ÃÂ¼ ÃÂ¥
+        self.log("\nÃÂ°ÃÂ¼ ÃÂ¥ ...")
         optimizer.save_results(str(self.output_dir))
 
-        # ÜT (5X)
+        # ÃÂT (5X)
         if self.args.save_visualizations:
-            self.log("\nÜT Ý1 ...")
+            self.log("\nÃÂT ÃÂ1 ...")
             try:
                 optimizer.plot_optimization_history(str(self.output_dir))
             except Exception as e:
-                self.log(f"    ÜT ä(: {e}")
+                self.log(f"  ÃÂ  ÃÂT ÃÂ¤(: {e}")
 
         self.log("\n" + "=" * 60)
-        self.log(" OPTUNA \T DÌ!")
-        self.log(f"\n=Ê \ ROUGE-L F1: {best_value:.4f}")
-        self.log(f"\n=Ê \ Xt||ø0:")
+        self.log(" OPTUNA \T DÃÂ!")
+        self.log(f"\n=ÃÂ \ ROUGE-L F1: {best_value:.4f}")
+        self.log(f"\n=ÃÂ \ Xt||ÃÂ¸0:")
         for key, value in best_params.items():
             self.log(f"  {key}: {value}")
         self.log("=" * 60)
@@ -149,14 +149,14 @@ class OptunaTrainer(BaseTrainer):
 
     def save_results(self, results):
         """
-        °ü ¥
+        ÃÂ°ÃÂ¼ ÃÂ¥
 
         Args:
-            results: \T °ü T¬
+            results: \T ÃÂ°ÃÂ¼ TÃÂ¬
         """
         result_path = self.output_dir / "optuna_results.json"
 
-        # ¥ ¥\ Ü\ ÀX
+        # ÃÂ¥ ÃÂ¥\ ÃÂ\ ÃÂX
         saveable_results = {
             'mode': results['mode'],
             'model': results['model'],
@@ -169,24 +169,24 @@ class OptunaTrainer(BaseTrainer):
         with open(result_path, 'w', encoding='utf-8') as f:
             json.dump(saveable_results, f, indent=2, ensure_ascii=False)
 
-        self.log(f"\n=¾ °ü ¥: {result_path}")
+        self.log(f"\n=ÃÂ¾ ÃÂ°ÃÂ¼ ÃÂ¥: {result_path}")
 
-        # \ |ø0\ Config Ý1 (¬¬© ¥)
+        # \ |ÃÂ¸0\ Config ÃÂ1 (ÃÂ¬ÃÂ¬ÃÂ© ÃÂ¥)
         best_config_path = self.output_dir / "best_config.yaml"
-        self.log(f"=¾ \ Config ¥: {best_config_path}")
+        self.log(f"=ÃÂ¾ \ Config ÃÂ¥: {best_config_path}")
 
 
-# ==================== ¸X h ==================== #
+# ==================== ÃÂ¸X h ==================== #
 def create_optuna_trainer(args, logger, wandb_logger=None):
     """
-    OptunaTrainer Ý1 ¸X h
+    OptunaTrainer ÃÂ1 ÃÂ¸X h
 
     Args:
-        args: 9 x
-        logger: Logger x¤4¤
-        wandb_logger: WandB Logger ( Ý)
+        args: ÃÂ9ÃÂ xÃÂ
+        logger: Logger xÃÂ¤4ÃÂ¤
+        wandb_logger: WandB Logger ( ÃÂ)
 
     Returns:
-        OptunaTrainer x¤4¤
+        OptunaTrainer xÃÂ¤4ÃÂ¤
     """
     return OptunaTrainer(args, logger, wandb_logger)
