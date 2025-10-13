@@ -155,7 +155,32 @@ def load_causal_lm(config, logger=None):
             if logger:
                 logger.write(f"  Chat 템플릿 토큰 추가: {num_added}개")
 
-    # 4. LoRA 설정
+    # 4. Full Fine-tuning vs LoRA 선택
+    use_full_finetuning = getattr(config, 'use_full_finetuning', False)
+
+    if use_full_finetuning:
+        # Full Fine-tuning 모드
+        if logger:
+            logger.write("  ✅ Full Fine-tuning 모드 활성화")
+            logger.write("    모든 파라미터 학습 가능")
+
+            trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+            total_params = sum(p.numel() for p in model.parameters())
+
+            logger.write(f"    학습 가능 파라미터: {trainable_params:,} (100%)")
+            logger.write(f"    전체 파라미터: {total_params:,}")
+
+        # Gradient Checkpointing은 Full FT에서도 유용
+        if config.training.get('gradient_checkpointing', True):
+            model.gradient_checkpointing_enable()
+            model.config.use_cache = False
+
+            if logger:
+                logger.write("  ✅ Gradient Checkpointing 활성화")
+
+        return model, tokenizer
+
+    # LoRA 설정
     if hasattr(config.model, 'lora') and config.model.lora:
         if logger:
             logger.write("  LoRA 설정 적용 중...")

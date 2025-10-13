@@ -270,8 +270,8 @@ def parse_arguments():
     parser.add_argument(
         '--tta_num_aug',
         type=int,
-        default=3,
-        help='TTA 증강 수'
+        default=1,
+        help='TTA 증강 수 (기본값: 1, 실무에서 거의 사용 안 함)'
     )
 
     # ==================== Optuna 설정 ====================
@@ -337,15 +337,15 @@ def parse_arguments():
         type=str,
         nargs='+',
         default=['back_translation', 'paraphrase'],
-        choices=['back_translation', 'paraphrase', 'synonym', 'turn_shuffle'],
-        help='증강 방법'
+        choices=['back_translation', 'paraphrase', 'synonym', 'turn_shuffle', 'sample'],
+        help='증강 방법 (권장: back_translation, paraphrase)'
     )
 
     parser.add_argument(
         '--augmentation_ratio',
         type=float,
-        default=0.3,
-        help='증강 비율 (0.0~1.0)'
+        default=0.5,
+        help='증강 비율 (0.0~1.0, 기본값: 0.5)'
     )
 
     # ==================== Solar API (PRD 09) ====================
@@ -428,6 +428,20 @@ def parse_arguments():
         '--use_onnx',
         action='store_true',
         help='ONNX 변환 적용'
+    )
+
+    # ==================== Fine-tuning 전략 ====================
+    parser.add_argument(
+        '--use_full_finetuning',
+        action='store_true',
+        help='LoRA 대신 Full Fine-tuning 사용 (Causal LM 모델, 메모리 많이 필요)'
+    )
+
+    parser.add_argument(
+        '--lora_rank',
+        type=int,
+        default=16,
+        help='LoRA rank (use_full_finetuning=False일 때만 적용, 기본값: 16)'
     )
 
     parser.add_argument(

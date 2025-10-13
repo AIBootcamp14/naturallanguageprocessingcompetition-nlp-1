@@ -683,17 +683,6 @@ class FullPipelineTrainer(BaseTrainer):
                 'error': str(e)
             }
 
-    def _override_config(self, config):
-        """Config 오버라이드"""
-        if hasattr(self.args, 'epochs') and self.args.epochs is not None:
-            config.training.epochs = self.args.epochs
-
-        if hasattr(self.args, 'batch_size') and self.args.batch_size is not None:
-            config.training.batch_size = self.args.batch_size
-
-        if hasattr(self.args, 'learning_rate') and self.args.learning_rate is not None:
-            config.training.learning_rate = self.args.learning_rate
-
     def _extract_eval_metrics(self, log_history):
         """평가 지표 추출"""
         eval_metrics = {}

@@ -175,6 +175,14 @@ class BaseTrainer(ABC):
         if hasattr(self.args, 'label_smoothing') and self.args.label_smoothing is not None:
             config.training.label_smoothing = self.args.label_smoothing
 
+        # Fine-tuning 전략
+        if hasattr(self.args, 'use_full_finetuning') and self.args.use_full_finetuning:
+            config.use_full_finetuning = True
+
+        if hasattr(self.args, 'lora_rank') and self.args.lora_rank is not None:
+            if hasattr(config.model, 'lora'):
+                config.model.lora.r = self.args.lora_rank
+
         # 생성 파라미터
         if hasattr(self.args, 'num_beams') and self.args.num_beams is not None:
             if not hasattr(config, 'inference'):
