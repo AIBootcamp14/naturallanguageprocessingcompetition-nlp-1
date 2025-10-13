@@ -63,6 +63,30 @@ def main():
         help="Beam search 빔 개수"
     )
     parser.add_argument(
+        "--max_new_tokens",
+        type=int,
+        default=None,
+        help="생성할 최대 토큰 수 (None: config 파일 값 사용, 권장: 200)"
+    )
+    parser.add_argument(
+        "--min_new_tokens",
+        type=int,
+        default=None,
+        help="생성할 최소 토큰 수 (None: config 파일 값 사용, 권장: 30)"
+    )
+    parser.add_argument(
+        "--repetition_penalty",
+        type=float,
+        default=None,
+        help="반복 억제 강도 (None: config 파일 값 사용, 권장: 1.5~2.0)"
+    )
+    parser.add_argument(
+        "--no_repeat_ngram_size",
+        type=int,
+        default=None,
+        help="반복 금지 n-gram 크기 (None: config 파일 값 사용, 권장: 3)"
+    )
+    parser.add_argument(
         "--experiment",
         type=str,
         default="baseline_kobart",
@@ -97,6 +121,14 @@ def main():
         options.append(f"bs{args.batch_size}")
     if args.num_beams != 4:
         options.append(f"beam{args.num_beams}")
+    if args.max_new_tokens is not None:
+        options.append(f"maxnew{args.max_new_tokens}")
+    if args.min_new_tokens is not None:
+        options.append(f"minnew{args.min_new_tokens}")
+    if args.repetition_penalty is not None:
+        options.append(f"rep{args.repetition_penalty}")
+    if args.no_repeat_ngram_size is not None:
+        options.append(f"ngram{args.no_repeat_ngram_size}")
 
     # 출력 디렉토리 자동 생성 (지정되지 않은 경우)
     if args.output_dir is None:
@@ -191,12 +223,23 @@ def main():
         )
 
         # 제출 파일 생성
+        # 생성 파라미터 준비 (None이 아닌 값만 전달)
+        generation_kwargs = {'num_beams': args.num_beams}
+        if args.max_new_tokens is not None:
+            generation_kwargs['max_new_tokens'] = args.max_new_tokens
+        if args.min_new_tokens is not None:
+            generation_kwargs['min_new_tokens'] = args.min_new_tokens
+        if args.repetition_penalty is not None:
+            generation_kwargs['repetition_penalty'] = args.repetition_penalty
+        if args.no_repeat_ngram_size is not None:
+            generation_kwargs['no_repeat_ngram_size'] = args.no_repeat_ngram_size
+
         submission_df = predictor.create_submission(
             test_df=test_df,
             output_path=args.output,
             batch_size=args.batch_size,
             show_progress=True,
-            num_beams=args.num_beams  # 오버라이드
+            **generation_kwargs  # 생성 파라미터 오버라이드
         )
 
         # 전역 submissions 폴더에도 저장
