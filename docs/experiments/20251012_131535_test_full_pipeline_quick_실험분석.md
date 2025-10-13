@@ -539,11 +539,12 @@ python scripts/train.py \
   --seed 42
 ```
 
-**예상 결과**:
-- ✅ 6/6 모델 학습 성공
-- ✅ 앙상블 정상 동작
-- ✅ TTA 적용 가능
+**실제 결과** (20251013_161056_test_strategy3_triple 실험):
+- ✅ 3/3 모델 학습 성공 (kobart, llama-3.2-korean-3b, qwen3-4b)
+- ✅ 앙상블 평가 완료 (stacking 전략)
+- ✅ Solar API 통합 성공 (50 샘플)
 - ✅ 추론 및 제출 파일 생성 성공
+- ⚠️ TTA 적용되지 않음 (tta_applied: false)
 
 ---
 
@@ -577,9 +578,10 @@ python scripts/train.py \
 3. ✅ 추론 및 제출 파일 생성 성공
 
 **남은 과제:**
-1. ⚠️ LLM 모델 성능 개선 필요 (ROUGE-1: 0.1096~0.1450)
+1. ⚠️ LLM 모델 성능 개선 필요 (ROUGE-1: 0.1096~0.1458)
 2. ⚠️ 데이터 증강 50% 적용 필요
 3. ⚠️ 프롬프트 엔지니어링 (Solar API) 활용
+4. ⚠️ TTA 전략 재검토 및 적용
 
 ### 7.2.4 다음 단계
 - 멘토링 피드백 반영 (`docs/modify/02_멘토링_피드백_기반_개선사항.md` 참조)
@@ -607,10 +609,11 @@ python scripts/train.py \
 ### 9.3 다음 단계
 1. ✅ 본 분석 보고서 작성 완료
 2. ✅ `src/models/lora_loader.py` 수정 (BFloat16 → Float16)
-3. 🔄 `src/models/llm_loader.py` 수정 (offload_folder 추가)
-4. 🔄 추론 코드 수정 (token_type_ids 제거)
-5. 🔄 문서 업데이트 (`docs/모듈화/02_핵심_시스템.md`)
-6. ✅ Qwen3-4B 모델 학습 완료
+3. ✅ Decoder-only padding 문제 해결 (left-padding 설정)
+4. ✅ 추론 코드 개선 (token_type_ids 제거, 모델 타입 자동 감지)
+5. ✅ Qwen3-4B 모델 학습 완료
+6. ⚠️ `src/models/llm_loader.py` 수정 필요 (offload_folder 추가) - 대형 모델(10B+) 지원용
+7. ⚠️ 문서 업데이트 필요 (`docs/모듈화/02_핵심_시스템.md`)
 
 ---
 
