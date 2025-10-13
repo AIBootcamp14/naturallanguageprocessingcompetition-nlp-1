@@ -77,8 +77,10 @@ class Predictor:
             Dict: 생성 파라미터 딕셔너리
         """
         # -------------- 기본 생성 파라미터 -------------- #
+        # NOTE: use max_new_tokens to control generated token count (safer for encoder-decoder)
         default_config = {
-            'max_length': 100,                          # 최대 생성 길이 (베이스라인 호환)
+            'max_length': 512,                          # 최대 토큰 길이 (input+output) - 여유있게 설정
+            'max_new_tokens': 128,                      # 새로 생성할 최대 토큰 수 (권장)
             'num_beams': 4,                             # Beam 개수
             'early_stopping': True,                     # 조기 종료
             'no_repeat_ngram_size': 2,                  # 반복 방지 n-gram 크기
@@ -90,8 +92,10 @@ class Predictor:
             inference_cfg = self.config.inference       # 추론 Config
 
             # Config 값으로 오버라이드 (베이스라인과 동일하게)
+            # allow overriding both max_length and max_new_tokens from config
             default_config.update({
-                'max_length': inference_cfg.get('generate_max_length', 100),
+                'max_length': inference_cfg.get('generate_max_length', 512),
+                'max_new_tokens': inference_cfg.get('generate_max_new_tokens', 128),
                 'num_beams': inference_cfg.get('num_beams', 4),
                 'early_stopping': inference_cfg.get('early_stopping', True),
                 'no_repeat_ngram_size': inference_cfg.get('no_repeat_ngram_size', 2),

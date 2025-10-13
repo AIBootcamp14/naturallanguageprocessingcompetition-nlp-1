@@ -541,20 +541,29 @@ class FullPipelineTrainer(BaseTrainer):
                 with torch.no_grad():
                     # Causal LM은 max_new_tokens 사용, Seq2Seq는 max_length 사용
                     if is_encoder_decoder:
+                        # For encoder-decoder models prefer max_new_tokens to
+                        # control the number of generated tokens directly and
+                        # avoid accidental truncation of outputs.
                         outputs = model.generate(
                             **inputs,
-                            max_length=getattr(self.args, 'max_length', 100),
-                            num_beams=getattr(self.args, 'num_beams', 4),
+                            max_new_tokens=getattr(self.args, 'max_new_tokens', 200),
+                            min_new_tokens=getattr(self.args, 'min_new_tokens', 30),
+                            num_beams=getattr(self.args, 'num_beams', 5),
                             early_stopping=True,
-                            no_repeat_ngram_size=getattr(self.args, 'no_repeat_ngram_size', 2)
+                            no_repeat_ngram_size=getattr(self.args, 'no_repeat_ngram_size', 3),
+                            length_penalty=getattr(self.args, 'length_penalty', 1.0),
+                            repetition_penalty=getattr(self.args, 'repetition_penalty', 1.2),
+                            do_sample=False
                         )
                     else:
                         outputs = model.generate(
                             **inputs,
-                            max_new_tokens=getattr(self.args, 'max_length', 100),
-                            num_beams=getattr(self.args, 'num_beams', 4),
+                            max_new_tokens=getattr(self.args, 'max_new_tokens', 200),
+                            min_new_tokens=getattr(self.args, 'min_new_tokens', 30),
+                            num_beams=getattr(self.args, 'num_beams', 5),
                             early_stopping=True,
-                            no_repeat_ngram_size=getattr(self.args, 'no_repeat_ngram_size', 2)
+                            no_repeat_ngram_size=getattr(self.args, 'no_repeat_ngram_size', 3),
+                            repetition_penalty=getattr(self.args, 'repetition_penalty', 1.2)
                         )
 
                 # 디코딩
@@ -562,6 +571,29 @@ class FullPipelineTrainer(BaseTrainer):
                     outputs,
                     skip_special_tokens=True
                 )
+
+                # 후처리: 불완전 토큰 제거 및 문장 종결 보장
+                def postprocess_summary(text):
+                    """요약문 후처리"""
+                    import re
+                    text = text.strip()
+
+                    # 1. 불완전한 플레이스홀더 제거 (#P, #Pe, #Person 등)
+                    text = re.sub(r'\s+#[A-Za-z가-힣]{0,10}$', '', text)
+
+                    # 2. 마지막 단어가 너무 짧으면 제거 (1~3자, 단 문장부호로 끝나면 제외)
+                    parts = text.rsplit(' ', 1)
+                    if len(parts) == 2 and len(parts[1]) <= 3 and not parts[1].endswith(('.', '!', '?', '。', '？', '！')):
+                        text = parts[0]
+
+                    # 3. 문장 종결 보장
+                    text = text.strip()
+                    if text and text[-1] not in '.!?。？！':
+                        text += '.'
+
+                    return text
+
+                batch_predictions = [postprocess_summary(pred) for pred in batch_predictions]
                 predictions.extend(batch_predictions)
 
                 if (i // batch_size + 1) % 10 == 0:
