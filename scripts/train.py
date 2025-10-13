@@ -370,6 +370,36 @@ def parse_arguments():
         help='Solar 모델 선택'
     )
 
+    # ==================== HuggingFace 보정 (PRD 04, 12) ====================
+    parser.add_argument(
+        '--use_pretrained_correction',
+        action='store_true',
+        help='HuggingFace 사전학습 모델 보정 사용 (추론 시)'
+    )
+
+    parser.add_argument(
+        '--correction_models',
+        type=str,
+        nargs='+',
+        default=['gogamza/kobart-base-v2', 'digit82/kobart-summarization'],
+        help='보정에 사용할 HuggingFace 모델 리스트'
+    )
+
+    parser.add_argument(
+        '--correction_strategy',
+        type=str,
+        default='quality_based',
+        choices=['quality_based', 'threshold', 'voting', 'weighted'],
+        help='보정 전략 (quality_based 추천)'
+    )
+
+    parser.add_argument(
+        '--correction_threshold',
+        type=float,
+        default=0.3,
+        help='품질 임계값 (0.0~1.0)'
+    )
+
     # ==================== 프롬프트 전략 (PRD 15) ====================
     parser.add_argument(
         '--prompt_strategy',
