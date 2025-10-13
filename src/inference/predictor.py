@@ -296,6 +296,9 @@ class Predictor:
             List[str]: 예측된 요약 리스트
         """
         # -------------- 데이터셋 생성 -------------- #
+        if self.logger:
+            self.logger.write("추론용 데이터셋 생성 중...")
+
         dataset = InferenceDataset(                     # 추론용 데이터셋
             dialogues=dialogues,
             tokenizer=self.tokenizer,
@@ -303,7 +306,13 @@ class Predictor:
             preprocess=True                             # 전처리 적용
         )
 
+        if self.logger:
+            self.logger.write(f"✅ 데이터셋 생성 완료 (샘플 수: {len(dataset)})")
+
         # -------------- DataLoader 생성 -------------- #
+        if self.logger:
+            self.logger.write(f"DataLoader 생성 중 (batch_size={batch_size})...")
+
         dataloader = DataLoader(
             dataset,
             batch_size=batch_size,
@@ -311,8 +320,18 @@ class Predictor:
             num_workers=0                               # 추론 시 워커 불필요
         )
 
+        if self.logger:
+            self.logger.write(f"✅ DataLoader 생성 완료 (총 배치 수: {len(dataloader)})")
+
         # -------------- 생성 파라미터 병합 -------------- #
         gen_config = {**self.generation_config, **generation_kwargs}  # 기본 + 오버라이드
+
+        if self.logger:
+            self.logger.write("생성 파라미터 설정 완료")
+            # 주요 파라미터 로깅
+            key_params = ['max_new_tokens', 'num_beams', 'repetition_penalty', 'no_repeat_ngram_size', 'min_new_tokens']
+            param_str = ", ".join([f"{k}={gen_config.get(k, 'N/A')}" for k in key_params if k in gen_config])
+            self.logger.write(f"  - {param_str}")
 
         # -------------- 배치 추론 -------------- #
         summaries = []                                  # 요약 리스트
@@ -320,13 +339,25 @@ class Predictor:
         # 진행 표시
         pbar = tqdm(dataloader, desc="Predicting") if show_progress else dataloader
 
-        for batch in pbar:                              # 각 배치 반복
+        if self.logger:
+            self.logger.write(f"배치 추론 시작 (총 {len(dataloader)}개 배치)")
+
+        for batch_idx, batch in enumerate(pbar, 1):     # 각 배치 반복
+            if self.logger:
+                self.logger.write(f"[배치 {batch_idx}/{len(dataloader)}] 추론 시작...")
+
             # 디바이스로 이동
+            if self.logger:
+                self.logger.write(f"[배치 {batch_idx}/{len(dataloader)}] 입력 데이터를 {self.device}로 전송 중...")
+
             inputs = {
                 k: v.to(self.device)
                 for k, v in batch.items()
                 if k in ['input_ids', 'attention_mask']  # BART는 이 두 개만 사용
             }
+
+            if self.logger:
+                self.logger.write(f"[배치 {batch_idx}/{len(dataloader)}] 모델 생성(generate) 실행 중...")
 
             # 추론 실행
             with torch.no_grad():                       # 그래디언트 계산 비활성화
@@ -335,14 +366,26 @@ class Predictor:
                     **gen_config
                 )
 
+            if self.logger:
+                self.logger.write(f"[배치 {batch_idx}/{len(dataloader)}] 생성 완료, 디코딩 중...")
+
             # 디코딩
             batch_summaries = self.tokenizer.batch_decode(  # 배치 디코딩
                 outputs,
                 skip_special_tokens=True                # 특수 토큰 제외
             )
 
+            if self.logger:
+                self.logger.write(f"[배치 {batch_idx}/{len(dataloader)}] 후처리 적용 중...")
+
             # 후처리 적용: 불완전한 문장 정제 + 문장 종결 보장
             summaries.extend([postprocess_summary(s) for s in batch_summaries])
+
+            if self.logger:
+                self.logger.write(f"✅ [배치 {batch_idx}/{len(dataloader)}] 완료 (누적 요약 수: {len(summaries)})")
+
+        if self.logger:
+            self.logger.write(f"🎉 전체 배치 추론 완료 (총 요약 수: {len(summaries)})")
 
         return summaries                                # 요약 리스트 반환
 

@@ -52,6 +52,9 @@ class OptunaTrainer(BaseTrainer):
         model_name = self.args.models[0]
         config = load_model_config(model_name)
 
+        # 명령행 인자로 Config 오버라이드
+        self._override_config(config)
+
         self.log(f"   Config 로드 완료: {model_name}")
 
         # 3. Dataset 준비 (나중에 내부에서 생성)
