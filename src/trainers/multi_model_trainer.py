@@ -288,7 +288,8 @@ class MultiModelEnsembleTrainer(BaseTrainer):
 
             predictions = ensemble.predict(
                 dialogues=dialogues,
-                max_length=200,
+                max_new_tokens=200,
+                min_new_tokens=30,
                 num_beams=4,
                 batch_size=8
             )

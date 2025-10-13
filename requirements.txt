@@ -13,3 +13,7 @@ tqdm==4.66.1
 transformers==4.57.0
 wandb==0.22.2
 python-dotenv>=1.0.0
+jupyter==1.0.0
+jupyterlab==4.0.9
+matplotlib==3.10.7
+peft==0.17.1

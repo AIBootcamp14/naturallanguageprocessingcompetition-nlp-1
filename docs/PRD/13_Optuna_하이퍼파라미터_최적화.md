@@ -608,9 +608,9 @@ llama_optimal = {
 
     # 생성
     'num_beams': 4,
-    'max_new_tokens': 150,  # 100 → 150 (여유)
-    'repetition_penalty': 1.1,
-    'no_repeat_ngram_size': 3,
+    'max_new_tokens': 100,  # 최적값: 100 (99.6% 완성도 달성)
+    'repetition_penalty': 1.5,  # 최적값: 1.5 (적절한 억제)
+    'no_repeat_ngram_size': 3,  # 최적값: 3 (반복 방지)
 
     # Target: ROUGE Sum 95+
 }
@@ -635,7 +635,9 @@ qwen_optimal = {
     'bf16': False,
 
     'num_beams': 4,
-    'max_new_tokens': 150,
+    'max_new_tokens': 100,  # 최적값: 100 (99.6% 완성도 달성)
+    'repetition_penalty': 1.5,  # 최적값: 1.5 (적절한 억제)
+    'no_repeat_ngram_size': 3,  # 최적값: 3 (반복 방지)
 }
 ```
 
@@ -656,7 +658,7 @@ search_ranges = {
     # 생성 파라미터
     'num_beams': [3, 4, 5],
     'repetition_penalty': [1.0, 1.1, 1.2],
-    'max_new_tokens': [100, 150, 200],
+    'max_new_tokens': [80, 100, 120],  # 최적값 100 기준 ±20 범위
 
     # ⚠️ 고정 권장 (검증된 값)
     'encoder_max_len': 1024,  # 절대 512로 하지 말것!

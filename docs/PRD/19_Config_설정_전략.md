@@ -482,14 +482,14 @@ training:
   greater_is_better: false
 
 generation:
-  max_new_tokens: 150
-  min_new_tokens: 10
+  max_new_tokens: 100          # 최적값: 100 (99.6% 완성도 달성)
+  min_new_tokens: 30            # 최소 30토큰 보장
   do_sample: true
   temperature: 0.7
   top_p: 0.9
   top_k: 50
-  no_repeat_ngram_size: 3
-  repetition_penalty: 1.1
+  no_repeat_ngram_size: 3       # 최적값: 3
+  repetition_penalty: 1.5       # 최적값: 1.5
 ```
 
 ### 5. Strategy Config (data_augmentation.yaml)
