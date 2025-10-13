@@ -67,8 +67,6 @@ class OptunaTrainer(BaseTrainer):
         # 4. Optuna Optimizer 초기화
         self.log(f"\n[3/3] Optuna 튜닝 시작...")
 
-        from src.data import create_datasets_from_df
-
         # Dataset 생성 함수 (Optuna 내부에서 사용)
         def create_datasets(tokenizer, config):
             """Dataset 생성 함수 제공"""
