@@ -68,6 +68,15 @@ inference:
   repetition_penalty: 1.5                               # 반복 억제 강도 (최적값: 1.5, 적절한 억제)
   length_penalty: 1.0                                   # 길이 페널티 (1.0=중립)
 
+  # HuggingFace 사전학습 모델 보정 (PRD 04, 12)
+  pretrained_correction:
+    enabled: false                                      # 기본값: 비활성화 (명령행 --use_pretrained_correction으로 활성화)
+    models:                                             # 보정에 사용할 HuggingFace 모델 리스트
+      - "gogamza/kobart-base-v2"                        # KoBART 사전학습 (일반 요약)
+      - "digit82/kobart-summarization"                  # KoBART 요약 특화 (대화 요약)
+    strategy: "quality_based"                           # 보정 전략 (quality_based 추천, threshold, voting, weighted)
+    threshold: 0.3                                      # 품질 임계값 (0.0~1.0, 낮을수록 엄격)
+
 # ---------------------- 실험 설정 ---------------------- #
 experiment:
   name: "ensemble_all_models"                           # 실험명

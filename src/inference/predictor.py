@@ -281,6 +281,10 @@ class Predictor:
         dialogues: List[str],                           # 대화 리스트
         batch_size: int = 32,                           # 배치 크기
         show_progress: bool = True,                     # 진행 표시 여부
+        use_pretrained_correction: bool = False,        # ✅ HF 보정 사용 여부
+        correction_models: Optional[List[str]] = None,  # ✅ HF 모델 리스트
+        correction_strategy: str = "quality_based",     # ✅ 보정 전략
+        correction_threshold: float = 0.3,              # ✅ 품질 임계값
         **generation_kwargs                             # 생성 파라미터 (선택적)
     ) -> List[str]:
         """
@@ -290,6 +294,10 @@ class Predictor:
             dialogues: 대화 리스트
             batch_size: 배치 크기
             show_progress: 진행 표시 여부
+            use_pretrained_correction: HuggingFace 사전학습 모델 보정 사용 여부
+            correction_models: 보정에 사용할 HF 모델 리스트 (예: ["gogamza/kobart-base-v2"])
+            correction_strategy: 보정 전략 (quality_based, threshold, voting, weighted)
+            correction_threshold: 품질 임계값 (0.0~1.0)
             **generation_kwargs: 생성 파라미터 오버라이드
 
         Returns:
@@ -386,6 +394,43 @@ class Predictor:
 
         if self.logger:
             self.logger.write(f"🎉 전체 배치 추론 완료 (총 요약 수: {len(summaries)})")
+
+        # ✅ ==================== HuggingFace 보정 로직 추가 ==================== #
+        if use_pretrained_correction and correction_models:
+            if self.logger:
+                self.logger.write("\n" + "=" * 60)
+                self.logger.write("🔧 HuggingFace 사전학습 모델 보정 시작")
+
+            try:
+                # PretrainedCorrector 초기화
+                from src.correction import create_pretrained_corrector
+
+                corrector = create_pretrained_corrector(
+                    model_names=correction_models,
+                    correction_strategy=correction_strategy,
+                    quality_threshold=correction_threshold,
+                    device=self.device,
+                    logger=self.logger
+                )
+
+                # 보정 수행
+                summaries = corrector.correct_batch(
+                    dialogues=dialogues,
+                    candidate_summaries=summaries,
+                    batch_size=batch_size,
+                    **generation_kwargs
+                )
+
+                if self.logger:
+                    self.logger.write("✅ HuggingFace 사전학습 모델 보정 완료")
+                    self.logger.write("=" * 60 + "\n")
+
+            except Exception as e:
+                if self.logger:
+                    self.logger.write(f"⚠️  HuggingFace 보정 실패: {str(e)}")
+                    self.logger.write("   원본 요약 사용")
+                # 보정 실패 시 원본 요약 그대로 사용
+        # ==================== HuggingFace 보정 로직 끝 ==================== #
 
         return summaries                                # 요약 리스트 반환
 
