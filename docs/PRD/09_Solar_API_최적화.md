@@ -1,4 +1,38 @@
-# ☀️ Solar API 최적화 전략
+# ☀️ Solar API 최적화 전략 (베이스라인 검증)
+
+## ✅ 대회 베이스라인 검증 (필수)
+
+### Few-shot Learning 구조
+```python
+# 베이스라인: Few-shot 예시를 assistant role로 제공
+def build_prompt(dialogue):
+    system_prompt = "You are a expert in the field of dialogue summarization, summarize the given dialogue in a concise manner. Follow the user's instruction carefully and provide a summary that is relevant to the dialogue."
+
+    few_shot_user = f"Dialogue:\n{sample_dialogue}\nSummary:\n"
+    few_shot_assistant = sample_summary  # 예시 요약
+
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": few_shot_user},
+        {"role": "assistant", "content": few_shot_assistant},  # Few-shot!
+        {"role": "user", "content": f"Dialogue:\n{dialogue}\nSummary:\n"}
+    ]
+
+# API 호출 (검증된 파라미터)
+summary = client.chat.completions.create(
+    model="solar-1-mini-chat",
+    messages=build_prompt(dialogue),
+    temperature=0.2,  # 낮은 값으로 일관성 유지
+    top_p=0.3        # 낮은 값으로 일관성 유지
+)
+```
+
+### 핵심 검증 사항
+- **Role 구조**: system → user (예시) → assistant (답변) → user (실제)
+- **Temperature**: 0.2 (낮게 설정 - 일관성)
+- **Top_p**: 0.3 (낮게 설정 - 일관성)
+- **Few-shot**: 1개 예시만으로 충분
+- **Rate limit**: 1분당 100개 요청 제한
 
 ## 🎯 핵심 문제
 **토큰 사용량 폭증 문제**: 전체 대화를 그대로 API에 전송하면 토큰 소비가 과도함

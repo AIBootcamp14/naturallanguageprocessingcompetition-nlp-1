@@ -1,0 +1,6 @@
+# 교차 검증 전략 Config
+cross_validation:
+  n_folds: 5
+  shuffle: true
+  stratified: false
+  seed: 42

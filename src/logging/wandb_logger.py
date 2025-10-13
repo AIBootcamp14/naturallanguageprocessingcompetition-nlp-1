@@ -64,11 +64,16 @@ class WandbLogger:
 
         # fold가 지정된 경우 run name에 추가
         run_name = self.run_name                 # 기본 실행 이름
-        
+
         # 폴드가 지정된 경우
         if fold is not None:
             run_name = f"fold-{fold}-{run_name}" # 폴드 번호 추가
-        
+
+        # WandB 디렉토리를 프로젝트 루트로 설정
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        wandb_dir = os.path.join(project_root, "wandb")
+        os.environ["WANDB_DIR"] = wandb_dir
+
         # WandB run 초기화
         self.run = wandb.init(
             project=self.project_name,           # 프로젝트 이름
@@ -76,6 +81,7 @@ class WandbLogger:
             name=run_name,                       # 실행 이름
             config=self.config,                  # 설정
             tags=self.tags,                      # 태그
+            dir=wandb_dir,                       # WandB 디렉토리 지정
             reinit=True                          # 재초기화 허용
         )
         
@@ -125,28 +131,28 @@ class WandbLogger:
         # 초기화되지 않은 경우
         if not self.is_initialized:
             return  # 함수 종료
-        
+
         # 최대 100개 샘플만 로깅
         max_samples = min(100, len(images))      # 최대 샘플 수 제한
-        
+
         data = []                                # 데이터 리스트 초기화
-        
+
         # 샘플 수만큼 반복
         for i in range(max_samples):
             img = images[i]                      # i번째 이미지
             pred = predictions[i]                # i번째 예측
             target = targets[i]                  # i번째 정답
-            
+
             # 이미지를 wandb Image로 변환
             if torch.is_tensor(img):             # 텐서인 경우
                 # numpy로 변환 후 차원 순서 변경
                 img = img.cpu().numpy().transpose(1, 2, 0)
-            
+
             # 예측 클래스명
             pred_class = class_names[pred] if class_names else str(pred)
             # 정답 클래스명
             target_class = class_names[target] if class_names else str(target)
-            
+
             # 데이터 추가
             data.append([
                 wandb.Image(img),                # WandB 이미지 객체
@@ -154,14 +160,170 @@ class WandbLogger:
                 target_class,                    # 정답 클래스
                 pred == target                   # 정답 여부
             ])
-        
+
         # WandB 테이블 생성
         table = wandb.Table(
             data=data,                           # 테이블 데이터
             columns=["Image", "Prediction", "Target", "Correct"]  # 컬럼명
         )
-        
+
         wandb.log({"predictions": table})        # 예측 테이블 로깅
+
+
+    # ========== PRD 11: 추가 시각화 5가지 ========== #
+
+    # 1. 학습률 스케줄 로깅
+    def log_learning_rate_schedule(self, step: int, learning_rate: float):
+        """
+        학습률 스케줄 로깅
+
+        Args:
+            step: 현재 스텝
+            learning_rate: 현재 학습률
+        """
+        if not self.is_initialized:
+            return
+
+        wandb.log({
+            "learning_rate": learning_rate,
+            "step": step
+        }, step=step)
+
+
+    # 2. 그래디언트 norm 로깅
+    def log_gradient_norms(self, model, step: int):
+        """
+        그래디언트 norm 로깅
+
+        Args:
+            model: PyTorch 모델
+            step: 현재 스텝
+        """
+        if not self.is_initialized:
+            return
+
+        # 전체 그래디언트 norm 계산
+        total_norm = 0.0
+        layer_norms = {}
+
+        for name, param in model.named_parameters():
+            if param.grad is not None:
+                param_norm = param.grad.data.norm(2).item()
+                total_norm += param_norm ** 2
+
+                # 레이어별 norm 저장 (상위 10개만)
+                layer_norms[f"grad_norm/{name}"] = param_norm
+
+        total_norm = total_norm ** 0.5
+
+        # 로깅
+        log_data = {
+            "gradient/total_norm": total_norm,
+            "step": step
+        }
+
+        # 상위 10개 레이어만 로깅 (너무 많으면 느려짐)
+        sorted_layers = sorted(layer_norms.items(), key=lambda x: x[1], reverse=True)[:10]
+        for layer_name, norm_value in sorted_layers:
+            log_data[layer_name] = norm_value
+
+        wandb.log(log_data, step=step)
+
+
+    # 3. Loss curve 로깅
+    def log_loss_curve(self, train_loss: float, val_loss: float = None, step: int = None):
+        """
+        Loss curve 로깅
+
+        Args:
+            train_loss: 학습 손실
+            val_loss: 검증 손실 (선택)
+            step: 스텝 번호 (선택)
+        """
+        if not self.is_initialized:
+            return
+
+        log_data = {
+            "loss/train": train_loss
+        }
+
+        if val_loss is not None:
+            log_data["loss/val"] = val_loss
+
+            # Loss 차이도 로깅 (overfitting 모니터링)
+            log_data["loss/train_val_diff"] = train_loss - val_loss
+
+        wandb.log(log_data, step=step)
+
+
+    # 4. GPU 메모리 사용량 로깅
+    def log_gpu_memory(self, step: int = None):
+        """
+        GPU 메모리 사용량 로깅
+
+        Args:
+            step: 스텝 번호 (선택)
+        """
+        if not self.is_initialized:
+            return
+
+        # CUDA 사용 가능 여부 확인
+        if not torch.cuda.is_available():
+            return
+
+        # GPU 개수만큼 반복
+        log_data = {}
+
+        for i in range(torch.cuda.device_count()):
+            # 메모리 정보 (바이트 -> GB)
+            allocated = torch.cuda.memory_allocated(i) / 1024**3
+            reserved = torch.cuda.memory_reserved(i) / 1024**3
+            max_allocated = torch.cuda.max_memory_allocated(i) / 1024**3
+
+            log_data[f"gpu_{i}/memory_allocated_gb"] = allocated
+            log_data[f"gpu_{i}/memory_reserved_gb"] = reserved
+            log_data[f"gpu_{i}/memory_max_allocated_gb"] = max_allocated
+
+            # 사용률 (%)
+            if reserved > 0:
+                log_data[f"gpu_{i}/memory_utilization"] = (allocated / reserved) * 100
+
+        wandb.log(log_data, step=step)
+
+
+    # 5. 학습 속도 로깅
+    def log_training_speed(
+        self,
+        samples_per_second: float = None,
+        steps_per_second: float = None,
+        epoch_time: float = None,
+        step: int = None
+    ):
+        """
+        학습 속도 로깅
+
+        Args:
+            samples_per_second: 초당 샘플 수
+            steps_per_second: 초당 스텝 수
+            epoch_time: 에포크 소요 시간 (초)
+            step: 스텝 번호 (선택)
+        """
+        if not self.is_initialized:
+            return
+
+        log_data = {}
+
+        if samples_per_second is not None:
+            log_data["speed/samples_per_second"] = samples_per_second
+
+        if steps_per_second is not None:
+            log_data["speed/steps_per_second"] = steps_per_second
+
+        if epoch_time is not None:
+            log_data["speed/epoch_time_seconds"] = epoch_time
+            log_data["speed/epoch_time_minutes"] = epoch_time / 60
+
+        wandb.log(log_data, step=step)
     
     
     # 실행 종료 함수 정의

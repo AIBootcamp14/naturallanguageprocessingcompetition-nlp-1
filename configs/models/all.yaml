@@ -1,0 +1,63 @@
+# ==================== 전체 모델 앙상블 설정 ==================== #
+# 모든 모델을 참조하는 메타 설정
+# PRD 08: 앙상블 전략 - 다중 모델 조합으로 성능 향상
+
+# ---------------------- 앙상블 모델 목록 ---------------------- #
+# 앙상블에 포함될 모델들의 설정 파일 참조
+models:
+  # KoBART (Encoder-Decoder)
+  - name: "kobart"                                      # 모델명
+    config: "configs/models/kobart.yaml"                # 설정 파일 경로
+    weight: 1.0                                         # 앙상블 가중치
+    type: "encoder_decoder"                             # 모델 타입
+
+  # Llama-3.2-Korean-3B (Causal LM)
+  - name: "llama-3.2-korean-3b"                         # 모델명
+    config: "configs/models/llama_3.2_korean_3b.yaml"   # 설정 파일 경로
+    weight: 1.0                                         # 앙상블 가중치
+    type: "causal_lm"                                   # 모델 타입
+
+  # Qwen3-4B (Causal LM)
+  - name: "qwen3-4b"                                    # 모델명
+    config: "configs/models/qwen3_4b.yaml"              # 설정 파일 경로
+    weight: 1.0                                         # 앙상블 가중치
+    type: "causal_lm"                                   # 모델 타입
+
+  # Solar-10.7B (Causal LM)
+  - name: "solar-10.7b"                                 # 모델명
+    config: "configs/models/solar-10.7b.yaml"           # 설정 파일 경로
+    weight: 1.0                                         # 앙상블 가중치
+    type: "causal_lm"                                   # 모델 타입
+
+  # Polyglot-Ko-12.8B (Causal LM)
+  - name: "polyglot-ko-12.8b"                           # 모델명
+    config: "configs/models/polyglot-ko-12.8b.yaml"     # 설정 파일 경로
+    weight: 1.0                                         # 앙상블 가중치
+    type: "causal_lm"                                   # 모델 타입
+
+  # KULLM-v2 (Causal LM)
+  - name: "kullm-v2"                                    # 모델명
+    config: "configs/models/kullm-v2.yaml"              # 설정 파일 경로
+    weight: 1.0                                         # 앙상블 가중치
+    type: "causal_lm"                                   # 모델 타입
+
+# ---------------------- 앙상블 전략 설정 ---------------------- #
+ensemble:
+  strategy: "voting"                                    # 앙상블 전략: voting, weighted_avg, stacking
+  voting_method: "soft"                                 # Voting 방법: soft (확률 평균), hard (다수결)
+  aggregation: "mean"                                   # 결과 집계 방법: mean, weighted_mean, max
+
+# ---------------------- 추론 설정 ---------------------- #
+inference:
+  batch_size: 4                                         # 추론 배치 크기 (앙상블은 메모리 사용량 고려)
+  parallel_models: false                                # 모델 병렬 실행 여부 (메모리 제약시 false)
+  save_individual_outputs: true                         # 개별 모델 출력 저장 여부
+
+# ---------------------- 실험 설정 ---------------------- #
+experiment:
+  name: "ensemble_all_models"                           # 실험명
+  tags:                                                 # 실험 태그
+    - "ensemble"
+    - "all-models"
+    - "voting"
+    - "multi-model"
