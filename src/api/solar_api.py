@@ -295,25 +295,37 @@ class SolarAPI:
         self._log(f"  - 배치 크기: {batch_size}")
         self._log(f"  - Rate limit 대기: {delay}초")
 
-        for i in range(0, len(dialogues), batch_size):
-            batch = dialogues[i:i + batch_size]
+        try:
+            for i in range(0, len(dialogues), batch_size):
+                batch = dialogues[i:i + batch_size]
+                batch_start = i + 1
+                batch_end = min(i + batch_size, len(dialogues))
 
-            # FIXME: Corrupted log message
+                self._log(f"[배치 {batch_start}-{batch_end}/{len(dialogues)}] 처리 중...")
 
-            batch_summaries = []
-            for dialogue in batch:
-                summary = self.summarize(
-                    dialogue,
-                    example_dialogue,
-                    example_summary
-                )
-                batch_summaries.append(summary)
+                batch_summaries = []
+                for dialogue in batch:
+                    summary = self.summarize(
+                        dialogue,
+                        example_dialogue,
+                        example_summary
+                    )
+                    batch_summaries.append(summary)
 
-            summaries.extend(batch_summaries)
+                summaries.extend(batch_summaries)
+                self._log(f"  ✅ 완료 (누적: {len(summaries)}/{len(dialogues)})")
 
-            # Rate limiting
-            if i + batch_size < len(dialogues):
-                time.sleep(delay)
+                # Rate limiting
+                if i + batch_size < len(dialogues):
+                    time.sleep(delay)
+
+        except Exception as e:
+            self._log(f"\n❌ 배치 요약 중 오류 발생: {str(e)}")
+            self._log(f"  진행 상황: {len(summaries)}/{len(dialogues)}개 완료")
+            # 마지막 진행률 기록
+            if self.logger and hasattr(self.logger, 'write_last_progress'):
+                self.logger.write_last_progress()
+            raise
 
         self._log(f"\n배치 요약 완료: {len(summaries)}개")
 

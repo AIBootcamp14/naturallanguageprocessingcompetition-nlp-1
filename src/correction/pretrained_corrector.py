@@ -127,49 +127,59 @@ class PretrainedCorrector:
         self._log(f"  - 품질 임계값: {self.quality_threshold}")
         self._log("=" * 60)
 
-        # -------------- 단계 1: 참조 요약 생성 -------------- #
-        # 각 허깅페이스 모델로 참조 요약 생성
-        reference_summaries = {}
-        for model_name, model in self.models.items():
-            self._log(f"\n[1/3] 참조 요약 생성 중: {model_name}")
-            tokenizer = self.tokenizers[model_name]
-            summaries = self._generate_summaries(
-                dialogues, model, tokenizer, batch_size, **generation_kwargs
+        try:
+            # -------------- 단계 1: 참조 요약 생성 -------------- #
+            # 각 허깅페이스 모델로 참조 요약 생성
+            reference_summaries = {}
+            for model_name, model in self.models.items():
+                self._log(f"\n[1/3] 참조 요약 생성 중: {model_name}")
+                tokenizer = self.tokenizers[model_name]
+                summaries = self._generate_summaries(
+                    dialogues, model, tokenizer, batch_size, **generation_kwargs
+                )
+                reference_summaries[model_name] = summaries
+                self._log(f"  ✅ 완료: {len(summaries)}개 요약 생성")
+
+            # -------------- 단계 2: 품질 평가 -------------- #
+            self._log(f"\n[2/3] 품질 평가 중...")
+            quality_scores = self.evaluator.evaluate_all(
+                candidate_summaries=candidate_summaries,
+                reference_summaries=reference_summaries,
+                dialogues=dialogues
             )
-            reference_summaries[model_name] = summaries
-            self._log(f"  ✅ 완료: {len(summaries)}개 요약 생성")
+            self._log(f"  ✅ 평가 완료")
 
-        # -------------- 단계 2: 품질 평가 -------------- #
-        self._log(f"\n[2/3] 품질 평가 중...")
-        quality_scores = self.evaluator.evaluate_all(
-            candidate_summaries=candidate_summaries,
-            reference_summaries=reference_summaries,
-            dialogues=dialogues
-        )
-        self._log(f"  ✅ 평가 완료")
+            # -------------- 단계 3: 보정 전략 적용 -------------- #
+            self._log(f"\n[3/3] 보정 전략 적용 중: {self.correction_strategy}")
+            corrected_summaries = self.ensemble.select(
+                candidate_summaries=candidate_summaries,
+                reference_summaries=reference_summaries,
+                quality_scores=quality_scores,
+                threshold=self.quality_threshold
+            )
+            self._log(f"  ✅ 보정 완료")
 
-        # -------------- 단계 3: 보정 전략 적용 -------------- #
-        self._log(f"\n[3/3] 보정 전략 적용 중: {self.correction_strategy}")
-        corrected_summaries = self.ensemble.select(
-            candidate_summaries=candidate_summaries,
-            reference_summaries=reference_summaries,
-            quality_scores=quality_scores,
-            threshold=self.quality_threshold
-        )
-        self._log(f"  ✅ 보정 완료")
+            # -------------- 보정 통계 출력 -------------- #
+            num_corrected = sum([
+                1 for orig, corr in zip(candidate_summaries, corrected_summaries)
+                if orig != corr
+            ])
+            self._log(f"\n📊 보정 통계:")
+            self._log(f"  - 전체: {len(dialogues)}개")
+            self._log(f"  - 보정됨: {num_corrected}개 ({num_corrected/len(dialogues)*100:.1f}%)")
+            self._log(f"  - 유지됨: {len(dialogues)-num_corrected}개")
+            self._log("=" * 60)
 
-        # -------------- 보정 통계 출력 -------------- #
-        num_corrected = sum([
-            1 for orig, corr in zip(candidate_summaries, corrected_summaries)
-            if orig != corr
-        ])
-        self._log(f"\n📊 보정 통계:")
-        self._log(f"  - 전체: {len(dialogues)}개")
-        self._log(f"  - 보정됨: {num_corrected}개 ({num_corrected/len(dialogues)*100:.1f}%)")
-        self._log(f"  - 유지됨: {len(dialogues)-num_corrected}개")
-        self._log("=" * 60)
+            return corrected_summaries
 
-        return corrected_summaries
+        except Exception as e:
+            self._log(f"\n❌ 보정 중 오류 발생: {str(e)}")
+            # 마지막 진행률 기록
+            if self.logger and hasattr(self.logger, 'write_last_progress'):
+                self.logger.write_last_progress()
+            # 원본 요약 반환 (Graceful degradation)
+            self._log("  ⚠️  원본 요약 반환")
+            return candidate_summaries
 
     # ---------------------- 단일 모델 요약 생성 메서드 ---------------------- #
     def _generate_summaries(
