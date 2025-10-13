@@ -21,9 +21,10 @@ class Logger:                                    # Logger 클래스 정의
         self.original_stderr = sys.stderr        # 원본 표준 에러 저장
         # 로그 파일을 열고, 라인 버퍼링을 사용합니다.
         self.log_file = open(log_path, 'a', encoding='utf-8', buffering=1)  # 로그 파일 열기
-        # 진행률 표시줄 중복 방지를 위한 변수
-        self.last_progress_line = None           # 마지막 진행률 라인 저장
+        # 진행률 표시줄 관리를 위한 변수
+        self.last_progress_line = None           # 마지막 진행률 라인 저장 (오류 시 기록용)
         self.last_progress_percent = None        # 마지막 진행률 퍼센티지 저장
+        self.progress_written = False            # 진행률이 기록되었는지 여부
 
     
     # ---------------------- 진행률 라인 확인 함수 ---------------------- #
@@ -63,43 +64,37 @@ class Logger:                                    # Logger 클래스 정의
         """
         로그 메시지를 파일에 기록하고,
         print_also=True일 경우 콘솔에도 출력합니다.
-        진행률 표시줄의 중복 출력을 방지합니다.
+        진행률 표시줄은 로그 파일에 기록하지 않고, 마지막 진행률만 저장합니다.
         """
         # 메시지 앞뒤 공백을 제거하고, 개행 문자가 없으면 추가합니다.
         message = message.strip()                # 메시지 공백 제거
         if not message:                          # 메시지가 비어있으면
             return                               # 함수 종료
 
-        # ---------------------- 진행률 라인 중복 방지 (1% 단위) ---------------------- #
+        # ---------------------- 진행률 라인 처리 ---------------------- #
         # 진행률 라인인지 확인
         is_progress = self._is_progress_line(message)
 
         if is_progress:
-            # 현재 진행률 퍼센티지 추출
+            # 진행률 라인인 경우: 로그 파일에 기록하지 않고 마지막 진행률만 저장
+            self.last_progress_line = message
             current_percent = self._extract_percentage(message)
-
-            # 퍼센티지를 추출할 수 있는 경우
             if current_percent is not None:
-                # 이전 퍼센티지가 있고, 1% 미만 차이인 경우 건너뛰기
-                if self.last_progress_percent is not None:
-                    percent_diff = abs(current_percent - self.last_progress_percent)
-                    if percent_diff < 1.0:
-                        return               # 1% 미만 차이는 기록하지 않음
-
-                # 1% 이상 차이가 나거나 첫 진행률인 경우 기록
                 self.last_progress_percent = current_percent
-                self.last_progress_line = message
-            else:
-                # 퍼센티지를 추출할 수 없지만 진행률 라인인 경우 (예: "0/100")
-                # 이전 라인과 완전히 동일하면 건너뛰기
-                if self.last_progress_line == message:
-                    return
-                self.last_progress_line = message
+
+            # 콘솔에는 출력 (터미널에서 진행률 확인용)
+            if self.print_also and print_also:
+                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                line = f"{timestamp} | {message}\n"
+                self.original_stdout.write(line)
+
+            return  # 로그 파일에는 기록하지 않고 함수 종료
         else:
             # 진행률이 아닌 일반 메시지가 오면 진행률 상태 초기화
             self.last_progress_line = None
             self.last_progress_percent = None
 
+        # ---------------------- 일반 메시지 기록 ---------------------- #
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 현재 시간 타임스탬프 생성
         line = f"{timestamp} | {message}\n"      # 타임스탬프와 메시지 결합
 
@@ -162,9 +157,24 @@ class Logger:                                    # Logger 클래스 정의
         tqdm.write = tqdm_write_wrapper          # tqdm 출력을 래퍼 함수로 리다이렉션
 
     
+    # 마지막 진행률 기록 함수 정의
+    def write_last_progress(self):
+        """
+        오류 또는 강제 중지 시 마지막 진행률을 로그 파일에 기록합니다.
+        """
+        if self.last_progress_line:
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            line = f"{timestamp} | [마지막 진행률] {self.last_progress_line}\n"
+            self.log_file.write(line)
+            self.log_file.flush()
+            self.last_progress_line = None
+            self.last_progress_percent = None
+
     # 로거 종료 함수 정의
     def close(self):
         """
         로그 파일을 닫습니다.
+        종료 시 마지막 진행률이 있으면 기록합니다.
         """
-        self.log_file.close() # 로그 파일 닫기
+        self.write_last_progress()  # 마지막 진행률 기록
+        self.log_file.close()        # 로그 파일 닫기
