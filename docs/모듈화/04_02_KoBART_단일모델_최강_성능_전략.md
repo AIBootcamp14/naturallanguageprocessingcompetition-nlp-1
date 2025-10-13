@@ -108,9 +108,8 @@ graph TB
 |------|-----|----------|------|
 | `--mode` | optuna | Optuna 최적화 모드 | 최적 하이퍼파라미터 자동 탐색 |
 | `--models` | kobart | KoBART 단일 모델 | 속도(99초) × 성능(1.048) 최고 |
-| `--n_trials` | 100 | Optuna 시행 횟수 | 100회 철저한 탐색으로 최적값 발견 |
-| `--epochs` | 30 | 학습 에폭 | 충분한 학습 (Early Stopping 적용) |
-| `--early_stopping_patience` | 5 | 조기 종료 기준 | 5 epoch 동안 개선 없으면 종료 |
+| `--optuna_trials` | 100 | Optuna 시행 횟수 | 100회 철저한 탐색으로 최적값 발견 |
+| `--epochs` | 30 | 학습 에폭 | 충분한 학습 (config의 early_stopping_patience 사용) |
 | `--batch_size` | 16 | 배치 크기 | GPU 메모리 최적 활용 |
 | `--gradient_accumulation_steps` | 10 | 그래디언트 누적 | 효과적 배치 160 (16×10) |
 | `--learning_rate` | 5e-5 | 학습률 | KoBART 최적값 (Optuna 탐색) |
@@ -156,9 +155,8 @@ graph TB
 python scripts/train.py \
   --mode optuna \
   --models kobart \
-  --n_trials 100 \
+  --optuna_trials 100 \
   --epochs 30 \
-  --early_stopping_patience 5 \
   --batch_size 16 \
   --gradient_accumulation_steps 10 \
   --learning_rate 5e-5 \
@@ -216,7 +214,6 @@ python scripts/train.py \
   --mode kfold \
   --models kobart \
   --epochs 15 \
-  --early_stopping_patience 3 \
   --batch_size 16 \
   --gradient_accumulation_steps 10 \
   --learning_rate 5e-5 \
@@ -264,7 +261,6 @@ python scripts/train.py \
   --mode kfold \
   --models kobart \
   --epochs 10 \
-  --early_stopping_patience 3 \
   --batch_size 16 \
   --gradient_accumulation_steps 10 \
   --learning_rate 5e-5 \
