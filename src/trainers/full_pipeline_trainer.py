@@ -362,7 +362,8 @@ class FullPipelineTrainer(BaseTrainer):
 
             predictions = ensemble.predict(
                 dialogues=dialogues,
-                max_length=200,
+                max_new_tokens=200,
+                min_new_tokens=30,
                 num_beams=4,
                 batch_size=8
             )
@@ -465,6 +466,12 @@ class FullPipelineTrainer(BaseTrainer):
                 - num_predictions: 예측 개수
                 - best_model_used: 사용된 최적 모델
         """
+        # 추론 로그 파일 생성
+        from src.logging.logger import Logger
+        inference_log_path = self.output_dir / "inference.log"
+        inference_logger = Logger(inference_log_path, print_also=False)
+        inference_logger.start_redirect()
+
         try:
             import pandas as pd
             from transformers import (
@@ -478,12 +485,17 @@ class FullPipelineTrainer(BaseTrainer):
             # 테스트 데이터 로드
             test_data_path = getattr(self.args, 'test_data', 'data/raw/test.csv')
             self.log(f"  테스트 데이터 로드: {test_data_path}")
+            inference_logger.write(f"테스트 데이터 로드: {test_data_path}")
             test_df = pd.read_csv(test_data_path)
             self.log(f"  테스트 샘플 수: {len(test_df)}")
+            inference_logger.write(f"테스트 샘플 수: {len(test_df)}")
 
             # 성공한 모델 중 첫 번째 모델 사용 (가장 먼저 학습 완료된 모델)
             if not model_paths:
                 self.log("    ❌ 사용 가능한 모델이 없습니다.")
+                inference_logger.write("❌ 사용 가능한 모델이 없습니다.")
+                inference_logger.stop_redirect()
+                inference_logger.close()
                 return {
                     'submission_path': None,
                     'num_predictions': 0,
@@ -492,6 +504,7 @@ class FullPipelineTrainer(BaseTrainer):
 
             best_model_path = model_paths[0]
             self.log(f"  사용 모델: {best_model_path}")
+            inference_logger.write(f"사용 모델: {best_model_path}")
 
             # 모델 타입 자동 감지
             config = AutoConfig.from_pretrained(best_model_path)
@@ -500,9 +513,11 @@ class FullPipelineTrainer(BaseTrainer):
             # 모델 및 토크나이저 로드
             if is_encoder_decoder:
                 self.log(f"  모델 타입: Encoder-Decoder (Seq2Seq)")
+                inference_logger.write(f"모델 타입: Encoder-Decoder (Seq2Seq)")
                 model = AutoModelForSeq2SeqLM.from_pretrained(best_model_path)
             else:
                 self.log(f"  모델 타입: Decoder-only (Causal LM)")
+                inference_logger.write(f"모델 타입: Decoder-only (Causal LM)")
                 model = AutoModelForCausalLM.from_pretrained(best_model_path)
 
             tokenizer = AutoTokenizer.from_pretrained(best_model_path)
@@ -511,10 +526,16 @@ class FullPipelineTrainer(BaseTrainer):
                 model = model.cuda()
             model.eval()
 
+            inference_logger.write(f"✅ 모델 로드 완료")
+            inference_logger.write(f"디바이스: {'cuda' if torch.cuda.is_available() else 'cpu'}")
+            inference_logger.write(f"모델 파라미터: {sum(p.numel() for p in model.parameters()):,}")
+
             # 배치 추론
             predictions = []
             batch_size = getattr(self.args, 'inference_batch_size', 32)
             self.log(f"  배치 크기: {batch_size}")
+            inference_logger.write(f"배치 크기: {batch_size}")
+            inference_logger.write(f"\n배치 추론 시작...")
 
             dialogues = test_df['dialogue'].tolist()
 
@@ -598,13 +619,12 @@ class FullPipelineTrainer(BaseTrainer):
 
                 if (i // batch_size + 1) % 10 == 0:
                     self.log(f"    진행: {i+len(batch_predictions)}/{len(dialogues)}")
+                    inference_logger.write(f"진행: {i+len(batch_predictions)}/{len(dialogues)}")
 
-            # 제출 파일 생성 (id 또는 fname 컬럼 자동 감지)
-            id_column = test_df['id'] if 'id' in test_df.columns else (
-                test_df['fname'] if 'fname' in test_df.columns else range(len(test_df))
-            )
+            # 제출 파일 생성 (fname 컬럼 사용)
+            fname_column = test_df['fname']
             submission_df = pd.DataFrame({
-                'id': id_column,
+                'fname': fname_column,
                 'summary': predictions
             })
 
@@ -618,6 +638,7 @@ class FullPipelineTrainer(BaseTrainer):
             submission_path_1 = submission_dir / f"{folder_name}.csv"
             submission_df.to_csv(submission_path_1, index=False, encoding='utf-8')
             self.log(f"  ✅ 제출 파일 저장 (1): {submission_path_1}")
+            inference_logger.write(f"✅ 제출 파일 저장 (1): {submission_path_1}")
 
             # 2. submissions/{날짜}/{실행폴더명}.csv 저장
             from pathlib import Path
@@ -628,8 +649,15 @@ class FullPipelineTrainer(BaseTrainer):
             submission_path_2 = global_submission_dir / f"{folder_name}.csv"
             submission_df.to_csv(submission_path_2, index=False, encoding='utf-8')
             self.log(f"  ✅ 제출 파일 저장 (2): {submission_path_2}")
+            inference_logger.write(f"✅ 제출 파일 저장 (2): {submission_path_2}")
 
             self.log(f"  예측 개수: {len(predictions)}")
+            inference_logger.write(f"예측 개수: {len(predictions)}")
+            inference_logger.write(f"\n🎉 추론 완료!")
+
+            # 추론 로거 정리
+            inference_logger.stop_redirect()
+            inference_logger.close()
 
             return {
                 'submission_path': str(submission_path_1),
@@ -642,6 +670,13 @@ class FullPipelineTrainer(BaseTrainer):
             import traceback
             self.log(f"    ❌ 추론 오류 발생: {e}")
             self.log(f"    상세: {traceback.format_exc()}")
+            inference_logger.write(f"❌ 추론 오류 발생: {e}")
+            inference_logger.write(f"상세: {traceback.format_exc()}")
+
+            # 추론 로거 정리
+            inference_logger.stop_redirect()
+            inference_logger.close()
+
             return {
                 'submission_path': None,
                 'num_predictions': 0,
