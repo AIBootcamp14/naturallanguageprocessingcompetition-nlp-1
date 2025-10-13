@@ -332,6 +332,12 @@ class FullPipelineTrainer(BaseTrainer):
 
                 tokenizer = AutoTokenizer.from_pretrained(model_path)
 
+                # Decoder-only 모델의 경우 left padding 설정
+                if not is_encoder_decoder:
+                    tokenizer.padding_side = "left"
+                    if tokenizer.pad_token is None:
+                        tokenizer.pad_token = tokenizer.eos_token
+
                 if torch.cuda.is_available():
                     model = model.cuda()
                 model.eval()
@@ -521,6 +527,12 @@ class FullPipelineTrainer(BaseTrainer):
                 model = AutoModelForCausalLM.from_pretrained(best_model_path)
 
             tokenizer = AutoTokenizer.from_pretrained(best_model_path)
+
+            # Decoder-only 모델의 경우 left padding 설정
+            if not is_encoder_decoder:
+                tokenizer.padding_side = "left"
+                if tokenizer.pad_token is None:
+                    tokenizer.pad_token = tokenizer.eos_token
 
             if torch.cuda.is_available():
                 model = model.cuda()

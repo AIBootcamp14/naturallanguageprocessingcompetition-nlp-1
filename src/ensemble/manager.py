@@ -45,7 +45,12 @@ class ModelManager:
             model_path: 모델 경로
             model_name: 모델 이름 (표시용)
         """
-        from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+        from transformers import (
+            AutoConfig,
+            AutoModelForSeq2SeqLM,
+            AutoModelForCausalLM,
+            AutoTokenizer
+        )
 
         if model_name is None:
             model_name = Path(model_path).name
@@ -53,9 +58,23 @@ class ModelManager:
         self._log(f"\n모델 로드 중: {model_name}")
         self._log(f"  - 경로: {model_path}")
 
+        # 모델 타입 자동 감지
+        config = AutoConfig.from_pretrained(model_path)
+        is_encoder_decoder = config.is_encoder_decoder if hasattr(config, 'is_encoder_decoder') else False
+
         # 모델 및 토크나이저 로드
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+        if is_encoder_decoder:
+            model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+        else:
+            model = AutoModelForCausalLM.from_pretrained(model_path)
+
         tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+        # Decoder-only 모델의 경우 left padding 설정
+        if not is_encoder_decoder:
+            tokenizer.padding_side = "left"
+            if tokenizer.pad_token is None:
+                tokenizer.pad_token = tokenizer.eos_token
 
         # GPU 사용 가능 시 이동
         import torch
