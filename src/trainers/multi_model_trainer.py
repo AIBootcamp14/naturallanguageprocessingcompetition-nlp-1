@@ -224,7 +224,12 @@ class MultiModelEnsembleTrainer(BaseTrainer):
             dict: 앙상블 평가 지표
         """
         try:
-            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+            from transformers import (
+                AutoConfig,
+                AutoModelForSeq2SeqLM,
+                AutoModelForCausalLM,
+                AutoTokenizer
+            )
             from rouge import Rouge
             import torch
 
@@ -235,8 +240,23 @@ class MultiModelEnsembleTrainer(BaseTrainer):
             tokenizers = []
 
             for model_path in model_paths:
-                model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+                # 모델 타입 자동 감지
+                config = AutoConfig.from_pretrained(model_path)
+                is_encoder_decoder = config.is_encoder_decoder if hasattr(config, 'is_encoder_decoder') else False
+
+                # 모델 타입에 따라 적절한 클래스 사용
+                if is_encoder_decoder:
+                    model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+                else:
+                    model = AutoModelForCausalLM.from_pretrained(model_path)
+
                 tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+                # Decoder-only 모델의 경우 left padding 설정
+                if not is_encoder_decoder:
+                    tokenizer.padding_side = "left"
+                    if tokenizer.pad_token is None:
+                        tokenizer.pad_token = tokenizer.eos_token
 
                 if torch.cuda.is_available():
                     model = model.cuda()
