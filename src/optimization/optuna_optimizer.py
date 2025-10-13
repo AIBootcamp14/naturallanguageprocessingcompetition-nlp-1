@@ -180,7 +180,7 @@ class OptunaOptimizer:
         try:
             # 3. 모델 로더 초기화
             model_loader = ModelLoader(config)
-            model, tokenizer = model_loader.load()
+            model, tokenizer = model_loader.load_model_and_tokenizer()
 
             # 4. Trainer 초기화 (WandB 비활성화)
             config.logging.use_wandb = False
@@ -260,8 +260,14 @@ class OptunaOptimizer:
         )
 
         # 4. 최적 파라미터 저장
-        self.best_params = self.study.best_params
-        self.best_value = self.study.best_value
+        try:
+            self.best_params = self.study.best_params
+            self.best_value = self.study.best_value
+        except ValueError as e:
+            # 완료된 trial이 없는 경우
+            self.logger.error(f"완료된 trial이 없습니다: {e}")
+            self.best_params = {}
+            self.best_value = 0.0
 
         self.logger.info(f"\n{'='*70}")
         self.logger.info(f"Optuna 최적화 완료")
