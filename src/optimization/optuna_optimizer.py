@@ -153,11 +153,18 @@ class OptunaOptimizer:
         config.training.weight_decay = params['weight_decay']
         config.training.scheduler_type = params['scheduler_type']
 
-        # Generation 파라미터 업데이트
-        config.generation.temperature = params['temperature']
-        config.generation.top_p = params['top_p']
-        config.generation.num_beams = params['num_beams']
-        config.generation.length_penalty = params['length_penalty']
+        # Generation 파라미터 업데이트 (inference 섹션에 있음)
+        if not hasattr(config, 'generation'):
+            # generation 섹션이 없으면 inference 섹션 사용
+            if hasattr(config, 'inference'):
+                config.inference.num_beams = params['num_beams']
+                config.inference.length_penalty = params['length_penalty']
+                # temperature와 top_p는 KoBART에서 사용 안 함 (beam search 모델)
+        else:
+            config.generation.temperature = params['temperature']
+            config.generation.top_p = params['top_p']
+            config.generation.num_beams = params['num_beams']
+            config.generation.length_penalty = params['length_penalty']
 
         # LoRA 파라미터 업데이트
         if 'lora_r' in params:
