@@ -60,12 +60,12 @@ graph TB
     I --> J
     J --> K
 
-    style Input fill:#e3f2fd,stroke:#1976d2,color:#000
-    style Training fill:#fff3e0,stroke:#f57c00,color:#000
-    style Evaluation fill:#e8f5e9,stroke:#388e3c,color:#000
-    style Output fill:#ffcdd2,stroke:#c62828,color:#000
+    style Input fill:#e1f5ff,stroke:#01579b,color:#000
+    style Training fill:#f3e5f5,stroke:#4a148c,color:#000
+    style Evaluation fill:#ffccbc,stroke:#bf360c,color:#000
+    style Output fill:#b39ddb,stroke:#311b92,color:#000
 
-    style K fill:#f44336,stroke:#b71c1c,color:#fff
+    style K fill:#ffccbc,stroke:#bf360c,color:#000
 ```
 
 ### 1.2 실험 목적
@@ -112,11 +112,11 @@ graph LR
     G --> H{제출 파일<br/>생성}
     H -->|실패<br/>KeyError| I[❌ 오류<br/>발생]
 
-    style A fill:#e3f2fd,stroke:#1976d2,color:#000
-    style C fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style E fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style G fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style I fill:#ffcdd2,stroke:#c62828,color:#fff
+    style A fill:#e1f5ff,stroke:#01579b,color:#000
+    style C fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style E fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style G fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style I fill:#ffccbc,stroke:#bf360c,color:#000
 ```
 
 | 항목 | 결과 |
@@ -208,6 +208,8 @@ solar_samples = 50                          # Solar API 평가 샘플 수
 
 ### 3.1 Loss 및 ROUGE 추이
 
+#### 3.1.1 Epoch별 학습 진행 타임라인
+
 ```mermaid
 graph LR
     A[Epoch 1<br/>Loss: 1.35<br/>ROUGE-Sum: 1.05] --> B[Epoch 2<br/>Loss: 1.29<br/>ROUGE-Sum: 1.13]
@@ -218,8 +220,72 @@ graph LR
     F --> G[Epoch 7<br/>Loss: 1.50<br/>ROUGE-Sum: 1.20]
     G --> H[Epoch 8<br/>Loss: 1.52<br/>ROUGE-Sum: 1.20<br/>🛑 Early Stop]
 
-    style E fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style H fill:#ffccbc,stroke:#d84315,color:#000
+    style E fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style H fill:#ffccbc,stroke:#bf360c,color:#000
+```
+
+#### 3.1.2 ROUGE 점수 비교 (주요 Epoch)
+
+```mermaid
+graph TB
+    subgraph Epoch1["Epoch 1 - 초기 성능"]
+        E1R1[ROUGE-1: 0.3989]
+        E1R2[ROUGE-2: 0.2554]
+        E1RL[ROUGE-L: 0.3940]
+        E1SUM[ROUGE-Sum: 1.0484]
+    end
+
+    subgraph Epoch5["Epoch 5 - 최고 성능 ✅"]
+        E5R1[ROUGE-1: 0.4700]
+        E5R2[ROUGE-2: 0.3056]
+        E5RL[ROUGE-L: 0.4613]
+        E5SUM[ROUGE-Sum: 1.2369]
+    end
+
+    subgraph Epoch8["Epoch 8 - 최종 성능"]
+        E8R1[ROUGE-1: 0.4576]
+        E8R2[ROUGE-2: 0.2963]
+        E8RL[ROUGE-L: 0.4496]
+        E8SUM[ROUGE-Sum: 1.2035]
+    end
+
+    Epoch1 --> Epoch5
+    Epoch5 --> Epoch8
+
+    style Epoch1 fill:#bbdefb,stroke:#01579b,color:#000
+    style Epoch5 fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style Epoch8 fill:#fff9c4,stroke:#f57f17,color:#000
+
+    style E1R1 fill:#e1f5ff,stroke:#01579b,color:#000
+    style E1R2 fill:#e1f5ff,stroke:#01579b,color:#000
+    style E1RL fill:#e1f5ff,stroke:#01579b,color:#000
+    style E1SUM fill:#e1f5ff,stroke:#01579b,color:#000
+
+    style E5R1 fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style E5R2 fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style E5RL fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style E5SUM fill:#c8e6c9,stroke:#1b5e20,color:#000
+
+    style E8R1 fill:#fff3e0,stroke:#e65100,color:#000
+    style E8R2 fill:#fff3e0,stroke:#e65100,color:#000
+    style E8RL fill:#fff3e0,stroke:#e65100,color:#000
+    style E8SUM fill:#fff3e0,stroke:#e65100,color:#000
+```
+
+#### 3.1.3 학습 시간 분해 (총 10분 40초)
+
+```mermaid
+graph LR
+    A[시작<br/>0초] --> B[Epoch 1-2<br/>약 2분 40초<br/>빠른 수렴]
+    B --> C[Epoch 3-5<br/>약 4분<br/>최적 성능 도달]
+    C --> D[Epoch 6-8<br/>약 4분<br/>과적합 감지]
+    D --> E[완료<br/>10분 40초]
+
+    style A fill:#e1f5ff,stroke:#01579b,color:#000
+    style B fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style C fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style D fill:#fff9c4,stroke:#f57f17,color:#000
+    style E fill:#b39ddb,stroke:#311b92,color:#000
 ```
 
 ### 3.2 Epoch별 상세 지표
@@ -343,6 +409,49 @@ stability_metrics = {
 }
 ```
 
+#### 3.3.1 Gradient Norm 안정성 차트
+
+```mermaid
+graph TB
+    subgraph GradRange["Gradient Norm 범위 분석"]
+        MIN[최소값: 2.35<br/>안정적 하한]
+        AVG[평균값: 3.5<br/>정상 범위 ✅]
+        MAX[최대값: 8.22<br/>클리핑 적용]
+    end
+
+    subgraph Stability["안정성 평가"]
+        STD[표준편차: 1.2<br/>낮은 변동성]
+        EVAL[평가: GOOD<br/>학습 안정]
+    end
+
+    MIN --> AVG --> MAX
+    AVG --> STD --> EVAL
+
+    style MIN fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style AVG fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style MAX fill:#fff9c4,stroke:#f57f17,color:#000
+    style STD fill:#bbdefb,stroke:#01579b,color:#000
+    style EVAL fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style GradRange fill:#f3e5f5,stroke:#4a148c,color:#000
+    style Stability fill:#fff3e0,stroke:#e65100,color:#000
+```
+
+#### 3.3.2 학습률 감소 패턴 시각화
+
+```mermaid
+graph LR
+    A[초기 학습률<br/>4.99e-5<br/>100%] --> B[Epoch 2<br/>약 3.75e-5<br/>75%]
+    B --> C[Epoch 4<br/>약 2.50e-5<br/>50%]
+    C --> D[Epoch 6<br/>약 1.25e-5<br/>25%]
+    D --> E[최종 학습률<br/>2.88e-7<br/>0.6%]
+
+    style A fill:#ffccbc,stroke:#bf360c,color:#000
+    style B fill:#fff9c4,stroke:#f57f17,color:#000
+    style C fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style D fill:#bbdefb,stroke:#01579b,color:#000
+    style E fill:#e1f5ff,stroke:#01579b,color:#000
+```
+
 ### 3.4 학습 곡선 특징
 
 ```mermaid
@@ -365,9 +474,9 @@ graph TB
 
     Phase1 --> Phase2 --> Phase3
 
-    style Phase1 fill:#c8e6c9,stroke:#2e7d32,color:#000
+    style Phase1 fill:#a5d6a7,stroke:#1b5e20,color:#000
     style Phase2 fill:#fff9c4,stroke:#f57f17,color:#000
-    style Phase3 fill:#ffccbc,stroke:#d84315,color:#000
+    style Phase3 fill:#ffccbc,stroke:#bf360c,color:#000
 ```
 
 **학습 곡선 분석:**
@@ -441,11 +550,98 @@ performance_evaluation = {
 }
 ```
 
+#### 4.3.1 ROUGE 메트릭 성능 비교 차트
+
+```mermaid
+graph TB
+    subgraph Metrics["ROUGE 메트릭별 성능"]
+        R1[ROUGE-1<br/>0.4700<br/>약 47%]
+        R2[ROUGE-2<br/>0.3056<br/>약 31%]
+        RL[ROUGE-L<br/>0.4613<br/>약 46%]
+    end
+
+    subgraph Analysis["성능 분석"]
+        A1[1-gram 매칭<br/>우수함]
+        A2[2-gram 매칭<br/>양호함]
+        A3[최장 공통 부분<br/>우수함]
+    end
+
+    R1 --> A1
+    R2 --> A2
+    RL --> A3
+
+    style R1 fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style R2 fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style RL fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style A1 fill:#bbdefb,stroke:#01579b,color:#000
+    style A2 fill:#fff9c4,stroke:#f57f17,color:#000
+    style A3 fill:#bbdefb,stroke:#01579b,color:#000
+    style Metrics fill:#f3e5f5,stroke:#4a148c,color:#000
+    style Analysis fill:#fff3e0,stroke:#e65100,color:#000
+```
+
+#### 4.3.2 Solar API vs KoBART 성능 비교
+
+```mermaid
+graph TB
+    subgraph KoBART["KoBART 모델 (학습됨)"]
+        KB_R1[ROUGE-1: 0.4700<br/>✅ +107%]
+        KB_R2[ROUGE-2: 0.3056<br/>✅ +300%]
+        KB_RL[ROUGE-L: 0.4613<br/>✅ +112%]
+    end
+
+    subgraph Solar["Solar API (제로샷)"]
+        SOL_R1[ROUGE-1: 0.2272<br/>기준선]
+        SOL_R2[ROUGE-2: 0.0765<br/>기준선]
+        SOL_RL[ROUGE-L: 0.2177<br/>기준선]
+    end
+
+    subgraph Result["비교 결과"]
+        WIN[KoBART 압도적 우세<br/>학습 효과 검증 ✅]
+    end
+
+    Solar --> KoBART
+    KoBART --> Result
+
+    style KoBART fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style Solar fill:#ffccbc,stroke:#bf360c,color:#000
+    style Result fill:#c8e6c9,stroke:#1b5e20,color:#000
+
+    style KB_R1 fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style KB_R2 fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style KB_RL fill:#c8e6c9,stroke:#1b5e20,color:#000
+
+    style SOL_R1 fill:#fff3e0,stroke:#e65100,color:#000
+    style SOL_R2 fill:#fff3e0,stroke:#e65100,color:#000
+    style SOL_RL fill:#fff3e0,stroke:#e65100,color:#000
+
+    style WIN fill:#a5d6a7,stroke:#1b5e20,color:#000
+```
+
+#### 4.3.3 학습 효율성 시각화
+
+```mermaid
+graph LR
+    A[데이터 입력<br/>12,457 샘플] --> B[학습 시작<br/>Batch 16]
+    B --> C[Epoch 1-2<br/>2분 40초<br/>빠른 수렴]
+    C --> D[Epoch 3-5<br/>4분<br/>최적화]
+    D --> E[Epoch 6-8<br/>4분<br/>미세조정]
+    E --> F[완료<br/>10분 40초<br/>✅ 효율적]
+
+    style A fill:#e1f5ff,stroke:#01579b,color:#000
+    style B fill:#fff3e0,stroke:#e65100,color:#000
+    style C fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style D fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style E fill:#fff9c4,stroke:#f57f17,color:#000
+    style F fill:#b39ddb,stroke:#311b92,color:#000
+```
+
 **성능 평가 요약:**
 - **ROUGE 점수**: 0.47/0.31/0.46 (Rouge-1/2/L)은 대화 요약 태스크에서 양호한 수준
 - **학습 시간**: Epoch당 약 1분 20초로 매우 빠른 학습 속도
 - **Early Stopping**: Epoch 5에서 최고 성능 달성 후 3 Epoch 내 개선 없어 정상 종료
 - **추론 속도**: 배치 크기 32로 499개 샘플을 약 1분 내 처리
+- **Solar API 대비**: ROUGE-1 +107%, ROUGE-2 +300%, ROUGE-L +112% 향상
 
 ---
 
@@ -462,9 +658,9 @@ graph TB
     E -->|No| F[KeyError 발생<br/>id]
     F --> G[❌ 제출 파일<br/>생성 실패]
 
-    style A fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style F fill:#ffcdd2,stroke:#c62828,color:#fff
-    style G fill:#ffcdd2,stroke:#c62828,color:#fff
+    style A fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style F fill:#ffccbc,stroke:#bf360c,color:#000
+    style G fill:#ffccbc,stroke:#bf360c,color:#000
 ```
 
 ### 5.2 오류 상세 정보
@@ -963,19 +1159,19 @@ graph TB
 
     P0 --> P1 --> P2 --> P3
 
-    style P0 fill:#ffcdd2,stroke:#c62828,color:#000
+    style P0 fill:#ffccbc,stroke:#bf360c,color:#000
     style P1 fill:#fff9c4,stroke:#f57f17,color:#000
-    style P2 fill:#c5e1a5,stroke:#558b2f,color:#000
-    style P3 fill:#bbdefb,stroke:#1976d2,color:#000
+    style P2 fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style P3 fill:#bbdefb,stroke:#01579b,color:#000
 
-    style A1 fill:#ef9a9a,stroke:#c62828,color:#000
-    style A2 fill:#ef9a9a,stroke:#c62828,color:#000
-    style B1 fill:#fff59d,stroke:#f57f17,color:#000
-    style B2 fill:#fff59d,stroke:#f57f17,color:#000
-    style C1 fill:#dce775,stroke:#558b2f,color:#000
-    style C2 fill:#dce775,stroke:#558b2f,color:#000
-    style D1 fill:#90caf9,stroke:#1976d2,color:#000
-    style D2 fill:#90caf9,stroke:#1976d2,color:#000
+    style A1 fill:#ffccbc,stroke:#bf360c,color:#000
+    style A2 fill:#ffccbc,stroke:#bf360c,color:#000
+    style B1 fill:#fff9c4,stroke:#f57f17,color:#000
+    style B2 fill:#fff9c4,stroke:#f57f17,color:#000
+    style C1 fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style C2 fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style D1 fill:#bbdefb,stroke:#01579b,color:#000
+    style D2 fill:#bbdefb,stroke:#01579b,color:#000
 ```
 
 ```python
@@ -1051,15 +1247,15 @@ graph TB
     H -->|Yes| I[✅ 검증 완료]
     G1 --> G
 
-    style A fill:#e3f2fd,stroke:#1976d2,color:#000
-    style C fill:#fff3e0,stroke:#f57c00,color:#000
-    style E fill:#f3e5f5,stroke:#7b1fa2,color:#000
-    style G fill:#e8f5e9,stroke:#388e3c,color:#000
-    style I fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style A1 fill:#ffcdd2,stroke:#c62828,color:#fff
-    style C1 fill:#ffcdd2,stroke:#c62828,color:#fff
-    style E1 fill:#ffcdd2,stroke:#c62828,color:#fff
-    style G1 fill:#ffcdd2,stroke:#c62828,color:#fff
+    style A fill:#e1f5ff,stroke:#01579b,color:#000
+    style C fill:#fff3e0,stroke:#e65100,color:#000
+    style E fill:#f3e5f5,stroke:#4a148c,color:#000
+    style G fill:#ffccbc,stroke:#bf360c,color:#000
+    style I fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style A1 fill:#ffccbc,stroke:#bf360c,color:#000
+    style C1 fill:#ffccbc,stroke:#bf360c,color:#000
+    style E1 fill:#ffccbc,stroke:#bf360c,color:#000
+    style G1 fill:#ffccbc,stroke:#bf360c,color:#000
 ```
 
 ### 7.2 검증 단계
