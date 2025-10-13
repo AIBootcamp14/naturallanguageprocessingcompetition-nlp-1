@@ -50,10 +50,10 @@ graph TB
 
 | 단계 | 소요 시간 | 비고 |
 |------|----------|------|
-| **전략 1: 최고 성능** | 8-12시간 | Optuna + K-Fold 5 + Epoch 30 |
-| **전략 2: 균형** | 4-6시간 | K-Fold 5 + Epoch 15 |
-| **전략 3: 빠른 실행** | 2-3시간 | K-Fold 3 + Epoch 10 |
-| **전략 4: 초고속** | 30분-1시간 | Single + Epoch 5 |
+| **전략 1: 절대 최고** | 20-30시간 | Optuna 100 trials (철저한 탐색) |
+| **전략 2: 균형** | 5-7시간 | K-Fold 5 + Epoch 15 + GradAcc 10 |
+| **전략 3: 빠른 고성능** | 2-3시간 | K-Fold 3 + Epoch 10 + GradAcc 10 |
+| **전략 4: 초고속** | 45분-1.5시간 | Single + Epoch 5 + GradAcc 10 |
 
 ---
 
@@ -63,19 +63,19 @@ graph TB
 
 | 문제 | 해결 방법 | 명령어 반영 |
 |------|----------|------------|
-| ✅ gradient_accumulation_steps 과다 | 기본값 1로 설정 완료 | `--gradient_accumulation_steps 4-8` (성능용) |
+| ✅ gradient_accumulation_steps 과다 | 기본값 1로 설정 완료 | `--gradient_accumulation_steps 10` (최고 성능용) |
 | ✅ 데이터 증강 30% → 50% | 기본값 0.5 설정 | `--augmentation_ratio 0.5` |
 | ✅ 역번역 우선 사용 | back_translation 추가 | `--augmentation_methods back_translation paraphrase` |
 | ✅ 문장 끊김 (99.6% 해결) | 후처리 함수 강화 | 자동 적용 |
 | ✅ Decoder-only padding | left-padding 설정 | 자동 적용 |
-| ✅ max_new_tokens | 200으로 설정 | `--max_new_tokens 200` |
+| ✅ max_new_tokens | 100으로 최적화 | `--max_new_tokens 100` (한국어 요약 최적) |
 | ✅ Full Fine-tuning | 옵션 추가 | `--use_full_finetuning` (선택) |
 
 ### 2.2 성능 향상 요소
 
 **gradient_accumulation_steps**:
-- 기본값 1: 빠른 학습
-- 성능용 4-8: 큰 배치 효과 → 안정적 학습, 일반화 능력 향상
+- 기본값 1: 빠른 학습 (일반적)
+- 성능용 10: 효과적 배치 160 (16×10) → 매우 안정적 학습, 일반화 능력 대폭 향상
 
 **k_folds**:
 - 2-3: 빠른 실행
@@ -108,11 +108,11 @@ graph TB
 |------|-----|----------|------|
 | `--mode` | optuna | Optuna 최적화 모드 | 최적 하이퍼파라미터 자동 탐색 |
 | `--models` | kobart | KoBART 단일 모델 | 속도(99초) × 성능(1.048) 최고 |
-| `--n_trials` | 20 | Optuna 시행 횟수 | 20회 탐색으로 최적값 발견 |
+| `--n_trials` | 100 | Optuna 시행 횟수 | 100회 철저한 탐색으로 최적값 발견 |
 | `--epochs` | 30 | 학습 에폭 | 충분한 학습 (Early Stopping 적용) |
 | `--early_stopping_patience` | 5 | 조기 종료 기준 | 5 epoch 동안 개선 없으면 종료 |
 | `--batch_size` | 16 | 배치 크기 | GPU 메모리 최적 활용 |
-| `--gradient_accumulation_steps` | 8 | 그래디언트 누적 | 효과적 배치 128 (16×8) |
+| `--gradient_accumulation_steps` | 10 | 그래디언트 누적 | 효과적 배치 160 (16×10) |
 | `--learning_rate` | 5e-5 | 학습률 | KoBART 최적값 (Optuna 탐색) |
 | `--warmup_ratio` | 0.1 | Warmup 비율 | 안정적 학습 시작 |
 | `--weight_decay` | 0.01 | 가중치 감쇠 | 과적합 방지 |
@@ -123,10 +123,10 @@ graph TB
 | `--augmentation_methods` | back_translation paraphrase | 증강 방법 | 역번역(우수) + 의역(괜찮음) |
 | `--k_folds` | 5 | K-Fold 교차검증 | 과적합 방지, 안정적 성능 |
 | `--fold_seed` | 42 | Fold 시드 | 재현 가능성 |
-| `--max_new_tokens` | 200 | 생성 최대 토큰 | 한국어 완전한 문장 생성 |
+| `--max_new_tokens` | 100 | 생성 최대 토큰 | 한국어 요약 최적 길이 |
 | `--min_new_tokens` | 30 | 생성 최소 토큰 | 너무 짧은 요약 방지 |
 | `--num_beams` | 5 | Beam Search | 품질 향상 |
-| `--repetition_penalty` | 1.2 | 반복 억제 | 반복 문장 방지 |
+| `--repetition_penalty` | 1.5 | 반복 억제 | 반복 문장 강력 방지 |
 | `--length_penalty` | 1.0 | 길이 페널티 | 적절한 길이 유도 |
 | `--no_repeat_ngram_size` | 3 | N-gram 반복 금지 | 3-gram 반복 방지 |
 | `--use_solar_api` | - | Solar API 통합 | 고품질 번역/요약 보정 |
@@ -138,7 +138,7 @@ graph TB
 - ✅ **Optuna 하이퍼파라미터 최적화**: 자동으로 최적 값 탐색
 - ✅ **K-Fold 교차검증 (5-Fold)**: 과적합 방지, 안정적 일반화
 - ✅ **데이터 증강 50%**: 역번역 + 의역으로 데이터 풍부화
-- ✅ **Gradient Accumulation (8)**: 효과적 배치 크기 128
+- ✅ **Gradient Accumulation (10)**: 효과적 배치 크기 160
 - ✅ **Early Stopping**: 과적합 방지
 - ✅ **Label Smoothing**: 과신 방지
 - ✅ **Solar API 통합**: 추론 시 고품질 보정
@@ -151,11 +151,11 @@ graph TB
 python scripts/train.py \
   --mode optuna \
   --models kobart \
-  --n_trials 20 \
+  --n_trials 100 \
   --epochs 30 \
   --early_stopping_patience 5 \
   --batch_size 16 \
-  --gradient_accumulation_steps 8 \
+  --gradient_accumulation_steps 10 \
   --learning_rate 5e-5 \
   --warmup_ratio 0.1 \
   --weight_decay 0.01 \
@@ -166,10 +166,10 @@ python scripts/train.py \
   --augmentation_methods back_translation paraphrase \
   --k_folds 5 \
   --fold_seed 42 \
-  --max_new_tokens 200 \
+  --max_new_tokens 100 \
   --min_new_tokens 30 \
   --num_beams 5 \
-  --repetition_penalty 1.2 \
+  --repetition_penalty 1.5 \
   --length_penalty 1.0 \
   --no_repeat_ngram_size 3 \
   --use_solar_api \
@@ -177,8 +177,8 @@ python scripts/train.py \
   --experiment_name kobart_ultimate \
   --seed 42
 
-# 예상 시간: 8-12시간
-# 예상 ROUGE Sum: 1.2-1.3 (현재 1.048 → +15-25%)
+# 예상 시간: 20-30시간 (Optuna 100 trials)
+# 예상 ROUGE Sum: 1.25-1.35 (현재 1.048 → +20-30%)
 ```
 
 ---
@@ -197,7 +197,7 @@ python scripts/train.py \
 |------|-----|----------|------------|
 | `--mode` | kfold | K-Fold 교차검증 | Optuna 제외 (시간 단축) |
 | `--epochs` | 15 | 중간 학습량 | 30 → 15 (시간 1/2) |
-| `--gradient_accumulation_steps` | 4 | 중간 배치 효과 | 8 → 4 (시간 단축) |
+| `--gradient_accumulation_steps` | 10 | 최고 배치 효과 | 동일 유지 (성능 우선) |
 
 #### 균형 성능 명령어
 
@@ -209,7 +209,7 @@ python scripts/train.py \
   --epochs 15 \
   --early_stopping_patience 3 \
   --batch_size 16 \
-  --gradient_accumulation_steps 4 \
+  --gradient_accumulation_steps 10 \
   --learning_rate 5e-5 \
   --warmup_ratio 0.1 \
   --weight_decay 0.01 \
@@ -220,18 +220,18 @@ python scripts/train.py \
   --augmentation_methods back_translation paraphrase \
   --k_folds 5 \
   --fold_seed 42 \
-  --max_new_tokens 200 \
+  --max_new_tokens 100 \
   --min_new_tokens 30 \
   --num_beams 5 \
-  --repetition_penalty 1.2 \
+  --repetition_penalty 1.5 \
   --length_penalty 1.0 \
   --no_repeat_ngram_size 3 \
   --use_solar_api \
   --experiment_name kobart_balanced \
   --seed 42
 
-# 예상 시간: 4-6시간
-# 예상 ROUGE Sum: 1.15-1.25 (현재 1.048 → +10-20%)
+# 예상 시간: 5-7시간
+# 예상 ROUGE Sum: 1.18-1.28 (현재 1.048 → +13-23%)
 ```
 
 ---
@@ -253,7 +253,7 @@ python scripts/train.py \
   --epochs 10 \
   --early_stopping_patience 3 \
   --batch_size 16 \
-  --gradient_accumulation_steps 2 \
+  --gradient_accumulation_steps 10 \
   --learning_rate 5e-5 \
   --warmup_ratio 0.1 \
   --weight_decay 0.01 \
@@ -262,17 +262,17 @@ python scripts/train.py \
   --augmentation_methods back_translation paraphrase \
   --k_folds 3 \
   --fold_seed 42 \
-  --max_new_tokens 200 \
+  --max_new_tokens 100 \
   --min_new_tokens 30 \
   --num_beams 5 \
-  --repetition_penalty 1.2 \
+  --repetition_penalty 1.5 \
   --no_repeat_ngram_size 3 \
   --use_solar_api \
   --experiment_name kobart_fast_high \
   --seed 42
 
 # 예상 시간: 2-3시간
-# 예상 ROUGE Sum: 1.1-1.2 (현재 1.048 → +5-15%)
+# 예상 ROUGE Sum: 1.12-1.22 (현재 1.048 → +7-17%)
 ```
 
 ---
@@ -293,22 +293,22 @@ python scripts/train.py \
   --models kobart \
   --epochs 5 \
   --batch_size 16 \
-  --gradient_accumulation_steps 1 \
+  --gradient_accumulation_steps 10 \
   --learning_rate 5e-5 \
   --warmup_ratio 0.1 \
   --use_augmentation \
-  --augmentation_ratio 0.3 \
-  --augmentation_methods back_translation \
-  --max_new_tokens 200 \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --max_new_tokens 100 \
   --min_new_tokens 30 \
   --num_beams 5 \
-  --repetition_penalty 1.2 \
+  --repetition_penalty 1.5 \
   --no_repeat_ngram_size 3 \
   --experiment_name kobart_ultrafast \
   --seed 42
 
-# 예상 시간: 30분-1시간
-# 예상 ROUGE Sum: 1.05-1.1 (현재 1.048 → +0-5%)
+# 예상 시간: 45분-1.5시간
+# 예상 ROUGE Sum: 1.08-1.15 (현재 1.048 → +3-10%)
 ```
 
 ---
@@ -331,9 +331,10 @@ python scripts/inference.py \
   --solar_weight 0.3 \
   --kobart_weight 0.7 \
   --ensemble_strategy weighted_avg \
-  --max_new_tokens 200 \
+  --max_new_tokens 100 \
   --min_new_tokens 30 \
   --num_beams 5 \
+  --repetition_penalty 1.5 \
   --batch_size 16 \
   --output submissions/kobart_solar_ensemble.csv
 ```
@@ -345,28 +346,17 @@ python scripts/inference.py \
 | `--kobart_weight` | 0.7 | KoBART 가중치 70% |
 | `--ensemble_strategy` | weighted_avg | 가중 평균 앙상블 |
 
-### 4.2 사전 학습 모델 보정 전략
+### 4.2 ~~사전 학습 모델 보정 전략~~ (미구현)
 
-#### 개념
-KoBART 학습 → 추론 시 사전 학습된 모델들로 보정
+> **⚠️ 주의**: 현재 `--use_pretrained_correction` 옵션이 구현되어 있지 않습니다.
+> 향후 구현 예정 기능입니다. 현재는 **Solar API만 사용 가능**합니다.
 
-```bash
-# ==================== 사전 학습 모델 보정 추론 ==================== #
-python scripts/inference.py \
-  --model experiments/.../kobart/final_model \
-  --test_data data/raw/test.csv \
-  --use_pretrained_correction \
-  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
-  --correction_threshold 0.3 \
-  --max_new_tokens 200 \
-  --batch_size 16 \
-  --output submissions/kobart_corrected.csv
-```
+~~개념: KoBART 학습 → 추론 시 사전 학습된 모델들로 보정~~
 
-**전략**:
-1. KoBART로 초안 생성
-2. 사전 학습 모델들로 품질 검증
-3. 임계값(0.3) 이하는 사전 학습 모델 결과 사용
+**현재 가능한 추론 고도화:**
+- ✅ Solar API 앙상블 (섹션 4.1)
+- ✅ 강화된 후처리 (섹션 4.3)
+- ❌ 허깅페이스 사전학습 모델 보정 (미구현)
 
 ### 4.3 후처리 고도화
 
@@ -394,11 +384,11 @@ def postprocess_summary(text: str) -> str:
 
 | 남은 시간 | 추천 전략 | 명령어 |
 |----------|----------|--------|
-| **24시간** | 전략 1 (절대 최고) | Optuna + K-Fold 5 + Epoch 30 |
-| **12시간** | 전략 2 (균형) | K-Fold 5 + Epoch 15 |
-| **6시간** | 전략 3 (빠른 고성능) | K-Fold 3 + Epoch 10 |
-| **3시간** | 전략 4 (초고속) | Single + Epoch 5 |
-| **1시간** | 긴급 | Single + Epoch 3 |
+| **48시간+** | 전략 1 (절대 최고) | Optuna 100 trials + K-Fold 5 + Epoch 30 |
+| **12시간** | 전략 2 (균형) | K-Fold 5 + Epoch 15 + GradAcc 10 |
+| **6시간** | 전략 3 (빠른 고성능) | K-Fold 3 + Epoch 10 + GradAcc 10 |
+| **3시간** | 전략 4 (초고속) | Single + Epoch 5 + GradAcc 10 |
+| **1시간** | 긴급 | Single + Epoch 3 + GradAcc 10 |
 
 ### 5.2 긴급 1시간 명령어
 
@@ -409,17 +399,19 @@ python scripts/train.py \
   --models kobart \
   --epochs 3 \
   --batch_size 16 \
+  --gradient_accumulation_steps 10 \
   --learning_rate 5e-5 \
   --use_augmentation \
-  --augmentation_ratio 0.3 \
-  --augmentation_methods back_translation \
-  --max_new_tokens 200 \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --max_new_tokens 100 \
   --num_beams 5 \
+  --repetition_penalty 1.5 \
   --experiment_name kobart_emergency \
   --seed 42
 
-# 예상 시간: 30-45분
-# 예상 ROUGE Sum: 1.05 (현재 1.048 → +0.2%)
+# 예상 시간: 35-50분
+# 예상 ROUGE Sum: 1.07-1.12 (현재 1.048 → +2-7%)
 ```
 
 ---
@@ -431,26 +423,29 @@ python scripts/train.py \
 | 전략 | 시간 | ROUGE Sum | 개선율 | 추천 상황 |
 |------|------|-----------|--------|----------|
 | **현재 (Baseline)** | 2분 | 1.048 | - | - |
-| **전략 1: 절대 최고** | 8-12시간 | 1.2-1.3 | +15-25% | 24시간 남음 |
-| **전략 2: 균형** | 4-6시간 | 1.15-1.25 | +10-20% | 12시간 남음 |
-| **전략 3: 빠른 고성능** | 2-3시간 | 1.1-1.2 | +5-15% | 6시간 남음 |
-| **전략 4: 초고속** | 30분-1시간 | 1.05-1.1 | +0-5% | 3시간 남음 |
-| **긴급** | 30-45분 | 1.05 | +0.2% | 1시간 남음 |
+| **전략 1: 절대 최고** | 20-30시간 | 1.25-1.35 | +20-30% | 48시간 남음 |
+| **전략 2: 균형** | 5-7시간 | 1.18-1.28 | +13-23% | 12시간 남음 |
+| **전략 3: 빠른 고성능** | 2-3시간 | 1.12-1.22 | +7-17% | 6시간 남음 |
+| **전략 4: 초고속** | 45분-1.5시간 | 1.08-1.15 | +3-10% | 3시간 남음 |
+| **긴급** | 35-50분 | 1.07-1.12 | +2-7% | 1시간 남음 |
 
 ### 6.2 시간 분해
 
-#### 전략 1 (8-12시간)
+#### 전략 1 (20-30시간)
 ```
-Optuna 20 trials: 4-6시간 (trial당 12-18분)
-K-Fold 5: 3-5시간 (fold당 36-60분)
-추론 및 앙상블: 30분-1시간
+Optuna 100 trials: 18-25시간 (trial당 10-15분)
+  - gradient_accumulation_steps=10으로 인한 시간 증가
+  - 철저한 하이퍼파라미터 탐색
+K-Fold 5 × Epoch 30: 별도 실행 불필요 (Optuna가 최적 모델 생성)
+추론 및 Solar API 앙상블: 1-2시간
 ```
 
-#### 전략 2 (4-6시간)
+#### 전략 2 (5-7시간)
 ```
-K-Fold 5 × Epoch 15: 3-4시간 (fold당 36-48분)
-데이터 증강: 30분
-추론: 30분
+K-Fold 5 × Epoch 15: 4-5시간 (fold당 48-60분)
+  - gradient_accumulation_steps=10 적용
+  - 데이터 증강 50% 포함
+추론 + Solar API: 1-2시간
 ```
 
 ### 6.3 리스크 관리
@@ -536,26 +531,41 @@ print(f"완전한 문장: {complete:.1%}")
 
 ### 8.1 막판 하루 전략
 
-**시나리오**: 오늘 오후 2시부터 내일 오후 2시까지 (24시간)
+**시나리오 A: 48시간 남음 (이틀)**
 
 ```
-14:00 - 22:00 (8시간): 전략 1 실행 (Optuna + K-Fold)
-22:00 - 23:00 (1시간): 중간 결과 분석, 필요시 전략 2로 전환
-23:00 - 05:00 (6시간): 전략 2 실행 (안전망)
-05:00 - 08:00 (3시간): 전략 3 실행 (추가 실험)
-08:00 - 12:00 (4시간): 최고 결과 선택 + 추론 최적화 + Solar API 앙상블
-12:00 - 13:00 (1시간): 최종 검증 및 제출 파일 생성
-13:00 - 14:00 (1시간): 여유 시간 (긴급 상황 대비)
+Day 1:
+09:00 - 09:00+30h (다음날 15:00): 전략 1 실행 (Optuna 100 trials)
+  → 백그라운드 실행, 정기적 체크포인트 저장
+
+Day 2:
+15:00 - 17:00 (2시간): Optuna 결과 분석, 최적 모델 선택
+17:00 - 20:00 (3시간): 최적 파라미터로 전략 2 실행 (검증용)
+20:00 - 22:00 (2시간): Solar API 앙상블 + 최종 추론
+22:00 - 23:00 (1시간): 제출 파일 검증 및 생성
+23:00 - 24:00 (1시간): 여유 시간 (긴급 대응)
+```
+
+**시나리오 B: 12시간 남음 (반나절)**
+
+```
+09:00 - 16:00 (7시간): 전략 2 실행 (K-Fold 5 + Epoch 15)
+16:00 - 18:00 (2시간): Solar API 앙상블 추론
+18:00 - 19:00 (1시간): 제출 파일 검증
+19:00 - 21:00 (2시간): 여유 시간 (전략 3 추가 실행 가능)
 ```
 
 ### 8.2 핵심 성공 요소
 
-1. ✅ **데이터 증강 50%**: 반드시 적용 (back_translation 우선)
-2. ✅ **K-Fold 5**: 안정적 일반화
-3. ✅ **Gradient Accumulation 4-8**: 큰 배치 효과
-4. ✅ **Early Stopping**: 과적합 방지
-5. ✅ **Solar API 앙상블**: 추론 시 보정
-6. ✅ **강화된 후처리**: 99.6% 완전한 문장
+1. ✅ **Gradient Accumulation 10**: 효과적 배치 160, 매우 안정적 학습
+2. ✅ **데이터 증강 50%**: 반드시 적용 (back_translation + paraphrase)
+3. ✅ **K-Fold 5**: 안정적 일반화
+4. ✅ **max_new_tokens 100**: 한국어 요약 최적 길이
+5. ✅ **repetition_penalty 1.5**: 반복 강력 억제
+6. ✅ **Optuna 100 trials**: 철저한 하이퍼파라미터 탐색 (시간 여유 시)
+7. ✅ **Early Stopping**: 과적합 방지
+8. ✅ **Solar API 앙상블**: 추론 시 보정
+9. ✅ **강화된 후처리**: 99.6% 완전한 문장
 
 ### 8.3 절대 피해야 할 것
 
@@ -572,11 +582,14 @@ print(f"완전한 문장: {complete:.1%}")
 ### 9.1 GPU 메모리 부족
 
 ```bash
-# Batch size 줄이기
---batch_size 8 --gradient_accumulation_steps 16
+# 방법 1: Batch size 줄이고 gradient_accumulation_steps 늘리기 (효과적 배치 유지)
+--batch_size 8 --gradient_accumulation_steps 20  # 효과적 배치 = 160
 
-# 또는
---batch_size 4 --gradient_accumulation_steps 32
+# 방법 2: 더 심각한 경우
+--batch_size 4 --gradient_accumulation_steps 40  # 효과적 배치 = 160
+
+# 주의: 효과적 배치 크기(batch_size × gradient_accumulation_steps)를
+# 160 근처로 유지하는 것이 성능에 중요합니다
 ```
 
 ### 9.2 학습 시간 초과
