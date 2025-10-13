@@ -1,0 +1,38 @@
+2025-10-12 20:32:53 | >> 표준 출력 및 오류를 로그 파일로 리디렉션 시작
+2025-10-12 20:32:56 | 📊 SINGLE 모드 실행 중...
+2025-10-12 20:32:56 | ============================================================
+2025-10-12 20:32:56 | 🚀 SINGLE MODEL 모드 학습 시작
+2025-10-12 20:32:56 | 📋 모델: llama-3.2-korean-3b
+2025-10-12 20:32:56 | ============================================================
+2025-10-12 20:32:56 | [1/5] 데이터 로딩...
+2025-10-12 20:32:57 | ⚠️ 디버그 모드: 학습 100개, 검증 20개
+2025-10-12 20:32:57 | [2/5] Config 로딩...
+2025-10-12 20:32:57 | ⚙️ Epochs 오버라이드: 1
+2025-10-12 20:32:57 | ⚙️ Batch size 오버라이드: 4
+2025-10-12 20:32:57 | ✅ Config 로드 완료: llama-3.2-korean-3b
+2025-10-12 20:32:57 | [3/5] 모델 로딩...
+2025-10-12 20:32:57 | 모델 타입: causal_lm
+2025-10-12 20:32:57 | Loading Causal LM: Bllossom/llama-3.2-Korean-Bllossom-3B
+2025-10-12 20:32:57 | 모델 로딩 중...
+2025-10-12 20:32:57 | `torch_dtype` is deprecated! Use `dtype` instead!
+2025-10-12 20:32:58 | Loading checkpoint shards:   0%|          | 0/2 [00:00<?, ?it/s]
+2025-10-12 20:33:00 | Loading checkpoint shards:  50%|█████     | 1/2 [00:02<00:02,  2.91s/it]
+2025-10-12 20:33:01 | Loading checkpoint shards: 100%|██████████| 2/2 [00:03<00:00,  1.68s/it]
+2025-10-12 20:33:02 | 토크나이저 로딩 중...
+2025-10-12 20:33:02 | 패딩 토큰 설정: <|eot_id|>
+2025-10-12 20:33:02 | ✅ Gradient Checkpointing 활성화
+2025-10-12 20:33:02 | ✅ Causal LM 로드 완료
+2025-10-12 20:33:02 | ✅ 모델 로드 완료
+2025-10-12 20:33:02 | [4/5] Dataset 생성...
+2025-10-12 20:33:02 | ✅ 학습 Dataset: 100개
+2025-10-12 20:33:02 | ✅ 검증 Dataset: 20개
+2025-10-12 20:33:02 | [5/5] 학습 시작...
+2025-10-12 20:33:02 | ============================================================
+2025-10-12 20:33:02 | 모델 학습 시작
+2025-10-12 20:33:02 | ============================================================
+2025-10-12 20:33:03 | WandB 로그인 상태: ieyeppo-job
+2025-10-12 20:33:03 | wandb: WARNING Path /home/ieyeppo/AI_Lab/natural-language-processing-competition/wandb/wandb/ wasn't writable, using system temp directory
+2025-10-12 20:33:03 | wandb: Currently logged in as: ieyeppo-job (kimsunmin0227-hufs) to https://api.wandb.ai. Use `wandb login --relogin` to force relogin
+2025-10-12 20:33:04 | wandb: WARNING Using a boolean value for 'reinit' is deprecated. Use 'return_previous' or 'finish_previous' instead.
+2025-10-12 20:33:04 | ❌ 오류 발생: 'Logger' object has no attribute 'isatty'
+2025-10-12 20:33:04 | >> 로그 리디렉션 중료.

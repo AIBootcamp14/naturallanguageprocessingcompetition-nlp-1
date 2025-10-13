@@ -1,0 +1,45 @@
+{
+  "mode": "full",
+  "models": [
+    "llama-3.2-korean-3b"
+  ],
+  "ensemble_strategy": "weighted_avg",
+  "use_tta": true,
+  "model_results": [
+    {
+      "model_name": "llama-3.2-korean-3b",
+      "model_path": "experiments/20251013/20251013_150618_test_llama_submission_fix/model_0_llama_3.2_korean_3b/llama_3.2_3b_qlora/final_model",
+      "eval_metrics": {
+        "eval_loss": 1.3466014862060547,
+        "eval_rouge1": 0.11139272780492855,
+        "eval_rouge2": 0.07467631836821995,
+        "eval_rougeL": 0.11139272780492855,
+        "eval_rouge_sum": 0.29746177397807705,
+        "eval_runtime": 395.4898,
+        "eval_samples_per_second": 1.262,
+        "eval_steps_per_second": 0.159,
+        "epoch": 1.0
+      },
+      "status": "success"
+    }
+  ],
+  "ensemble_results": {},
+  "solar_results": {
+    "solar_rouge_1_f1": 0.22721529000252147,
+    "solar_rouge_2_f1": 0.07650273711618417,
+    "solar_rouge_l_f1": 0.21771327705012092,
+    "n_samples": 50
+  },
+  "tta_results": {
+    "tta_applied": false,
+    "strategies": [
+      "paraphrase"
+    ],
+    "num_aug": 2
+  },
+  "inference_results": {
+    "submission_path": null,
+    "num_predictions": 0,
+    "error": "Input length of input_ids is 414, but `max_length` is set to 100. This can lead to unexpected behavior. You should consider increasing `max_length` or, better yet, setting `max_new_tokens`."
+  }
+}

@@ -1,0 +1,38 @@
+2025-10-12 23:43:24 | 📋 실험명: 1012-2343-qwen3_4b_qlora
+2025-10-12 23:43:24 | 🔗 WandB URL: https://wandb.ai/ieyeppo/nlp-competition/runs/jl8vntvn
+2025-10-12 23:43:24 | /home/ieyeppo/AI_Lab/natural-language-processing-competition/src/training/trainer.py:218: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `Seq2SeqTrainer.__init__`. Use `processing_class` instead.
+  trainer = Seq2SeqTrainer(
+2025-10-12 23:43:24 | The model is already on multiple devices. Skipping the move to device specified in `args`.
+2025-10-12 23:43:24 | 학습 진행 중...
+2025-10-12 23:43:24 | The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 151643}.
+2025-10-12 23:43:24 | 0%|          | 0/63 [00:24<?, ?it/s]
+2025-10-12 23:43:39 | ❌ qwen3-4b 학습 실패: OutOfMemoryError: CUDA out of memory. Tried to allocate 18.55 GiB. GPU 0 has a total capacity of 23.99 GiB of which 0 bytes is free. Including non-PyTorch memory, this process has 17179869184.00 GiB memory in use. Of the allocated memory 23.09 GiB is allocated by PyTorch, and 4.46 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+2025-10-12 23:43:39 | 오류 로그 저장: experiments/20251012/20251012_234209_test_full_pipeline_batch32/errors/qwen3-4b_error.log
+2025-10-12 23:43:39 | ==================================================
+2025-10-12 23:43:39 | 모델 4/6: solar-10.7b
+2025-10-12 23:43:39 | ==================================================
+2025-10-12 23:43:39 | 모델 타입: causal_lm
+2025-10-12 23:43:39 | Loading Causal LM: upstage/solar-10.7b-instruct-v1.0
+2025-10-12 23:43:39 | 모델 로딩 중...
+2025-10-12 23:43:40 | Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]
+2025-10-12 23:43:51 | Loading checkpoint shards:  20%|██        | 1/5 [00:11<00:46, 11.57s/it]
+2025-10-12 23:44:06 | Loading checkpoint shards:  40%|████      | 2/5 [00:26<00:39, 13.32s/it]
+2025-10-12 23:44:11 | Loading checkpoint shards:  60%|██████    | 3/5 [00:31<00:19,  9.60s/it]
+2025-10-12 23:44:16 | Loading checkpoint shards:  80%|████████  | 4/5 [00:35<00:07,  7.64s/it]
+2025-10-12 23:44:17 | Loading checkpoint shards: 100%|██████████| 5/5 [00:37<00:00,  5.29s/it]
+2025-10-12 23:44:17 | Loading checkpoint shards: 100%|██████████| 5/5 [00:37<00:00,  7.41s/it]
+2025-10-12 23:44:18 | WARNING:accelerate.big_modeling:Some parameters are on the meta device because they were offloaded to the cpu.
+2025-10-12 23:44:18 | 토크나이저 로딩 중...
+2025-10-12 23:44:19 | LoRA 설정 적용 중...
+2025-10-12 23:44:19 | 🔍 자동 탐지된 target_modules: ['q_proj', 'k_proj', 'v_proj', 'o_proj', 'gate_proj', 'up_proj', 'down_proj']
+2025-10-12 23:44:19 | ✅ LoRA 적용 완료
+2025-10-12 23:44:19 | 학습 가능 파라미터: 62,914,560 (0.58%)
+2025-10-12 23:44:19 | 전체 파라미터: 10,794,438,656
+2025-10-12 23:44:19 | Input require grads 활성화 (LoRA + Gradient Checkpointing)
+2025-10-12 23:44:19 | ✅ Gradient Checkpointing 활성화
+2025-10-12 23:44:19 | ✅ Causal LM 로드 완료
+2025-10-12 23:44:19 | ============================================================
+2025-10-12 23:44:19 | 모델 학습 시작
+2025-10-12 23:44:19 | ============================================================
+2025-10-12 23:44:19 | WandB 로그인 상태: ieyeppo-job
+2025-10-12 23:44:19 | wandb: Finishing previous runs because reinit is set to True.

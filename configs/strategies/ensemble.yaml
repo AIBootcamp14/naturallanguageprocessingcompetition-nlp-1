@@ -1,0 +1,5 @@
+# 앙상블 전략 Config
+ensemble:
+  type: weighted  # weighted, voting
+  weights: null   # null이면 균등 가중치
+  voting_type: hard  # hard, soft

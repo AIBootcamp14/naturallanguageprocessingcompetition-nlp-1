@@ -1,0 +1,51 @@
+# Qwen3-4B-Instruct 모델 설정
+# PRD 08: Zero-shot ROUGE Sum 45.02 (4위)
+
+_base_: ../base/causal_lm.yaml
+
+model:
+  type: causal_lm
+  checkpoint: "Qwen/Qwen3-4B-Instruct-2507"
+  size: "4B"
+  dtype: "fp16"  # Qwen은 fp16 사용
+  chat_template: "qwen"
+
+# LoRA 설정 (Qwen 최적화)
+lora:
+  r: 16
+  alpha: 32
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  dropout: 0.05
+  use_qlora: true
+
+# 학습 설정 (Qwen 최적화)
+training:
+  epochs: 3
+  batch_size: 6  # 4B 모델은 배치 크기 약간 줄임
+  gradient_accumulation_steps: 10  # effective batch = 6 * 10 = 60
+  learning_rate: 2e-5
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.1
+  weight_decay: 0.1
+  max_grad_norm: 1.2
+
+# LLM Dataset 설정
+dataset:
+  format_type: "chat"  # Qwen은 chat format 사용
+  use_instruction_augmentation: false
+
+# 실험 설정
+experiment:
+  name: "qwen3_4b_qlora"
+  tags:
+    - "qwen"
+    - "4b"
+    - "qlora"
+    - "instruct"

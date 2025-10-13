@@ -1,0 +1,51 @@
+# Llama-3.2-Korean-Bllossom-3B 모델 설정
+# PRD 08: Zero-shot ROUGE Sum 49.52 (1위)
+
+_base_: ../base/causal_lm.yaml
+
+model:
+  type: causal_lm
+  checkpoint: "Bllossom/llama-3.2-Korean-Bllossom-3B"
+  size: "3B"
+  dtype: "fp16"  # PyTorch AMP 호환성을 위해 FP16 사용
+  chat_template: "llama"
+
+# LoRA 설정 (Llama 최적화)
+lora:
+  r: 16
+  alpha: 32
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+  dropout: 0.05
+  use_qlora: true
+
+# 학습 설정 (Llama 최적화)
+training:
+  epochs: 3
+  batch_size: 8
+  gradient_accumulation_steps: 8
+  learning_rate: 2e-5
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.1
+  weight_decay: 0.1
+  max_grad_norm: 1.2
+
+# LLM Dataset 설정
+dataset:
+  format_type: "chat"  # Llama는 chat format 사용
+  use_instruction_augmentation: false
+
+# 실험 설정
+experiment:
+  name: "llama_3.2_3b_qlora"
+  tags:
+    - "llama"
+    - "3b"
+    - "qlora"
+    - "korean"
