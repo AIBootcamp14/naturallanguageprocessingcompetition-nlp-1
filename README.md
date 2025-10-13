@@ -222,14 +222,15 @@ save_config(config, './config_exp2.yaml')
 | #0.1 | Baseline (Modular) | 56.28% | 36.65% | 47.93% | **46.9526** | 2025-10-13 | ✅ (+0.01) |
 | #1 | Augmented Data (LLM) | 52.43% | 32.50% | 43.41% | **42.7807** | 2025-10-12 | ❌ Failed (-4.16) |
 | #2 | Post-processing v2 | 56.31% | 36.65% | 48.00% | **46.9863** | 2025-10-13 | ❌ Rollback (+0.03) |
+| #3 | Learning Rate 2e-5 (v1) | 56.19% | 36.32% | 47.57% | **46.6919** | 2025-10-13 | ❌ Failed (-0.26) |
+| #3 | Learning Rate 2e-5 (v2) | 55.93% | 36.72% | 47.17% | **46.6089** | 2025-10-13 | ❌ Failed (-0.34) |
 
 ### Planned Experiments
 
 | Exp # | Description | Target | Risk | Priority | Status |
 |-------|-------------|--------|------|----------|--------|
-| #3 | Learning Rate 2e-5 | +1~2 | ✅ Low | 🔥 Day 1 | 📋 Planned |
-| #4 | Learning Rate 3e-5 | +1~2 | ✅ Low | Day 3 | 📋 Planned |
-| #5 | Learning Rate 5e-5 | +2~3 | ⚠️ Medium | Day 4 | 📋 Planned |
+| #4 | Learning Rate 3e-5 | +1~2 | ✅ Low | Day 3 | ❌ Skipped (LR 방향 잘못됨) |
+| #5 | Learning Rate 5e-5 | +2~3 | ⚠️ Medium | Day 4 | ❌ Skipped (LR 방향 잘못됨) |
 | #6 | Time Token | +0.5~1 | ⚠️ Medium | Day 4-5 | 📋 Planned |
 | #7 | Money Token | +0.3~0.7 | ⚠️ Medium | Day 5-6 | 📋 Planned |
 | #8 | Warmup Steps 50/100 | +0.5~1 | ✅ Low | Week 2 | 📋 Planned |
@@ -270,6 +271,26 @@ save_config(config, './config_exp2.yaml')
 - ✅ 이론적 개선 ≠ 성능 향상 (실증 필수)
 - ✅ Dev set 검증 먼저 수행하기
 - ✅ Baseline의 단순함을 존중, 모델 학습 개선에 집중
+
+#### Exp #3: Learning Rate 2e-5
+
+**원인**:
+1. **LR 2e-5가 과도함** - Baseline 1e-5가 이미 최적
+2. **모든 checkpoint에서 일관된 하락** - checkpoint 선택 무관
+3. **Dev/Test 괴리 심화** - Dev +0.81%p → Test -0.26점
+4. **checkpoint 선택의 역설** - Best loss(ckpt-1000)가 오히려 더 나쁨 (-0.34)
+
+**교훈**:
+- ✅ LR 튜닝은 예상보다 **훨씬 민감함**
+- ✅ Baseline 하이퍼파라미터에는 이유가 있음
+- ✅ 잘못된 LR로는 어떤 checkpoint도 좋지 않음
+- ✅ checkpoint 최적화 < LR 선택의 중요성
+- ✅ Dev 점수(20%p 격차)로 Test 예측 불가능
+
+**새로운 방향**:
+- Epochs 연장 (20 → 30)
+- Warmup Steps 조정
+- Special Tokens 추가
 
 ---
 
@@ -360,13 +381,14 @@ cleaned = remove_special_tokens(
 
 ### 🔄 Week 1 (2025-10-13 ~ 10-19) - 50점 돌파
 - [x] **Day 1 (2025-10-13)**: Exp #2 (후처리 v2) → ❌ 실패 (46.99, 변화 없음)
-- [ ] **Day 1 (다음)**: Exp #3 (LR 2e-5) → 48~49점 목표 🔥
-- [ ] **Day 2-3**: Exp #4 (LR 3e-5) → 49~50점 목표
-- [ ] **Day 3-4**: Exp #5 (LR 5e-5 or Time Token) → 50~51 목표
-- [ ] **Day 5-7**: Warmup/Epochs 튜닝 → 50점 확실히 돌파
+- [x] **Day 1 (2025-10-13)**: Exp #3 (LR 2e-5) → ❌ 실패 (46.69, -0.26)
+- [ ] **Day 2**: Exp #9 (Epochs 30) 또는 Warmup 조정 → 47~48점 목표
+- [ ] **Day 3-4**: Time Token 또는 다른 안전한 개선
+- [ ] **Day 5-7**: 조합 최적화 → 50점 돌파 시도
 
 **목표**: **50점 이상 달성**
 **현재 Best**: 46.9526점 (Baseline Modular)
+**제출 횟수**: 8/12 사용 (4회 남음)
 
 ### 📋 Week 2 (2025-10-20 ~ 10-26) - 52~54점
 - [ ] Special Token 추가 (Time/Money)
