@@ -66,7 +66,9 @@ class BlendingEnsemble:
         self,
         val_dialogues: List[str],
         val_summaries: List[str],
-        max_length: int = 200,
+        max_new_tokens: int = 200,
+
+        min_new_tokens: int = 30,
         num_beams: int = 4
     ):
         """
@@ -75,7 +77,8 @@ class BlendingEnsemble:
         Args:
             val_dialogues: 검증용 대화 리스트
             val_summaries: 검증용 요약 리스트 (정답)
-            max_length: 최대 생성 길이
+            max_new_tokens: 생성할 최대 토큰 수
+            min_new_tokens: 생성할 최소 토큰 수
             num_beams: Beam search 크기
         """
         self._log("\nBlending 가중치 학습 시작...")
@@ -84,7 +87,8 @@ class BlendingEnsemble:
         # 1단계: 각 베이스 모델의 예측 수집
         base_predictions = self._get_base_predictions(
             val_dialogues,
-            max_length=max_length,
+            max_new_tokens=max_new_tokens,
+                        min_new_tokens=min_new_tokens,
             num_beams=num_beams
         )
 
@@ -128,7 +132,9 @@ class BlendingEnsemble:
     def _get_base_predictions(
         self,
         dialogues: List[str],
-        max_length: int = 200,
+        max_new_tokens: int = 200,
+
+        min_new_tokens: int = 30,
         num_beams: int = 4
     ) -> List[List[str]]:
         """베이스 모델들의 예측 수집"""
@@ -159,7 +165,8 @@ class BlendingEnsemble:
                     outputs = model.generate(
                         inputs['input_ids'],
                         attention_mask=inputs['attention_mask'],
-                        max_length=max_length,
+                        max_new_tokens=max_new_tokens,
+                        min_new_tokens=min_new_tokens,
                         num_beams=num_beams,
                         early_stopping=True
                     )
@@ -174,7 +181,9 @@ class BlendingEnsemble:
     def predict(
         self,
         dialogues: List[str],
-        max_length: int = 200,
+        max_new_tokens: int = 200,
+
+        min_new_tokens: int = 30,
         num_beams: int = 4,
         batch_size: int = 8
     ) -> List[str]:
@@ -183,7 +192,8 @@ class BlendingEnsemble:
 
         Args:
             dialogues: 대화 리스트
-            max_length: 최대 생성 길이
+            max_new_tokens: 생성할 최대 토큰 수
+            min_new_tokens: 생성할 최소 토큰 수
             num_beams: Beam search 크기
             batch_size: 배치 크기
 
@@ -196,7 +206,8 @@ class BlendingEnsemble:
         # 1단계: 베이스 모델 예측
         base_predictions = self._get_base_predictions(
             dialogues,
-            max_length=max_length,
+            max_new_tokens=max_new_tokens,
+                        min_new_tokens=min_new_tokens,
             num_beams=num_beams
         )
 
