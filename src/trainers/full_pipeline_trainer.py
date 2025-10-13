@@ -306,7 +306,12 @@ class FullPipelineTrainer(BaseTrainer):
             dict: 앙상블 평가 지표
         """
         try:
-            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+            from transformers import (
+                AutoConfig,
+                AutoModelForSeq2SeqLM,
+                AutoModelForCausalLM,
+                AutoTokenizer
+            )
             from rouge import Rouge
             import torch
 
@@ -315,7 +320,16 @@ class FullPipelineTrainer(BaseTrainer):
             tokenizers = []
 
             for model_path in model_paths:
-                model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+                # 모델 타입 자동 감지
+                config = AutoConfig.from_pretrained(model_path)
+                is_encoder_decoder = config.is_encoder_decoder if hasattr(config, 'is_encoder_decoder') else False
+
+                # 모델 타입에 따라 적절한 클래스 사용
+                if is_encoder_decoder:
+                    model = AutoModelForSeq2SeqLM.from_pretrained(model_path)
+                else:
+                    model = AutoModelForCausalLM.from_pretrained(model_path)
+
                 tokenizer = AutoTokenizer.from_pretrained(model_path)
 
                 if torch.cuda.is_available():
@@ -453,7 +467,12 @@ class FullPipelineTrainer(BaseTrainer):
         """
         try:
             import pandas as pd
-            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+            from transformers import (
+                AutoConfig,
+                AutoModelForSeq2SeqLM,
+                AutoModelForCausalLM,
+                AutoTokenizer
+            )
             import torch
 
             # 테스트 데이터 로드
@@ -474,8 +493,18 @@ class FullPipelineTrainer(BaseTrainer):
             best_model_path = model_paths[0]
             self.log(f"  사용 모델: {best_model_path}")
 
+            # 모델 타입 자동 감지
+            config = AutoConfig.from_pretrained(best_model_path)
+            is_encoder_decoder = config.is_encoder_decoder if hasattr(config, 'is_encoder_decoder') else False
+
             # 모델 및 토크나이저 로드
-            model = AutoModelForSeq2SeqLM.from_pretrained(best_model_path)
+            if is_encoder_decoder:
+                self.log(f"  모델 타입: Encoder-Decoder (Seq2Seq)")
+                model = AutoModelForSeq2SeqLM.from_pretrained(best_model_path)
+            else:
+                self.log(f"  모델 타입: Decoder-only (Causal LM)")
+                model = AutoModelForCausalLM.from_pretrained(best_model_path)
+
             tokenizer = AutoTokenizer.from_pretrained(best_model_path)
 
             if torch.cuda.is_available():
@@ -510,13 +539,23 @@ class FullPipelineTrainer(BaseTrainer):
 
                 # 생성
                 with torch.no_grad():
-                    outputs = model.generate(
-                        **inputs,
-                        max_length=getattr(self.args, 'max_length', 100),
-                        num_beams=getattr(self.args, 'num_beams', 4),
-                        early_stopping=True,
-                        no_repeat_ngram_size=getattr(self.args, 'no_repeat_ngram_size', 2)
-                    )
+                    # Causal LM은 max_new_tokens 사용, Seq2Seq는 max_length 사용
+                    if is_encoder_decoder:
+                        outputs = model.generate(
+                            **inputs,
+                            max_length=getattr(self.args, 'max_length', 100),
+                            num_beams=getattr(self.args, 'num_beams', 4),
+                            early_stopping=True,
+                            no_repeat_ngram_size=getattr(self.args, 'no_repeat_ngram_size', 2)
+                        )
+                    else:
+                        outputs = model.generate(
+                            **inputs,
+                            max_new_tokens=getattr(self.args, 'max_length', 100),
+                            num_beams=getattr(self.args, 'num_beams', 4),
+                            early_stopping=True,
+                            no_repeat_ngram_size=getattr(self.args, 'no_repeat_ngram_size', 2)
+                        )
 
                 # 디코딩
                 batch_predictions = tokenizer.batch_decode(
