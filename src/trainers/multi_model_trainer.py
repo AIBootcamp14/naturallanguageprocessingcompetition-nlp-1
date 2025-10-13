@@ -1,17 +1,17 @@
 # ==================== MultiModelEnsembleTrainer ==================== #
 """
-ÃÂ¤ ÃÂ¨x YÃÂ Trainer
+다중 모델 앙상블 Trainer
 
-PRD 12: ÃÂ¤ ÃÂ¨x YÃÂ ÃÂµ l
-ÃÂ¬ÃÂ¬ ÃÂ¨xD YÃÂµXÃÂ  YÃÂ\ ÃÂ°iXÃÂ¬ \ÃÂ ! ÃÂ
+PRD 12: 다중 모델 앙상블 모듈
+여러 모델을 학습하여 앙상블로 성능을 향상시키는 목적
 """
 
-# ---------------------- \ |tÃÂ¬ÃÂ¬ ---------------------- #
+# ---------------------- 외부 라이브러리 ---------------------- #
 import json
 from pathlib import Path
 from typing import List, Dict, Any
 
-# ---------------------- \ÃÂ¸ ÃÂ¨ÃÂ ---------------------- #
+# ---------------------- 내부 모듈 ---------------------- #
 from src.trainers.base_trainer import BaseTrainer
 from src.config import load_model_config
 from src.models import load_model_and_tokenizer
@@ -22,48 +22,48 @@ from src.ensemble import ModelManager
 
 # ==================== MultiModelEnsembleTrainer ==================== #
 class MultiModelEnsembleTrainer(BaseTrainer):
-    """ÃÂ¤ ÃÂ¨x YÃÂ Trainer"""
+    """다중 모델 앙상블 Trainer"""
 
     def train(self):
         """
-        ÃÂ¤ ÃÂ¨x YÃÂµ  YÃÂ ÃÂ¤ÃÂ
+        다중 모델 학습 및 앙상블 실행
 
         Returns:
-            dict: YÃÂµ ÃÂ°ÃÂ¼
+            dict: 학습 결과
                 - mode: 'multi_model'
-                - models: ÃÂ¨x ÃÂ¬ÃÂ¤ÃÂ¸
-                - results:  ÃÂ¨xÃÂ YÃÂµ ÃÂ°ÃÂ¼
-                - ensemble_strategy: YÃÂ ÃÂµ
-                - eval_metrics: YÃÂ ÃÂ ÃÂ°ÃÂ¼
+                - models: 모델 목록
+                - results: 각 모델의 학습 결과
+                - ensemble_strategy: 앙상블 전략
+                - eval_metrics: 앙상블 평가 결과
         """
         self.log("=" * 60)
-        self.log("=ÃÂ MULTI MODEL ENSEMBLE ÃÂ¨ÃÂ YÃÂµ ÃÂÃÂ")
-        self.log(f"=ÃÂ ÃÂ¨x: {', '.join(self.args.models)}")
-        self.log(f"=' YÃÂ ÃÂµ: {self.args.ensemble_strategy}")
+        self.log("📊 MULTI MODEL ENSEMBLE 모드 학습 시작")
+        self.log(f"🔧 모델: {', '.join(self.args.models)}")
+        self.log(f"🔢 앙상블 전략: {self.args.ensemble_strategy}")
         self.log("=" * 60)
 
-        # 1. pt0 \ÃÂ
-        self.log("\n[1/4] pt0 \)...")
+        # 1. 데이터 로드
+        self.log("\n[1/4] 데이터 로드...")
         train_df, eval_df = self.load_data()
 
-        # 2.  ÃÂ¨x YÃÂµ
-        self.log(f"\n[2/4] ÃÂ¨x YÃÂµ ({len(self.args.models)} ÃÂ¨x)...")
+        # 2. 각 모델 학습
+        self.log(f"\n[2/4] 모델 학습 ({len(self.args.models)} 모델)...")
         model_results = []
         model_paths = []
 
         for idx, model_name in enumerate(self.args.models):
             self.log(f"\n{'='*50}")
-            self.log(f"ÃÂ¨x {idx+1}/{len(self.args.models)}: {model_name}")
+            self.log(f"모델 {idx+1}/{len(self.args.models)}: {model_name}")
             self.log(f"{'='*50}")
 
-            # Config \ÃÂ
+            # Config 로드
             config = load_model_config(model_name)
             self._override_config(config)
 
-            # ÃÂ¨x  ÃÂ lÃÂt \ÃÂ
+            # 모델 및 토크나이저 로드
             model, tokenizer = load_model_and_tokenizer(config, logger=self.logger)
 
-            # Dataset ÃÂ1
+            # Dataset 생성
             model_type = config.model.get('type', 'encoder_decoder')
 
             train_dataset = DialogueSummarizationDataset(
@@ -86,11 +86,11 @@ class MultiModelEnsembleTrainer(BaseTrainer):
                 model_type=model_type
             )
 
-            # Trainer ÃÂ1  YÃÂµ
+            # Trainer 생성 및 학습
             model_output_dir = self.output_dir / f"model_{idx}_{model_name.replace('-', '_')}"
             model_output_dir.mkdir(parents=True, exist_ok=True)
 
-            # ConfigÃÂ output_dir $
+            # Config에 output_dir 설정
             config.training.output_dir = str(model_output_dir)
 
             trainer = create_trainer(
@@ -103,15 +103,15 @@ class MultiModelEnsembleTrainer(BaseTrainer):
                 logger=self.logger
             )
 
-            # YÃÂµ ÃÂ¤ÃÂ
+            # 학습 실행
             train_result = trainer.train()
 
-            # ÃÂ¨x ÃÂ¥
+            # 모델 저장
             final_model_path = model_output_dir / 'final_model'
             trainer.save_model(str(final_model_path))
             model_paths.append(str(final_model_path))
 
-            # ÃÂ°ÃÂ¼ ÃÂ¥
+            # 결과 저장
             eval_metrics = self._extract_eval_metrics(trainer.state.log_history)
             model_results.append({
                 'model_name': model_name,
@@ -119,21 +119,21 @@ class MultiModelEnsembleTrainer(BaseTrainer):
                 'eval_metrics': eval_metrics
             })
 
-            # FIXME: Corrupted log message
+            # 평가 지표 출력
             if eval_metrics:
                 for key, value in eval_metrics.items():
                     if 'rouge' in key.lower():
                         self.log(f"  {key}: {value:.4f}")
 
-        # 3. YÃÂ ÃÂ
-        self.log(f"\n[3/4] YÃÂ ÃÂ ...")
+        # 3. 앙상블 평가
+        self.log(f"\n[3/4] 앙상블 평가 중...")
         ensemble_metrics = self._evaluate_ensemble(
             model_paths=model_paths,
             eval_df=eval_df,
             strategy=self.args.ensemble_strategy
         )
 
-        # 4. ÃÂ°ÃÂ¼ ÃÂ
+        # 4. 결과 반환
         results = {
             'mode': 'multi_model',
             'models': self.args.models,
@@ -143,8 +143,8 @@ class MultiModelEnsembleTrainer(BaseTrainer):
         }
 
         self.log("\n" + "=" * 60)
-        self.log(" MULTI MODEL ENSEMBLE YÃÂµ DÃÂ!")
-        self.log("\n=ÃÂ ÃÂ ÃÂ¨x 1ÃÂ¥:")
+        self.log("✅ MULTI MODEL ENSEMBLE 학습 완료!")
+        self.log("\n📈 개별 모델 성능:")
         for result in model_results:
             self.log(f"\n{result['model_name']}:")
             if result['eval_metrics']:
@@ -152,7 +152,7 @@ class MultiModelEnsembleTrainer(BaseTrainer):
                     if 'rouge' in key.lower():
                         self.log(f"  {key}: {value:.4f}")
 
-        self.log("\n=ÃÂ YÃÂ 1ÃÂ¥:")
+        self.log("\n📈 앙상블 성능:")
         if ensemble_metrics:
             for key, value in ensemble_metrics.items():
                 self.log(f"  {key}: {value:.4f}")
@@ -163,14 +163,14 @@ class MultiModelEnsembleTrainer(BaseTrainer):
 
     def save_results(self, results):
         """
-        ÃÂ°ÃÂ¼ ÃÂ¥
+        결과 저장
 
         Args:
-            results: YÃÂµ ÃÂ°ÃÂ¼ TÃÂ¬
+            results: 학습 결과 딕셔너리
         """
         result_path = self.output_dir / "multi_model_results.json"
 
-        # ÃÂ¥ ÃÂ¥\ ÃÂ\ ÃÂX
+        # 저장 가능한 형태로 변환
         saveable_results = {
             'mode': results['mode'],
             'models': results['models'],
@@ -182,14 +182,14 @@ class MultiModelEnsembleTrainer(BaseTrainer):
         with open(result_path, 'w', encoding='utf-8') as f:
             json.dump(saveable_results, f, indent=2, ensure_ascii=False)
 
-        self.log(f"\n=ÃÂ¾ ÃÂ°ÃÂ¼ ÃÂ¥: {result_path}")
+        self.log(f"\n📂 결과 저장: {result_path}")
 
     def _override_config(self, config):
         """
-        ÃÂ9ÃÂ xÃÂ\ Config $ÃÂ|tÃÂ
+        명령행 인자로 Config 오버라이드
 
         Args:
-            config: Config ÃÂ´
+            config: Config 객체
         """
         # Epochs
         if hasattr(self.args, 'epochs') and self.args.epochs is not None:
@@ -205,17 +205,17 @@ class MultiModelEnsembleTrainer(BaseTrainer):
 
     def _extract_eval_metrics(self, log_history):
         """
-        YÃÂµ \ÃÂ¸ÃÂ ÃÂ TÃÂ¸ÃÂ­ ÃÂÃÂ
+        학습 로그에서 평가 지표 추출
 
         Args:
-            log_history: TrainerX \ÃÂ¸ ÃÂÃÂ¤ÃÂ ÃÂ¬
+            log_history: Trainer의 로그 히스토리 기록
 
         Returns:
-            dict: ÃÂ TÃÂ¸ÃÂ­
+            dict: 평가 지표
         """
         eval_metrics = {}
 
-        # ÃÂÃÂÃÂ eval \ÃÂ¸ >0
+        # 마지막 eval 로그 추출
         for log_entry in reversed(log_history):
             if 'eval_loss' in log_entry:
                 for key, value in log_entry.items():
@@ -232,24 +232,24 @@ class MultiModelEnsembleTrainer(BaseTrainer):
         strategy: str
     ) -> Dict[str, float]:
         """
-        YÃÂ ÃÂ
+        앙상블 평가
 
         Args:
-            model_paths: ÃÂ¨x ÃÂ½\ ÃÂ¬ÃÂ¤ÃÂ¸
-            eval_df: ÃÂ pt0ÃÂ
-            strategy: YÃÂ ÃÂµ
+            model_paths: 모델 경로 목록
+            eval_df: 평가 데이터프레임
+            strategy: 앙상블 전략
 
         Returns:
-            dict: YÃÂ ÃÂ TÃÂ¸ÃÂ­
+            dict: 앙상블 평가 지표
         """
         try:
             from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
             from rouge import Rouge
             import torch
 
-            self.log(f"  YÃÂ ÃÂµ: {strategy}")
+            self.log(f"  앙상블 전략: {strategy}")
 
-            # ÃÂ¨x  ÃÂ lÃÂt \ÃÂ
+            # 모델 및 토크나이저 로드
             models = []
             tokenizers = []
 
@@ -264,26 +264,26 @@ class MultiModelEnsembleTrainer(BaseTrainer):
                 models.append(model)
                 tokenizers.append(tokenizer)
 
-            # ModelManager\ YÃÂ ÃÂ1
+            # ModelManager로 앙상블 생성
             manager = ModelManager(logger=self.logger)
             manager.models = models
             manager.tokenizers = tokenizers
             manager.model_names = self.args.models
 
-            # YÃÂ ÃÂµÃÂ 0| ÃÂ1
+            # 앙상블 전략에 따라 생성
             if strategy in ['weighted_avg', 'rouge_weighted']:
                 ensemble = manager.create_ensemble(
                     ensemble_type='weighted',
                     weights=self.args.ensemble_weights
                 )
-            else:  # majority_vote ÃÂ±
+            else:  # majority_vote 등
                 ensemble = manager.create_ensemble(
                     ensemble_type='voting',
                     voting='hard'
                 )
 
-            # !
-            dialogues = eval_df['dialogue'].tolist()[:100]  # ÃÂ ÃÂ
+            # 예측
+            dialogues = eval_df['dialogue'].tolist()[:100]  # 샘플 평가
             references = eval_df['summary'].tolist()[:100]
 
             predictions = ensemble.predict(
@@ -293,7 +293,7 @@ class MultiModelEnsembleTrainer(BaseTrainer):
                 batch_size=8
             )
 
-            # ROUGE ÃÂÃÂ°
+            # ROUGE 계산
             rouge = Rouge()
             scores = rouge.get_scores(predictions, references, avg=True)
 
@@ -306,21 +306,21 @@ class MultiModelEnsembleTrainer(BaseTrainer):
             return ensemble_metrics
 
         except Exception as e:
-            self.log(f"  ÃÂ  YÃÂ ÃÂ ÃÂ¤(: {e}")
+            self.log(f"    ⚠️  앙상블 평가 오류: {e}")
             return {}
 
 
-# ==================== ÃÂ¸X h ==================== #
+# ==================== 편의 함수 ==================== #
 def create_multi_model_trainer(args, logger, wandb_logger=None):
     """
-    MultiModelEnsembleTrainer ÃÂ1 ÃÂ¸X h
+    MultiModelEnsembleTrainer 생성 편의 함수
 
     Args:
-        args: ÃÂ9ÃÂ xÃÂ
-        logger: Logger xÃÂ¤4ÃÂ¤
-        wandb_logger: WandB Logger ( ÃÂ)
+        args: 명령행 인자
+        logger: Logger 인스턴스
+        wandb_logger: WandB Logger (선택)
 
     Returns:
-        MultiModelEnsembleTrainer xÃÂ¤4ÃÂ¤
+        MultiModelEnsembleTrainer 인스턴스
     """
     return MultiModelEnsembleTrainer(args, logger, wandb_logger)
