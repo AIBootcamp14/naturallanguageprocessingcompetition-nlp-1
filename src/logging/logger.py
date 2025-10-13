@@ -33,14 +33,10 @@ class Logger:                                    # Logger 클래스 정의
         메시지가 tqdm 진행률 표시줄인지 확인
         퍼센티지(%), it/s, s/it 등이 포함된 라인을 감지
         """
-        # ANSI 이스케이프 시퀀스 제거
-        import re
-        clean_message = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', message)
-
         progress_indicators = ['%|', 'it/s', 's/it', '/s]', '|', '[00:']
         # 진행률 지표가 포함되어 있고, 숫자가 포함된 경우만 진행률로 간주
-        has_indicator = any(indicator in clean_message for indicator in progress_indicators)
-        has_digit = any(c.isdigit() for c in clean_message)
+        has_indicator = any(indicator in message for indicator in progress_indicators)
+        has_digit = any(c.isdigit() for c in message)
         return has_indicator and has_digit
 
     # ---------------------- 퍼센티지 추출 함수 ---------------------- #
@@ -50,11 +46,8 @@ class Logger:                                    # Logger 클래스 정의
         예: "Training:  50%|█████     | 100/200" -> 50.0
         """
         import re
-        # ANSI 이스케이프 시퀀스 제거
-        clean_message = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', message)
-
         # 퍼센티지 패턴 찾기: 숫자 + %
-        match = re.search(r'(\d+)%', clean_message)
+        match = re.search(r'(\d+)%', message)
         if match:
             return float(match.group(1))
         return None
@@ -66,26 +59,33 @@ class Logger:                                    # Logger 클래스 정의
         print_also=True일 경우 콘솔에도 출력합니다.
         진행률 표시줄은 로그 파일에 기록하지 않고, 마지막 진행률만 저장합니다.
         """
+        # ANSI 이스케이프 시퀀스 제거
+        import re
+        clean_message = re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', message)
+
         # 메시지 앞뒤 공백을 제거하고, 개행 문자가 없으면 추가합니다.
-        message = message.strip()                # 메시지 공백 제거
-        if not message:                          # 메시지가 비어있으면
+        clean_message = clean_message.strip()    # 메시지 공백 제거
+        if not clean_message:                    # 메시지가 비어있으면
             return                               # 함수 종료
 
+        # 원본 메시지도 strip (콘솔 출력용)
+        message = message.strip()
+
         # ---------------------- 진행률 라인 처리 ---------------------- #
-        # 진행률 라인인지 확인
-        is_progress = self._is_progress_line(message)
+        # 진행률 라인인지 확인 (clean_message 사용)
+        is_progress = self._is_progress_line(clean_message)
 
         if is_progress:
             # 진행률 라인인 경우: 로그 파일에 기록하지 않고 마지막 진행률만 저장
-            self.last_progress_line = message
-            current_percent = self._extract_percentage(message)
+            self.last_progress_line = clean_message
+            current_percent = self._extract_percentage(clean_message)
             if current_percent is not None:
                 self.last_progress_percent = current_percent
 
             # 콘솔에는 출력 (터미널에서 진행률 확인용)
             if self.print_also and print_also:
                 timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                line = f"{timestamp} | {message}\n"
+                line = f"{timestamp} | {clean_message}\n"
                 self.original_stdout.write(line)
 
             return  # 로그 파일에는 기록하지 않고 함수 종료
@@ -96,7 +96,7 @@ class Logger:                                    # Logger 클래스 정의
 
         # ---------------------- 일반 메시지 기록 ---------------------- #
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')  # 현재 시간 타임스탬프 생성
-        line = f"{timestamp} | {message}\n"      # 타임스탬프와 메시지 결합
+        line = f"{timestamp} | {clean_message}\n"      # 타임스탬프와 clean_message 결합
 
         self.log_file.write(line)                # 로그 파일에 기록
 
@@ -105,10 +105,12 @@ class Logger:                                    # Logger 클래스 정의
             # 에러 메시지인 경우
             if print_error:
                 # 재귀 호출을 피하기 위해 원본 표준 출력을 사용합니다.
-                self.original_stdout.write(f"\033[91m{line}\033[0m")  # 빨간색으로 에러 출력
+                console_line = f"{timestamp} | {clean_message}\n"
+                self.original_stdout.write(f"\033[91m{console_line}\033[0m")  # 빨간색으로 에러 출력
             # 일반 메시지인 경우
             else:
-                self.original_stdout.write(line) # 일반 출력
+                console_line = f"{timestamp} | {clean_message}\n"
+                self.original_stdout.write(console_line) # 일반 출력
     
     
     # 플러시 함수 정의
