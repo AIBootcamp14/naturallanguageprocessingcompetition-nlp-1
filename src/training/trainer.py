@@ -164,6 +164,19 @@ class ModelTrainer:
         # -100을 패딩 토큰으로 변경
         labels = np.where(labels != -100, labels, self.tokenizer.pad_token_id)
 
+        # 유효하지 않은 토큰 ID 필터링 (OverflowError 방지)
+        vocab_size = len(self.tokenizer)
+        predictions = np.where(
+            (predictions >= 0) & (predictions < vocab_size),
+            predictions,
+            self.tokenizer.pad_token_id
+        )
+        labels = np.where(
+            (labels >= 0) & (labels < vocab_size),
+            labels,
+            self.tokenizer.pad_token_id
+        )
+
         # 디코딩
         decoded_preds = self.tokenizer.batch_decode(    # 예측 디코딩
             predictions,
