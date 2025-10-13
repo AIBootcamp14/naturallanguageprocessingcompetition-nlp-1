@@ -528,9 +528,12 @@ class FullPipelineTrainer(BaseTrainer):
                 if (i // batch_size + 1) % 10 == 0:
                     self.log(f"    진행: {i+len(batch_predictions)}/{len(dialogues)}")
 
-            # 제출 파일 생성
+            # 제출 파일 생성 (id 또는 fname 컬럼 자동 감지)
+            id_column = test_df['id'] if 'id' in test_df.columns else (
+                test_df['fname'] if 'fname' in test_df.columns else range(len(test_df))
+            )
             submission_df = pd.DataFrame({
-                'id': test_df['id'],
+                'id': id_column,
                 'summary': predictions
             })
 
