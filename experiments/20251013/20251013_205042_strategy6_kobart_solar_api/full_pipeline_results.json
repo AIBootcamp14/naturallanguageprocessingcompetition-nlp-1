@@ -1,0 +1,47 @@
+{
+  "mode": "full",
+  "models": [
+    "kobart"
+  ],
+  "ensemble_strategy": "weighted_avg",
+  "use_tta": true,
+  "model_results": [
+    {
+      "model_name": "kobart",
+      "model_path": "experiments/20251013/20251013_205042_strategy6_kobart_solar_api/model_0_kobart/default/final_model",
+      "eval_metrics": {
+        "eval_loss": 1.4511322975158691,
+        "eval_rouge1": 0.4661836950132116,
+        "eval_rouge2": 0.3083040106996352,
+        "eval_rougeL": 0.45999048239662593,
+        "eval_rouge_sum": 1.2344781881094726,
+        "eval_runtime": 99.1418,
+        "eval_samples_per_second": 5.033,
+        "eval_steps_per_second": 0.323,
+        "epoch": 8.0
+      },
+      "status": "success"
+    }
+  ],
+  "ensemble_results": {},
+  "solar_results": {
+    "solar_rouge_1_f1": 0.22565174941103006,
+    "solar_rouge_2_f1": 0.08241507273440345,
+    "solar_rouge_l_f1": 0.21747935807687402,
+    "n_samples": 50
+  },
+  "tta_results": {
+    "tta_applied": false,
+    "strategies": [
+      "paraphrase",
+      "reorder"
+    ],
+    "num_aug": 3
+  },
+  "inference_results": {
+    "submission_path": "experiments/20251013/20251013_205042_strategy6_kobart_solar_api/submissions/20251013_205042_strategy6_kobart_solar_api.csv",
+    "submission_path_2": "submissions/20251013/20251013_205042_strategy6_kobart_solar_api.csv",
+    "num_predictions": 499,
+    "best_model_used": "experiments/20251013/20251013_205042_strategy6_kobart_solar_api/model_0_kobart/default/final_model"
+  }
+}

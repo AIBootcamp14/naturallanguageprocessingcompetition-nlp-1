@@ -12,6 +12,7 @@
 from typing import List, Dict, Optional, Union
 from pathlib import Path
 from tqdm import tqdm
+import re
 
 # ---------------------- 서드파티 라이브러리 ---------------------- #
 import torch
@@ -26,6 +27,123 @@ from omegaconf import DictConfig
 # ---------------------- 프로젝트 모듈 ---------------------- #
 from src.data import InferenceDataset                   # 추론용 데이터셋
 from src.utils.core.common import ensure_dir           # 디렉토리 생성 유틸
+
+
+# ==================== 후처리 함수 ==================== #
+def postprocess_summary(text: str) -> str:
+    """
+    요약문 후처리: 불완전한 문장을 정제하여 완전한 문장으로 변환
+
+    주요 처리 과정:
+    1. 반복된 점들 제거 ("... . . ." 패턴)
+    2. 불완전한 플레이스홀더 제거 (모든 패턴)
+    3. 불완전한 마지막 문장 제거 (끊긴 문장 삭제)
+    4. 불완전한 종결어 제거
+    5. 문장 종결 보장 (마침표가 없으면 추가)
+
+    Args:
+        text: 모델이 생성한 원본 요약문
+
+    Returns:
+        정제된 요약문
+
+    Examples:
+        >>> postprocess_summary("Person1과 Person2는 #Mr.")
+        'Person1과 Person2는.'
+
+        >>> postprocess_summary("회의 시간을 변경하자고 제")
+        '회의 시간을 변경하자고.'
+
+        >>> postprocess_summary("약속했... . . .")
+        '약속했.'
+    """
+    text = text.strip()                                 # 앞뒤 공백 제거
+    if not text:                                        # 빈 문자열 처리
+        return text
+
+    # -------------- 1. 반복된 점들 제거 -------------- #
+    # "... . . ." 또는 연속된 점 패턴 제거
+    text = re.sub(r'(\.{3,}|\s*\.\s*){2,}', '', text)
+    text = text.strip()
+
+    # -------------- 2. 불완전한 플레이스홀더 제거 (강화) -------------- #
+    # 마지막에 불완전한 플레이스홀더 패턴 모두 제거
+    # #Mr. #Mrs. #Fr. #Korea. #Person1 #Peron1 #PAerson1 등
+    # 패턴 1: # 뒤에 대문자로 시작하고 . 으로 끝나는 경우
+    text = re.sub(r'\s*#[A-Z][a-z]*\.$', '', text)
+    # 패턴 2: # 뒤에 짧은 문자열 (10자 이하)
+    text = re.sub(r'\s*#[A-Za-z가-힣]{0,15}$', '', text)
+    text = text.strip()
+
+    # -------------- 3. 마지막 불완전한 문장 제거 (강화) -------------- #
+    # 마지막 완전한 문장부호까지만 남기기
+    last_punct_idx = -1
+    for i in range(len(text) - 1, -1, -1):
+        if text[i] in '.!?。？！':
+            last_punct_idx = i
+            break
+
+    if last_punct_idx > 0:
+        # 마지막 문장부호 이후에 뭔가 있으면 (불완전한 문장)
+        after_punct = text[last_punct_idx + 1:].strip()
+        if after_punct:
+            # 불완전한 조각이 있으면 제거
+            # 30자 이하는 불완전한 것으로 간주하고 제거
+            if len(after_punct) <= 30:
+                text = text[:last_punct_idx + 1]
+            else:
+                # 30자 이상이지만 문장부호로 끝나지 않으면 제거
+                if after_punct[-1] not in '.!?。？！':
+                    text = text[:last_punct_idx + 1]
+
+    text = text.strip()
+
+    # -------------- 4. 불완전한 종결어 제거 (강화) -------------- #
+    # "이후.", "그 후.", "그러고 나서." 같은 불완전한 종결 제거
+    incomplete_endings = [
+        '이후.', '그 후.', '그러고 나서.', '결국.', '최종적으로.',
+        '이제.', '그리고.', '또한.', '하지만.', '그러나.',
+        '그들은 지금 가자.', '그는 다시 진행한다.', '대화는 마무리됩니다.'
+    ]
+
+    for ending in incomplete_endings:
+        if text.endswith(ending):
+            text = text[:-len(ending)].strip()
+            # 제거 후 마지막 문장부호 찾기
+            last_punct_idx = -1
+            for i in range(len(text) - 1, -1, -1):
+                if text[i] in '.!?。？！':
+                    last_punct_idx = i
+                    break
+            if last_punct_idx > 0:
+                text = text[:last_punct_idx + 1]
+            break
+
+    text = text.strip()
+
+    # -------------- 5. 짧은 마지막 조사/단어 제거 -------------- #
+    # 문장부호 없이 끝나는 경우, 1-3자 조사 제거
+    if text and text[-1] not in '.!?。？！':
+        words = text.split()                            # 단어 분리
+        if len(words) > 1:                              # 여러 단어가 있는 경우
+            last_word = words[-1]                       # 마지막 단어
+            # 마지막 단어가 짧은 조사인 경우 제거
+            common_particles = [
+                '은', '는', '을', '를', '이', '가',
+                '의', '에', '로', '와', '과', '도',
+                '만', '에서', '으로', '프', '또한', '그', '이에',
+                '완', '시', '오', '각', '나서'
+            ]
+            if len(last_word) <= 4 and last_word in common_particles:
+                text = ' '.join(words[:-1])             # 마지막 단어 제외
+                text = text.strip()
+
+    # -------------- 6. 문장 종결 보장 -------------- #
+    # 마침표가 없으면 추가
+    if text and text[-1] not in '.!?。？！':
+        text += '.'
+
+    return text
 
 
 # ==================== Predictor 클래스 정의 ==================== #
@@ -77,8 +195,10 @@ class Predictor:
             Dict: 생성 파라미터 딕셔너리
         """
         # -------------- 기본 생성 파라미터 -------------- #
+        # NOTE: use max_new_tokens to control generated token count (safer for encoder-decoder)
         default_config = {
-            'max_length': 100,                          # 최대 생성 길이 (베이스라인 호환)
+            'max_length': 512,                          # 최대 토큰 길이 (input+output) - 여유있게 설정
+            'max_new_tokens': 128,                      # 새로 생성할 최대 토큰 수 (권장)
             'num_beams': 4,                             # Beam 개수
             'early_stopping': True,                     # 조기 종료
             'no_repeat_ngram_size': 2,                  # 반복 방지 n-gram 크기
@@ -90,8 +210,10 @@ class Predictor:
             inference_cfg = self.config.inference       # 추론 Config
 
             # Config 값으로 오버라이드 (베이스라인과 동일하게)
+            # allow overriding both max_length and max_new_tokens from config
             default_config.update({
-                'max_length': inference_cfg.get('generate_max_length', 100),
+                'max_length': inference_cfg.get('generate_max_length', 512),
+                'max_new_tokens': inference_cfg.get('generate_max_new_tokens', 128),
                 'num_beams': inference_cfg.get('num_beams', 4),
                 'early_stopping': inference_cfg.get('early_stopping', True),
                 'no_repeat_ngram_size': inference_cfg.get('no_repeat_ngram_size', 2),
@@ -149,7 +271,8 @@ class Predictor:
             skip_special_tokens=True                    # 특수 토큰 제외
         )
 
-        return summary.strip()                          # 앞뒤 공백 제거 후 반환
+        # 후처리 적용: 불완전한 문장 정제 + 문장 종결 보장
+        return postprocess_summary(summary)
 
 
     # ---------------------- 배치 예측 함수 ---------------------- #
@@ -218,8 +341,8 @@ class Predictor:
                 skip_special_tokens=True                # 특수 토큰 제외
             )
 
-            # 앞뒤 공백 제거 후 추가
-            summaries.extend([s.strip() for s in batch_summaries])
+            # 후처리 적용: 불완전한 문장 정제 + 문장 종결 보장
+            summaries.extend([postprocess_summary(s) for s in batch_summaries])
 
         return summaries                                # 요약 리스트 반환
 
