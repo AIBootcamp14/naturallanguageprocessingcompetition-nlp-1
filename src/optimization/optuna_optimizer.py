@@ -7,16 +7,16 @@ PRD 13: Optuna 하이퍼파라미터 최적화 전략
 import optuna
 from optuna.samplers import TPESampler
 from optuna.pruners import MedianPruner
-from typing import Dict, Any, Optional, List, Callable
+from typing import Dict, Any, Optional
 import logging
 from pathlib import Path
 import json
 import pandas as pd
 from omegaconf import DictConfig, OmegaConf
 
-from ..training import ModelTrainer
+from ..models import load_model_and_tokenizer
 from ..data import DialogueSummarizationDataset
-from ..models import ModelLoader
+from ..training import create_trainer
 
 
 class OptunaOptimizer:
@@ -34,38 +34,38 @@ class OptunaOptimizer:
     def __init__(
         self,
         config: DictConfig,
-        train_dataset: DialogueSummarizationDataset,
-        val_dataset: DialogueSummarizationDataset,
+        train_df: pd.DataFrame,
+        eval_df: pd.DataFrame,
         n_trials: int = 50,
         timeout: Optional[int] = None,
         study_name: Optional[str] = None,
         storage: Optional[str] = None,
         direction: str = "maximize",
-        logger: Optional[logging.Logger] = None
+        logger=None
     ):
         """
         초기화
 
         Args:
             config: 기본 Config (탐색 공간 정의에 사용)
-            train_dataset: 학습 데이터셋
-            val_dataset: 검증 데이터셋
+            train_df: 학습 데이터프레임
+            eval_df: 검증 데이터프레임
             n_trials: 총 Trial 횟수
             timeout: 최대 실행 시간 (초)
             study_name: Study 이름
             storage: Study 저장소 (SQLite/PostgreSQL)
             direction: 최적화 방향 ("maximize" or "minimize")
-            logger: 로거
+            logger: Logger 인스턴스
         """
         self.config = config
-        self.train_dataset = train_dataset
-        self.val_dataset = val_dataset
+        self.train_df = train_df
+        self.eval_df = eval_df
         self.n_trials = n_trials
         self.timeout = timeout
         self.study_name = study_name or f"optuna_study_{config.model.name}"
         self.storage = storage
         self.direction = direction
-        self.logger = logger or logging.getLogger(__name__)
+        self.logger = logger
 
         # Optuna Study
         self.study: Optional[optuna.Study] = None
@@ -74,10 +74,20 @@ class OptunaOptimizer:
         self.best_params: Optional[Dict[str, Any]] = None
         self.best_value: Optional[float] = None
 
-        self.logger.info(f"OptunaOptimizer 초기화 완료")
-        self.logger.info(f"  - Study 이름: {self.study_name}")
-        self.logger.info(f"  - Trial 횟수: {self.n_trials}")
-        self.logger.info(f"  - 방향: {self.direction}")
+        self._log(f"OptunaOptimizer 초기화 완료")
+        self._log(f"  - Study 이름: {self.study_name}")
+        self._log(f"  - Trial 횟수: {self.n_trials}")
+        self._log(f"  - 방향: {self.direction}")
+
+    def _log(self, msg: str):
+        """로깅 헬퍼"""
+        if self.logger:
+            if hasattr(self.logger, 'write'):
+                self.logger.write(msg)
+            else:
+                self.logger.info(msg)
+        else:
+            print(msg)
 
     def create_search_space(self, trial: optuna.Trial) -> Dict[str, Any]:
         """
@@ -91,35 +101,21 @@ class OptunaOptimizer:
         """
         params = {}
 
-        # 1. 모델 파라미터 (LoRA)
-        if self.config.get('lora'):
-            params['lora_r'] = trial.suggest_categorical('lora_r', [8, 16, 32, 64])
-            params['lora_alpha'] = trial.suggest_categorical('lora_alpha', [16, 32, 64, 128])
-            params['lora_dropout'] = trial.suggest_float('lora_dropout', 0.0, 0.2)
-
-        # 2. 학습 파라미터
+        # 학습 파라미터 (핵심)
         params['learning_rate'] = trial.suggest_float('learning_rate', 1e-6, 1e-4, log=True)
-        params['batch_size'] = trial.suggest_categorical('batch_size', [8, 16, 32, 64])
         params['num_epochs'] = trial.suggest_int('num_epochs', 3, 10)
         params['warmup_ratio'] = trial.suggest_float('warmup_ratio', 0.0, 0.2)
         params['weight_decay'] = trial.suggest_float('weight_decay', 0.0, 0.1)
 
-        # 3. Scheduler
+        # Scheduler
         params['scheduler_type'] = trial.suggest_categorical(
             'scheduler_type',
             ['linear', 'cosine', 'cosine_with_restarts', 'polynomial']
         )
 
-        # 4. Generation 파라미터
-        params['temperature'] = trial.suggest_float('temperature', 0.1, 1.0)
-        params['top_p'] = trial.suggest_float('top_p', 0.5, 1.0)
+        # Generation 파라미터 (KoBART용)
         params['num_beams'] = trial.suggest_categorical('num_beams', [2, 4, 6, 8])
         params['length_penalty'] = trial.suggest_float('length_penalty', 0.5, 2.0)
-
-        # 5. Dropout (모델에 따라)
-        if self.config.model.get('hidden_dropout_prob') is not None:
-            params['hidden_dropout'] = trial.suggest_float('hidden_dropout', 0.0, 0.3)
-            params['attention_dropout'] = trial.suggest_float('attention_dropout', 0.0, 0.3)
 
         return params
 
@@ -136,90 +132,103 @@ class OptunaOptimizer:
         # 1. 하이퍼파라미터 샘플링
         params = self.create_search_space(trial)
 
-        self.logger.info(f"\n{'='*60}")
-        self.logger.info(f"Trial {trial.number} 시작")
-        self.logger.info(f"파라미터: {params}")
-        self.logger.info(f"{'='*60}")
+        self._log(f"\n{'='*60}")
+        self._log(f"Trial {trial.number} 시작")
+        self._log(f"파라미터: {params}")
+        self._log(f"{'='*60}")
 
-        # 2. Config 업데이트
-        config = OmegaConf.to_container(self.config, resolve=True)
-        config = OmegaConf.create(config)
+        try:
+            # 2. Config 복사 및 업데이트
+            config = OmegaConf.to_container(self.config, resolve=True)
+            config = OmegaConf.create(config)
 
-        # Training 파라미터 업데이트
-        config.training.learning_rate = params['learning_rate']
-        config.training.batch_size = params['batch_size']
-        config.training.num_epochs = params['num_epochs']
-        config.training.warmup_ratio = params['warmup_ratio']
-        config.training.weight_decay = params['weight_decay']
-        config.training.scheduler_type = params['scheduler_type']
+            # Training 파라미터 업데이트
+            if not hasattr(config, 'training'):
+                config.training = {}
 
-        # Generation 파라미터 업데이트 (inference 섹션에 있음)
-        if not hasattr(config, 'generation'):
-            # generation 섹션이 없으면 inference 섹션 사용
+            config.training.learning_rate = params['learning_rate']
+            config.training.epochs = params['num_epochs']
+            config.training.warmup_ratio = params['warmup_ratio']
+            config.training.weight_decay = params['weight_decay']
+            config.training.lr_scheduler_type = params['scheduler_type']
+
+            # Inference 파라미터 업데이트 (KoBART는 inference 섹션 사용)
             if hasattr(config, 'inference'):
                 config.inference.num_beams = params['num_beams']
                 config.inference.length_penalty = params['length_penalty']
-                # temperature와 top_p는 KoBART에서 사용 안 함 (beam search 모델)
-        else:
-            config.generation.temperature = params['temperature']
-            config.generation.top_p = params['top_p']
-            config.generation.num_beams = params['num_beams']
-            config.generation.length_penalty = params['length_penalty']
 
-        # LoRA 파라미터 업데이트
-        if 'lora_r' in params:
-            config.lora.r = params['lora_r']
-            config.lora.alpha = params['lora_alpha']
-            config.lora.dropout = params['lora_dropout']
-
-        # Dropout 업데이트
-        if 'hidden_dropout' in params:
-            config.model.hidden_dropout_prob = params['hidden_dropout']
-            config.model.attention_dropout_prob = params['attention_dropout']
-
-        try:
-            # 3. 모델 로더 초기화
-            model_loader = ModelLoader(config)
-            model, tokenizer = model_loader.load_model_and_tokenizer()
-
-            # 4. Trainer 초기화 (WandB 비활성화)
+            # WandB 비활성화
+            if not hasattr(config, 'logging'):
+                config.logging = {}
             config.logging.use_wandb = False
 
-            trainer = ModelTrainer(
-                model=model,
+            # 3. 모델 및 토크나이저 로드
+            model, tokenizer = load_model_and_tokenizer(config, logger=self.logger)
+
+            # 4. Dataset 생성
+            model_type = config.model.get('type', 'encoder_decoder')
+
+            train_dataset = DialogueSummarizationDataset(
+                dialogues=self.train_df['dialogue'].tolist(),
+                summaries=self.train_df['summary'].tolist(),
                 tokenizer=tokenizer,
-                train_dataset=self.train_dataset,
-                val_dataset=self.val_dataset,
-                config=config,
-                output_dir=f"outputs/optuna_trial_{trial.number}"
+                encoder_max_len=config.tokenizer.encoder_max_len,
+                decoder_max_len=config.tokenizer.decoder_max_len,
+                preprocess=True,
+                model_type=model_type
             )
 
-            # 5. 학습
+            eval_dataset = DialogueSummarizationDataset(
+                dialogues=self.eval_df['dialogue'].tolist(),
+                summaries=self.eval_df['summary'].tolist(),
+                tokenizer=tokenizer,
+                encoder_max_len=config.tokenizer.encoder_max_len,
+                decoder_max_len=config.tokenizer.decoder_max_len,
+                preprocess=True,
+                model_type=model_type
+            )
+
+            # 5. Trainer 생성
+            trainer = create_trainer(
+                config=config,
+                model=model,
+                tokenizer=tokenizer,
+                train_dataset=train_dataset,
+                eval_dataset=eval_dataset,
+                use_wandb=False,
+                logger=self.logger
+            )
+
+            # 6. 학습
             trainer.train()
 
-            # 6. 검증 평가
+            # 7. 평가
             metrics = trainer.evaluate()
 
-            # 7. ROUGE-L F1 반환 (maximize)
-            rouge_l_f1 = metrics.get('rouge_l_f1', 0.0)
+            # 8. ROUGE-L F1 추출
+            rouge_l_f1 = 0.0
+            if 'eval_rouge_l_f1' in metrics:
+                rouge_l_f1 = metrics['eval_rouge_l_f1']
+            elif 'rouge_l_f1' in metrics:
+                rouge_l_f1 = metrics['rouge_l_f1']
 
-            self.logger.info(f"Trial {trial.number} 완료")
-            self.logger.info(f"  - ROUGE-L F1: {rouge_l_f1:.4f}")
-            self.logger.info(f"  - ROUGE-1 F1: {metrics.get('rouge_1_f1', 0.0):.4f}")
-            self.logger.info(f"  - ROUGE-2 F1: {metrics.get('rouge_2_f1', 0.0):.4f}")
+            self._log(f"Trial {trial.number} 완료")
+            self._log(f"  - ROUGE-L F1: {rouge_l_f1:.4f}")
 
-            # 8. 중간 결과 보고 (Pruning에 사용)
-            trial.report(rouge_l_f1, step=config.training.num_epochs)
+            # 9. 중간 결과 보고
+            trial.report(rouge_l_f1, step=params['num_epochs'])
 
-            # 9. Pruning 체크
+            # 10. Pruning 체크
             if trial.should_prune():
-                self.logger.info(f"Trial {trial.number} Pruned!")
+                self._log(f"Trial {trial.number} Pruned!")
                 raise optuna.TrialPruned()
 
             return rouge_l_f1
 
         except Exception as e:
-            self.logger.error(f"Trial {trial.number} 실패: {str(e)}")
+            self._log(f"Trial {trial.number} 실패: {str(e)}")
+            import traceback
+            self._log(traceback.format_exc())
             raise optuna.TrialPruned()
 
     def optimize(self) -> optuna.Study:
@@ -229,16 +238,16 @@ class OptunaOptimizer:
         Returns:
             완료된 Optuna Study
         """
-        self.logger.info(f"\n{'='*70}")
-        self.logger.info(f"Optuna 최적화 시작")
-        self.logger.info(f"{'='*70}")
+        self._log(f"\n{'='*70}")
+        self._log(f"Optuna 최적화 시작")
+        self._log(f"{'='*70}")
 
         # 1. Sampler 및 Pruner 설정
         sampler = TPESampler(seed=42)
         pruner = MedianPruner(
-            n_startup_trials=5,  # 처음 5개 trial은 pruning 안함
-            n_warmup_steps=3,     # 3 에포크 후부터 pruning
-            interval_steps=1      # 매 에포크마다 체크
+            n_startup_trials=5,
+            n_warmup_steps=3,
+            interval_steps=1
         )
 
         # 2. Study 생성
@@ -264,52 +273,34 @@ class OptunaOptimizer:
             self.best_params = self.study.best_params
             self.best_value = self.study.best_value
         except ValueError as e:
-            # 완료된 trial이 없는 경우
-            self.logger.error(f"완료된 trial이 없습니다: {e}")
+            self._log(f"완료된 trial이 없습니다: {e}")
             self.best_params = {}
             self.best_value = 0.0
 
-        self.logger.info(f"\n{'='*70}")
-        self.logger.info(f"Optuna 최적화 완료")
-        self.logger.info(f"{'='*70}")
-        self.logger.info(f"최적 ROUGE-L F1: {self.best_value:.4f}")
-        self.logger.info(f"최적 파라미터:")
+        self._log(f"\n{'='*70}")
+        self._log(f"Optuna 최적화 완료")
+        self._log(f"{'='*70}")
+        self._log(f"최적 ROUGE-L F1: {self.best_value:.4f}")
+        self._log(f"최적 파라미터:")
         for key, value in self.best_params.items():
-            self.logger.info(f"  - {key}: {value}")
+            self._log(f"  - {key}: {value}")
 
         return self.study
 
     def get_best_params(self) -> Dict[str, Any]:
-        """
-        최적 하이퍼파라미터 반환
-
-        Returns:
-            최적 파라미터 딕셔너리
-        """
+        """최적 하이퍼파라미터 반환"""
         if self.best_params is None:
             raise ValueError("optimize()를 먼저 실행해야 합니다")
-
         return self.best_params
 
     def get_best_value(self) -> float:
-        """
-        최적 ROUGE 점수 반환
-
-        Returns:
-            최적 ROUGE 점수
-        """
+        """최적 ROUGE 점수 반환"""
         if self.best_value is None:
             raise ValueError("optimize()를 먼저 실행해야 합니다")
-
         return self.best_value
 
     def save_results(self, output_path: str):
-        """
-        최적화 결과 저장
-
-        Args:
-            output_path: 저장 경로
-        """
+        """최적화 결과 저장"""
         if self.study is None:
             raise ValueError("optimize()를 먼저 실행해야 합니다")
 
@@ -325,14 +316,14 @@ class OptunaOptimizer:
                 'n_trials': len(self.study.trials)
             }, f, indent=2, ensure_ascii=False)
 
-        self.logger.info(f"최적 파라미터 저장: {best_params_path}")
+        self._log(f"최적 파라미터 저장: {best_params_path}")
 
         # 2. All trials 저장
         trials_df = self.study.trials_dataframe()
         trials_csv_path = output_path / "all_trials.csv"
         trials_df.to_csv(trials_csv_path, index=False, encoding='utf-8')
 
-        self.logger.info(f"전체 Trial 저장: {trials_csv_path}")
+        self._log(f"전체 Trial 저장: {trials_csv_path}")
 
         # 3. Study 통계
         stats = {
@@ -341,26 +332,23 @@ class OptunaOptimizer:
             'n_completed': len([t for t in self.study.trials if t.state == optuna.trial.TrialState.COMPLETE]),
             'n_pruned': len([t for t in self.study.trials if t.state == optuna.trial.TrialState.PRUNED]),
             'n_failed': len([t for t in self.study.trials if t.state == optuna.trial.TrialState.FAIL]),
-            'best_value': self.best_value,
-            'best_trial_number': self.study.best_trial.number
+            'best_value': self.best_value
         }
+
+        if self.best_params:
+            stats['best_trial_number'] = self.study.best_trial.number
 
         stats_path = output_path / "study_stats.json"
         with open(stats_path, 'w', encoding='utf-8') as f:
             json.dump(stats, f, indent=2, ensure_ascii=False)
 
-        self.logger.info(f"Study 통계 저장: {stats_path}")
-        self.logger.info(f"  - 완료: {stats['n_completed']}")
-        self.logger.info(f"  - Pruned: {stats['n_pruned']}")
-        self.logger.info(f"  - 실패: {stats['n_failed']}")
+        self._log(f"Study 통계 저장: {stats_path}")
+        self._log(f"  - 완료: {stats['n_completed']}")
+        self._log(f"  - Pruned: {stats['n_pruned']}")
+        self._log(f"  - 실패: {stats['n_failed']}")
 
     def plot_optimization_history(self, output_path: str):
-        """
-        최적화 히스토리 시각화
-
-        Args:
-            output_path: 저장 경로
-        """
+        """최적화 히스토리 시각화"""
         if self.study is None:
             raise ValueError("optimize()를 먼저 실행해야 합니다")
 
@@ -386,16 +374,16 @@ class OptunaOptimizer:
             fig = plot_parallel_coordinate(self.study)
             fig.write_html(str(output_path / "parallel_coordinate.html"))
 
-            self.logger.info(f"시각화 저장 완료: {output_path}")
+            self._log(f"시각화 저장 완료: {output_path}")
 
         except ImportError:
-            self.logger.warning("plotly가 설치되지 않아 시각화를 건너뜁니다")
+            self._log("plotly가 설치되지 않아 시각화를 건너뜁니다")
 
 
 def create_optuna_optimizer(
     config: DictConfig,
-    train_dataset: DialogueSummarizationDataset,
-    val_dataset: DialogueSummarizationDataset,
+    train_df: pd.DataFrame,
+    eval_df: pd.DataFrame,
     n_trials: int = 50,
     **kwargs
 ) -> OptunaOptimizer:
@@ -404,8 +392,8 @@ def create_optuna_optimizer(
 
     Args:
         config: Config
-        train_dataset: 학습 데이터셋
-        val_dataset: 검증 데이터셋
+        train_df: 학습 데이터프레임
+        eval_df: 검증 데이터프레임
         n_trials: Trial 횟수
         **kwargs: 추가 파라미터
 
@@ -414,8 +402,8 @@ def create_optuna_optimizer(
     """
     return OptunaOptimizer(
         config=config,
-        train_dataset=train_dataset,
-        val_dataset=val_dataset,
+        train_df=train_df,
+        eval_df=eval_df,
         n_trials=n_trials,
         **kwargs
     )
