@@ -77,6 +77,15 @@ inference:
     strategy: "quality_based"                           # 보정 전략 (quality_based 추천, threshold, voting, weighted)
     threshold: 0.3                                      # 품질 임계값 (0.0~1.0, 낮을수록 엄격)
 
+  # Solar API 앙상블 (PRD 09)
+  solar_api:
+    enabled: false                                      # 기본값: 비활성화 (명령행 --use_solar_api로 활성화)
+    model: "solar-1-mini-chat"                          # Solar 모델 선택
+    temperature: 0.2                                    # 생성 온도 (낮을수록 일관성)
+    top_p: 0.3                                          # Top-p (낮을수록 일관성)
+    batch_size: 10                                      # 배치 크기 (Rate limit 고려)
+    delay: 1.0                                          # 배치 간 대기 시간 (초)
+
 # ---------------------- 실험 설정 ---------------------- #
 experiment:
   name: "ensemble_all_models"                           # 실험명
