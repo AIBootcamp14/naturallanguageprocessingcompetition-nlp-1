@@ -1,0 +1,46 @@
+{
+  "mode": "full",
+  "models": [
+    "kobart"
+  ],
+  "ensemble_strategy": "weighted_avg",
+  "use_tta": true,
+  "model_results": [
+    {
+      "model_name": "kobart",
+      "model_path": "experiments/20251013/20251013_111525_strategy1_kobart_optimized/model_0_kobart/default/final_model",
+      "eval_metrics": {
+        "eval_loss": 1.4201492071151733,
+        "eval_rouge1": 0.46995988186216936,
+        "eval_rouge2": 0.3055783140148465,
+        "eval_rougeL": 0.4613433763141848,
+        "eval_rouge_sum": 1.2368815721912005,
+        "eval_runtime": 27.5366,
+        "eval_samples_per_second": 18.121,
+        "eval_steps_per_second": 1.162,
+        "epoch": 8.0
+      },
+      "status": "success"
+    }
+  ],
+  "ensemble_results": {},
+  "solar_results": {
+    "solar_rouge_1_f1": 0.22721529000252147,
+    "solar_rouge_2_f1": 0.07650273711618417,
+    "solar_rouge_l_f1": 0.21771327705012092,
+    "n_samples": 50
+  },
+  "tta_results": {
+    "tta_applied": false,
+    "strategies": [
+      "paraphrase",
+      "reorder"
+    ],
+    "num_aug": 3
+  },
+  "inference_results": {
+    "submission_path": null,
+    "num_predictions": 0,
+    "error": "'id'"
+  }
+}
