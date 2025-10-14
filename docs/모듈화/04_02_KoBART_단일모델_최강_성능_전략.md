@@ -98,8 +98,9 @@ graph TB
 #### 실행 파이프라인 (3단계 전체)
 
 ```mermaid
-graph TB
-    subgraph Step1["🔸 단계 1: Optuna 최적화 (10-12시간)"]
+graph LR
+    subgraph Step1["🔸 단계 1: Optuna 최적화"]
+        direction TB
         A[명령어 실행<br/>--mode optuna --resume] --> CP1{Optuna<br/>체크포인트?}
         CP1 -->|Yes| CP2[완료된 Trial 로드]
         CP1 -->|No| B[Config 로드]
@@ -109,9 +110,10 @@ graph TB
         D --> E[최적 파라미터 탐색<br/>learning_rate, epochs, etc.]
         E --> F[💾 best_params.json<br/>저장 완료]
     end
-
-    subgraph Step2["🔹 단계 2: K-Fold 5 학습 (2.5-3시간)"]
-        F --> G[명령어 실행<br/>--mode kfold --resume<br/>최적 파라미터 적용]
+    
+    subgraph Step2["🔹 단계 2: K-Fold 5 학습"]
+        direction TB
+        G[명령어 실행<br/>--mode kfold --resume<br/>최적 파라미터 적용]
         G --> CP3{KFold<br/>체크포인트?}
         CP3 -->|Yes| CP4[완료된 Fold 로드]
         CP3 -->|No| H[5-Fold 분할]
@@ -119,25 +121,32 @@ graph TB
         H --> I[Fold 1~5 학습<br/>💾 Fold마다 저장]
         I --> J[5개 모델 생성<br/>앙상블 준비]
     end
-
-    subgraph Step3["🔺 단계 3: 추론 + 보정 (2-3시간)"]
-        J --> K[명령어 실행<br/>scripts/inference.py]
+    
+    subgraph Step3["🔺 단계 3: 추론 + 보정"]
+        direction TB
+        K[명령어 실행<br/>scripts/inference.py]
         K --> L[5-Fold 앙상블<br/>Soft Voting]
         L --> M[HuggingFace 보정<br/>quality_based]
         M --> N[Solar API 앙상블<br/>고품질 보정]
         N --> O[후처리<br/>99.6% 완전 문장]
         O --> P[💾 submission.csv<br/>최종 제출 파일]
     end
-
-    subgraph Info["중요 정보"]
+    
+    subgraph Info["💡 중요 정보"]
+        direction TB
         Q[💾 각 단계마다 Resume 가능<br/>단계 1→2→3 순차 실행<br/>전체 소요 시간: 15-18시간]
     end
-
-    style Step1 fill:#e8f5e9,stroke:#1b5e20,color:#000
-    style Step2 fill:#e1f5ff,stroke:#01579b,color:#000
-    style Step3 fill:#fff3e0,stroke:#e65100,color:#000
-    style Info fill:#ffebee,stroke:#c62828,color:#000
-
+    
+    %% 단계 간 연결
+    Step1 --> Step2
+    Step2 --> Step3
+    
+    %% 스타일 적용
+    style Step1 fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px,color:#000
+    style Step2 fill:#e1f5ff,stroke:#01579b,stroke-width:3px,color:#000
+    style Step3 fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    style Info fill:#ffebee,stroke:#c62828,stroke-width:3px,color:#000
+    
     style A fill:#81c784,stroke:#388e3c,color:#000
     style CP1 fill:#ba68c8,stroke:#7b1fa2,color:#fff
     style CP2 fill:#ce93d8,stroke:#7b1fa2,color:#000
@@ -526,31 +535,50 @@ python scripts/inference.py \
 #### 실행 파이프라인
 
 ```mermaid
-graph LR
-    A[명령어 실행<br/>--mode kfold --resume<br/>--k_folds 3] --> CP1{체크포인트<br/>존재?}
-    CP1 -->|Yes| CP2[완료된 Fold 로드]
-    CP1 -->|No| B[Config 로드]
-    CP2 --> B
-    B --> C[데이터 증강 50%]
-    C --> D[3-Fold 분할]
-    D --> E[Fold 1/3<br/>Epoch 7<br/>💾 저장]
-    E --> F[Fold 2/3<br/>Epoch 7<br/>💾 저장]
-    F --> G[Fold 3/3<br/>Epoch 7<br/>💾 저장]
-    G --> H[앙상블 추론]
-    H --> I[HF 보정 + Solar API]
-    I --> J[submission.csv<br/>💾 Resume 가능]
-
-    style A fill:#e1f5ff,stroke:#01579b,color:#000
+graph TB
+    subgraph Init["🔸 초기화"]
+        direction LR
+        A[명령어 실행<br/>--mode kfold --resume<br/>--k_folds 3] --> CP1{체크포인트<br/>존재?}
+        CP1 -->|Yes| CP2[완료된 Fold 로드]
+        CP1 -->|No| B[Config 로드]
+        CP2 --> B
+        B --> C[데이터 증강 50%]
+        C --> D[3-Fold 분할]
+    end
+    
+    subgraph Training["🔹 K-Fold 학습 (3-Fold)"]
+        direction LR
+        E[Fold 1/3<br/>Epoch 7<br/>💾 저장] --> F[Fold 2/3<br/>Epoch 7<br/>💾 저장]
+        F --> G[Fold 3/3<br/>Epoch 7<br/>💾 저장]
+    end
+    
+    subgraph Output["🔺 추론 & 제출"]
+        direction LR
+        H[앙상블 추론<br/>3개 모델 Voting] --> I[HF 보정 + Solar API<br/>고품질 후처리]
+        I --> J[💾 submission.csv<br/>Resume 가능]
+    end
+    
+    %% 단계 간 연결 (세로)
+    Init --> Training
+    Training --> Output
+    
+    %% Subgraph 스타일
+    style Init fill:#e1f5ff,stroke:#01579b,stroke-width:3px,color:#000
+    style Training fill:#f3e5f5,stroke:#4a148c,stroke-width:3px,color:#000
+    style Output fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px,color:#000
+    
+    %% 노드 스타일
+    style A fill:#90caf9,stroke:#1976d2,color:#000
     style CP1 fill:#ba68c8,stroke:#7b1fa2,color:#fff
     style CP2 fill:#ce93d8,stroke:#7b1fa2,color:#000
-    style B fill:#e1f5ff,stroke:#01579b,color:#000
-    style C fill:#fff3e0,stroke:#e65100,color:#000
-    style D fill:#fff3e0,stroke:#e65100,color:#000
-    style E fill:#f3e5f5,stroke:#4a148c,color:#000
-    style F fill:#f3e5f5,stroke:#4a148c,color:#000
-    style G fill:#f3e5f5,stroke:#4a148c,color:#000
-    style H fill:#b39ddb,stroke:#311b92,color:#000
-    style I fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style B fill:#81d4fa,stroke:#0288d1,color:#000
+    style C fill:#ffcc80,stroke:#f57c00,color:#000
+    style D fill:#ffb74d,stroke:#f57c00,color:#000
+    style E fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style F fill:#ba68c8,stroke:#7b1fa2,color:#fff
+    style G fill:#ab47bc,stroke:#4a148c,color:#fff
+    style H fill:#a5d6a7,stroke:#388e3c,color:#000
+    style I fill:#81c784,stroke:#2e7d32,color:#000
     style J fill:#66bb6a,stroke:#2e7d32,color:#fff
 ```
 
@@ -648,31 +676,50 @@ python scripts/inference.py \
 #### 실행 파이프라인
 
 ```mermaid
-graph LR
-    A[명령어 실행<br/>--mode single --resume] --> CP1{체크포인트<br/>존재?}
-    CP1 -->|Yes| CP2[완료된 Epoch 로드]
-    CP1 -->|No| B[Config 로드]
-    CP2 --> B
-    B --> C[데이터 증강 50%]
-    C --> D[Train/Val 8:2 분할]
-    D --> E[모델 로드]
-    E --> F[학습 Epoch 5<br/>grad_acc_steps=10<br/>💾 Epoch마다 저장]
-    F --> G[평가 + 체크포인트]
-    G --> H[Test 추론]
-    H --> I[HF 보정 + Solar API]
-    I --> J[submission.csv<br/>💾 Resume 가능]
-
-    style A fill:#e1f5ff,stroke:#01579b,color:#000
+graph TB
+    subgraph Init["🔸 초기화 & 데이터 준비"]
+        direction LR
+        A[명령어 실행<br/>--mode single --resume] --> CP1{체크포인트<br/>존재?}
+        CP1 -->|Yes| CP2[완료된 Epoch 로드]
+        CP1 -->|No| B[Config 로드]
+        CP2 --> B
+        B --> C[데이터 증강 50%]
+        C --> D[Train/Val 8:2 분할]
+    end
+    
+    subgraph Training["🔹 단일 모델 학습"]
+        direction LR
+        E[모델 로드<br/>kobart-summarization] --> F[학습 Epoch 5<br/>grad_acc_steps=10<br/>💾 Epoch마다 저장]
+        F --> G[평가 + 체크포인트<br/>ROUGE 측정]
+    end
+    
+    subgraph Output["🔺 추론 & 제출"]
+        direction LR
+        H[Test 추론<br/>단일 모델] --> I[HF 보정 + Solar API<br/>고품질 후처리]
+        I --> J[💾 submission.csv<br/>Resume 가능]
+    end
+    
+    %% 단계 간 연결 (세로)
+    Init --> Training
+    Training --> Output
+    
+    %% Subgraph 스타일
+    style Init fill:#e1f5ff,stroke:#01579b,stroke-width:3px,color:#000
+    style Training fill:#f3e5f5,stroke:#4a148c,stroke-width:3px,color:#000
+    style Output fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px,color:#000
+    
+    %% 노드 스타일
+    style A fill:#90caf9,stroke:#1976d2,color:#000
     style CP1 fill:#ba68c8,stroke:#7b1fa2,color:#fff
     style CP2 fill:#ce93d8,stroke:#7b1fa2,color:#000
-    style B fill:#e1f5ff,stroke:#01579b,color:#000
-    style C fill:#fff3e0,stroke:#e65100,color:#000
-    style D fill:#fff3e0,stroke:#e65100,color:#000
-    style E fill:#c8e6c9,stroke:#1b5e20,color:#000
-    style F fill:#f3e5f5,stroke:#4a148c,color:#000
-    style G fill:#ffccbc,stroke:#bf360c,color:#000
-    style H fill:#b39ddb,stroke:#311b92,color:#000
-    style I fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style B fill:#81d4fa,stroke:#0288d1,color:#000
+    style C fill:#ffcc80,stroke:#f57c00,color:#000
+    style D fill:#ffb74d,stroke:#f57c00,color:#000
+    style E fill:#a5d6a7,stroke:#388e3c,color:#000
+    style F fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style G fill:#ffab91,stroke:#e64a19,color:#000
+    style H fill:#ba68c8,stroke:#7b1fa2,color:#fff
+    style I fill:#81c784,stroke:#2e7d32,color:#000
     style J fill:#66bb6a,stroke:#2e7d32,color:#fff
 ```
 
