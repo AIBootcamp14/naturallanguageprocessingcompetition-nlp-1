@@ -610,31 +610,59 @@ def setup_environment(args):
     logger = Logger(log_path, print_also=True)
     logger.start_redirect()
 
-    return logger
+    # ✅ WandB 초기화
+    wandb_logger = None
+    if args.use_wandb:
+        try:
+            from src.logging.wandb_logger import WandbLogger
+
+            # WandB Logger 생성
+            wandb_logger = WandbLogger(
+                project_name=args.wandb_project,
+                experiment_name=args.experiment_name,
+                config=vars(args),
+                tags=[args.mode, args.models[0]] if args.models else [args.mode]
+            )
+
+            # WandB 초기화
+            wandb_logger.init_run()
+
+            logger.write("✅ WandB 초기화 완료")
+            logger.write(f"   프로젝트: {args.wandb_project}")
+            logger.write(f"   실험명: {args.experiment_name}")
+
+        except ImportError as e:
+            logger.write(f"⚠️  WandB 패키지가 설치되지 않았습니다: {e}")
+            wandb_logger = None
+        except Exception as e:
+            logger.write(f"⚠️  WandB 초기화 실패: {e}")
+            wandb_logger = None
+
+    return logger, wandb_logger
 
 
 # ==================== Trainer 선택 ====================
-def get_trainer(args, logger):
+def get_trainer(args, logger, wandb_logger=None):
     """모드에 따른 Trainer 선택"""
     if args.mode == 'single':
         from src.trainers import SingleModelTrainer
-        return SingleModelTrainer(args, logger)
+        return SingleModelTrainer(args, logger, wandb_logger)
 
     elif args.mode == 'kfold':
         from src.trainers import KFoldTrainer
-        return KFoldTrainer(args, logger)
+        return KFoldTrainer(args, logger, wandb_logger)
 
     elif args.mode == 'multi_model':
         from src.trainers import MultiModelEnsembleTrainer
-        return MultiModelEnsembleTrainer(args, logger)
+        return MultiModelEnsembleTrainer(args, logger, wandb_logger)
 
     elif args.mode == 'optuna':
         from src.trainers import OptunaTrainer
-        return OptunaTrainer(args, logger)
+        return OptunaTrainer(args, logger, wandb_logger)
 
     elif args.mode == 'full':
         from src.trainers import FullPipelineTrainer
-        return FullPipelineTrainer(args, logger)
+        return FullPipelineTrainer(args, logger, wandb_logger)
 
     else:
         raise ValueError(f"지원하지 않는 모드: {args.mode}")
@@ -654,11 +682,11 @@ def main():
     print("=" * 60)
 
     # 환경 설정
-    logger = setup_environment(args)
+    logger, wandb_logger = setup_environment(args)
 
     try:
         # Trainer 생성
-        trainer = get_trainer(args, logger)
+        trainer = get_trainer(args, logger, wandb_logger)
 
         # 학습 실행
         logger.write(f"\n📊 {args.mode.upper()} 모드 실행 중...")
@@ -743,6 +771,14 @@ def main():
         raise
 
     finally:
+        # WandB 종료
+        if wandb_logger is not None:
+            try:
+                wandb_logger.finish()
+                logger.write("\n✅ WandB 세션 종료")
+            except:
+                pass
+
         # 정리
         logger.stop_redirect()
         logger.close()
