@@ -13,6 +13,11 @@ from typing import List, Dict, Optional, Union
 from pathlib import Path
 from tqdm import tqdm
 import re
+import warnings
+
+# Transformers 경고 메시지 필터링
+warnings.filterwarnings("ignore", message=".*max_new_tokens.*max_length.*")
+warnings.filterwarnings("ignore", message=".*num_labels.*id2label.*")
 
 # ---------------------- 서드파티 라이브러리 ---------------------- #
 import torch
