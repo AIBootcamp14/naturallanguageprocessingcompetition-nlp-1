@@ -139,30 +139,36 @@ graph TB
         W[Optuna는 최적 파라미터만 찾음<br/>K-Fold는 실행되지 않음<br/>별도로 kfold 모드 실행 필요]
     end
 
-    style A fill:#e1f5ff,stroke:#01579b,color:#000
-    style A1 fill:#e1f5ff,stroke:#01579b,color:#000
-    style B fill:#e1f5ff,stroke:#01579b,color:#000
-    style C fill:#fff3e0,stroke:#e65100,color:#000
-    style D fill:#fff3e0,stroke:#e65100,color:#000
-    style E fill:#fff3e0,stroke:#e65100,color:#000
-    style F fill:#f3e5f5,stroke:#4a148c,color:#000
-    style G fill:#f3e5f5,stroke:#4a148c,color:#000
-    style H fill:#f3e5f5,stroke:#4a148c,color:#000
-    style I fill:#c8e6c9,stroke:#1b5e20,color:#000
-    style J fill:#c8e6c9,stroke:#1b5e20,color:#000
-    style K fill:#fff3e0,stroke:#e65100,color:#000
-    style L fill:#f3e5f5,stroke:#4a148c,color:#000
-    style M fill:#f3e5f5,stroke:#4a148c,color:#000
-    style N fill:#ffccbc,stroke:#bf360c,color:#000
-    style O fill:#fff9c4,stroke:#f57f17,color:#000
-    style P fill:#a5d6a7,stroke:#1b5e20,color:#000
-    style Q fill:#bbdefb,stroke:#01579b,color:#000
-    style R fill:#a5d6a7,stroke:#1b5e20,color:#000
-    style S fill:#b39ddb,stroke:#311b92,color:#000
-    style T fill:#b39ddb,stroke:#311b92,color:#000
-    style U fill:#b39ddb,stroke:#311b92,color:#000
-    style V fill:#b39ddb,stroke:#311b92,color:#000
-    style W fill:#ffccbc,stroke:#bf360c,color:#000
+    style input fill:#e3f2fd,stroke:#1976d2,color:#000
+    style processing fill:#fff3e0,stroke:#f57c00,color:#000
+    style optimization fill:#e8f5e9,stroke:#388e3c,color:#000
+    style results fill:#f3e5f5,stroke:#7b1fa2,color:#000
+    style warning fill:#ffebee,stroke:#c62828,color:#000
+
+    style A fill:#90caf9,stroke:#1976d2,color:#000
+    style A1 fill:#90caf9,stroke:#1976d2,color:#000
+    style B fill:#90caf9,stroke:#1976d2,color:#000
+    style C fill:#ffcc80,stroke:#f57c00,color:#000
+    style D fill:#ffcc80,stroke:#f57c00,color:#000
+    style E fill:#ffcc80,stroke:#f57c00,color:#000
+    style F fill:#81c784,stroke:#388e3c,color:#000
+    style G fill:#81c784,stroke:#388e3c,color:#000
+    style H fill:#81c784,stroke:#388e3c,color:#000
+    style I fill:#a5d6a7,stroke:#388e3c,color:#000
+    style J fill:#a5d6a7,stroke:#388e3c,color:#000
+    style K fill:#ffcc80,stroke:#f57c00,color:#000
+    style L fill:#81c784,stroke:#388e3c,color:#000
+    style M fill:#81c784,stroke:#388e3c,color:#000
+    style N fill:#ffab91,stroke:#e64a19,color:#000
+    style O fill:#fff59d,stroke:#f9a825,color:#000
+    style P fill:#66bb6a,stroke:#2e7d32,color:#fff
+    style Q fill:#90caf9,stroke:#1976d2,color:#000
+    style R fill:#66bb6a,stroke:#2e7d32,color:#fff
+    style S fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style T fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style U fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style V fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style W fill:#ef9a9a,stroke:#c62828,color:#000
 ```
 
 #### 시나리오
@@ -309,31 +315,38 @@ graph TB
         L --> X[로그 저장<br/>train.log, metrics.json]
     end
 
-    style A fill:#e1f5ff,stroke:#01579b,color:#000
-    style A1 fill:#e1f5ff,stroke:#01579b,color:#000
-    style B fill:#e1f5ff,stroke:#01579b,color:#000
-    style C fill:#fff3e0,stroke:#e65100,color:#000
-    style D fill:#fff3e0,stroke:#e65100,color:#000
-    style E fill:#fff3e0,stroke:#e65100,color:#000
-    style F fill:#f3e5f5,stroke:#4a148c,color:#000
-    style G fill:#fff3e0,stroke:#e65100,color:#000
-    style H fill:#c8e6c9,stroke:#1b5e20,color:#000
-    style I fill:#fff3e0,stroke:#e65100,color:#000
-    style J fill:#f3e5f5,stroke:#4a148c,color:#000
-    style K fill:#f3e5f5,stroke:#4a148c,color:#000
-    style L fill:#ffccbc,stroke:#bf360c,color:#000
-    style M fill:#b39ddb,stroke:#311b92,color:#000
-    style N fill:#fff9c4,stroke:#f57f17,color:#000
-    style O fill:#f3e5f5,stroke:#4a148c,color:#000
-    style P fill:#c8e6c9,stroke:#1b5e20,color:#000
-    style Q fill:#c8e6c9,stroke:#1b5e20,color:#000
-    style R fill:#b39ddb,stroke:#311b92,color:#000
-    style S fill:#b39ddb,stroke:#311b92,color:#000
-    style T fill:#c8e6c9,stroke:#1b5e20,color:#000
-    style U fill:#c8e6c9,stroke:#1b5e20,color:#000
-    style V fill:#fff3e0,stroke:#e65100,color:#000
-    style W fill:#a5d6a7,stroke:#1b5e20,color:#000
-    style X fill:#b39ddb,stroke:#311b92,color:#000
+    style input fill:#e3f2fd,stroke:#1976d2,color:#000
+    style processing fill:#fff3e0,stroke:#f57c00,color:#000
+    style training fill:#e8f5e9,stroke:#388e3c,color:#000
+    style ensemble fill:#f3e5f5,stroke:#7b1fa2,color:#000
+    style inference fill:#e1f5fe,stroke:#0288d1,color:#000
+    style results fill:#f3e5f5,stroke:#7b1fa2,color:#000
+
+    style A fill:#90caf9,stroke:#1976d2,color:#000
+    style A1 fill:#90caf9,stroke:#1976d2,color:#000
+    style B fill:#90caf9,stroke:#1976d2,color:#000
+    style C fill:#ffcc80,stroke:#f57c00,color:#000
+    style D fill:#ffcc80,stroke:#f57c00,color:#000
+    style E fill:#ffcc80,stroke:#f57c00,color:#000
+    style F fill:#81c784,stroke:#388e3c,color:#000
+    style G fill:#ffcc80,stroke:#f57c00,color:#000
+    style H fill:#a5d6a7,stroke:#388e3c,color:#000
+    style I fill:#ffcc80,stroke:#f57c00,color:#000
+    style J fill:#81c784,stroke:#388e3c,color:#000
+    style K fill:#81c784,stroke:#388e3c,color:#000
+    style L fill:#ffab91,stroke:#e64a19,color:#000
+    style M fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style N fill:#fff59d,stroke:#f9a825,color:#000
+    style O fill:#81c784,stroke:#388e3c,color:#000
+    style P fill:#ba68c8,stroke:#7b1fa2,color:#fff
+    style Q fill:#ba68c8,stroke:#7b1fa2,color:#fff
+    style R fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style S fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style T fill:#81d4fa,stroke:#0288d1,color:#000
+    style U fill:#81d4fa,stroke:#0288d1,color:#000
+    style V fill:#ffcc80,stroke:#f57c00,color:#000
+    style W fill:#66bb6a,stroke:#2e7d32,color:#fff
+    style X fill:#ce93d8,stroke:#7b1fa2,color:#000
 ```
 
 #### 시나리오
