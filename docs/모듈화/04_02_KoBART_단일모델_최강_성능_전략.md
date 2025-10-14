@@ -95,9 +95,79 @@ graph TB
 
 ### 3.1 전략 1: 절대 최고 성능 (Optuna + K-Fold + Full)
 
+#### 실행 파이프라인
+
+```mermaid
+graph TB
+    subgraph "입력 계층"
+        A[명령어 실행<br/>--mode optuna] --> B[Config 로드<br/>kobart.yaml]
+        A1[학습 데이터<br/>train.csv] --> C[데이터 로드]
+    end
+
+    subgraph "데이터 처리 계층"
+        C --> D[데이터 증강 50%<br/>back_translation + paraphrase]
+        D --> E[Train/Eval 분할]
+    end
+
+    subgraph "Optuna 최적화 계층"
+        B --> F[OptunaOptimizer 초기화<br/>100 trials]
+        E --> F
+        F --> G[Trial 1~100 반복]
+        G --> H{각 Trial마다}
+        H --> I[하이퍼파라미터 샘플링<br/>learning_rate, epochs, warmup_ratio<br/>weight_decay, scheduler_type<br/>num_beams, length_penalty]
+        I --> J[모델 로드<br/>digit82/kobart-summarization]
+        J --> K[Dataset 생성<br/>encoder_max_len=512<br/>decoder_max_len=128]
+        K --> L[Trainer 생성<br/>Seq2SeqTrainer]
+        L --> M[학습 실행<br/>Epoch 30 + Early Stopping]
+        M --> N[평가 ROUGE-L F1]
+        N --> O{ROUGE-L F1<br/>최고 점수?}
+        O -->|Yes| P[최적 파라미터 저장]
+        O -->|No| Q[다음 Trial]
+        Q --> G
+        P --> G
+    end
+
+    subgraph "결과 저장 계층"
+        G --> R[최적화 완료]
+        R --> S[best_params.json 저장<br/>learning_rate, epochs, etc.]
+        R --> T[all_trials.csv 저장<br/>100개 trial 결과]
+        R --> U[study_stats.json 저장<br/>완료/Pruned/실패 통계]
+        R --> V[시각화 생성<br/>optimization_history.html<br/>param_importances.html]
+    end
+
+    subgraph "중요 정보"
+        W[⚠️ Optuna는 최적 파라미터만 찾음<br/>K-Fold는 실행되지 않음<br/>별도로 kfold 모드 실행 필요]
+    end
+
+    style A fill:#e1f5ff,stroke:#01579b,color:#000
+    style A1 fill:#e1f5ff,stroke:#01579b,color:#000
+    style B fill:#e1f5ff,stroke:#01579b,color:#000
+    style C fill:#fff3e0,stroke:#e65100,color:#000
+    style D fill:#fff3e0,stroke:#e65100,color:#000
+    style E fill:#fff3e0,stroke:#e65100,color:#000
+    style F fill:#f3e5f5,stroke:#4a148c,color:#000
+    style G fill:#f3e5f5,stroke:#4a148c,color:#000
+    style H fill:#f3e5f5,stroke:#4a148c,color:#000
+    style I fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style J fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style K fill:#fff3e0,stroke:#e65100,color:#000
+    style L fill:#f3e5f5,stroke:#4a148c,color:#000
+    style M fill:#f3e5f5,stroke:#4a148c,color:#000
+    style N fill:#ffccbc,stroke:#bf360c,color:#000
+    style O fill:#fff9c4,stroke:#f57f17,color:#000
+    style P fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style Q fill:#bbdefb,stroke:#01579b,color:#000
+    style R fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style S fill:#b39ddb,stroke:#311b92,color:#000
+    style T fill:#b39ddb,stroke:#311b92,color:#000
+    style U fill:#b39ddb,stroke:#311b92,color:#000
+    style V fill:#b39ddb,stroke:#311b92,color:#000
+    style W fill:#ffccbc,stroke:#bf360c,color:#000
+```
+
 #### 시나리오
-1. Optuna로 20회 시행하여 최적 하이퍼파라미터 탐색
-2. 찾은 파라미터로 K-Fold 5로 교차검증
+1. Optuna로 100회 시행하여 최적 하이퍼파라미터 탐색
+2. 찾은 파라미터로 K-Fold 5로 교차검증 (별도 실행)
 3. Epoch 30 + Early Stopping으로 충분한 학습
 4. 데이터 증강 50% (back_translation + paraphrase)
 5. Full Fine-tuning (LoRA 대신 전체 파라미터 학습)
@@ -192,11 +262,85 @@ python scripts/train.py \
 
 ### 3.2 전략 2: 균형잡힌 고성능 (K-Fold + 중간 Epoch)
 
+#### 실행 파이프라인
+
+```mermaid
+graph TB
+    subgraph "입력 계층"
+        A[명령어 실행<br/>--mode kfold] --> B[Config 로드<br/>kobart.yaml]
+        A1[학습 데이터<br/>train.csv] --> C[데이터 로드]
+    end
+
+    subgraph "데이터 처리 계층"
+        C --> D[데이터 증강 50%<br/>back_translation + paraphrase]
+        D --> E[K-Fold 분할<br/>5-Fold, seed=42]
+    end
+
+    subgraph "K-Fold 학습 계층 (Fold 1~5 반복)"
+        B --> F[Fold 1/5 시작]
+        E --> F
+        F --> G[Train/Val 분할]
+        G --> H[모델 로드<br/>digit82/kobart-summarization]
+        H --> I[Dataset 생성<br/>encoder_max_len=512<br/>decoder_max_len=128]
+        I --> J[Trainer 생성<br/>batch_size=16<br/>grad_acc_steps=10<br/>effective_batch=160]
+        J --> K[학습 실행<br/>Epoch 15 + Early Stopping]
+        K --> L[평가 ROUGE]
+        L --> M[체크포인트 저장<br/>fold_1/checkpoint-best]
+        M --> N{다음 Fold?}
+        N -->|Yes| O[Fold 2/5 시작]
+        O --> G
+        N -->|No| P[앙상블 준비]
+    end
+
+    subgraph "앙상블 계층"
+        P --> Q[Fold 1~5 모델 로드]
+        Q --> R[Test 데이터 추론<br/>각 Fold 예측]
+        R --> S[Soft Voting<br/>평균 확률 기반 선택]
+    end
+
+    subgraph "추론 고도화 계층"
+        S --> T[HuggingFace 보정<br/>gogamza/kobart-base-v2<br/>digit82/kobart-summarization<br/>quality_based 전략]
+        T --> U[Solar API 앙상블<br/>solar-1-mini-chat<br/>배치 처리]
+        U --> V[후처리<br/>99.6% 완전한 문장]
+    end
+
+    subgraph "결과 저장 계층"
+        V --> W[submission.csv 생성<br/>ID, summary]
+        L --> X[로그 저장<br/>train.log, metrics.json]
+    end
+
+    style A fill:#e1f5ff,stroke:#01579b,color:#000
+    style A1 fill:#e1f5ff,stroke:#01579b,color:#000
+    style B fill:#e1f5ff,stroke:#01579b,color:#000
+    style C fill:#fff3e0,stroke:#e65100,color:#000
+    style D fill:#fff3e0,stroke:#e65100,color:#000
+    style E fill:#fff3e0,stroke:#e65100,color:#000
+    style F fill:#f3e5f5,stroke:#4a148c,color:#000
+    style G fill:#fff3e0,stroke:#e65100,color:#000
+    style H fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style I fill:#fff3e0,stroke:#e65100,color:#000
+    style J fill:#f3e5f5,stroke:#4a148c,color:#000
+    style K fill:#f3e5f5,stroke:#4a148c,color:#000
+    style L fill:#ffccbc,stroke:#bf360c,color:#000
+    style M fill:#b39ddb,stroke:#311b92,color:#000
+    style N fill:#fff9c4,stroke:#f57f17,color:#000
+    style O fill:#f3e5f5,stroke:#4a148c,color:#000
+    style P fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style Q fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style R fill:#b39ddb,stroke:#311b92,color:#000
+    style S fill:#b39ddb,stroke:#311b92,color:#000
+    style T fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style U fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style V fill:#fff3e0,stroke:#e65100,color:#000
+    style W fill:#a5d6a7,stroke:#1b5e20,color:#000
+    style X fill:#b39ddb,stroke:#311b92,color:#000
+```
+
 #### 시나리오
 1. K-Fold 5로 교차검증
 2. Epoch 15 + Early Stopping
 3. 데이터 증강 50%
-4. Gradient Accumulation 4
+4. Gradient Accumulation 10
 
 #### 명령어 옵션 설명
 
@@ -248,6 +392,32 @@ python scripts/train.py \
 
 ### 3.3 전략 3: 빠른 고성능 (K-Fold 3 + 적은 Epoch)
 
+#### 실행 파이프라인
+
+```mermaid
+graph LR
+    A[명령어 실행<br/>--mode kfold<br/>--k_folds 3] --> B[Config 로드]
+    B --> C[데이터 증강 50%]
+    C --> D[3-Fold 분할]
+    D --> E[Fold 1/3<br/>Epoch 10]
+    E --> F[Fold 2/3<br/>Epoch 10]
+    F --> G[Fold 3/3<br/>Epoch 10]
+    G --> H[앙상블 추론]
+    H --> I[HF 보정 + Solar API]
+    I --> J[submission.csv]
+
+    style A fill:#e1f5ff,stroke:#01579b,color:#000
+    style B fill:#e1f5ff,stroke:#01579b,color:#000
+    style C fill:#fff3e0,stroke:#e65100,color:#000
+    style D fill:#fff3e0,stroke:#e65100,color:#000
+    style E fill:#f3e5f5,stroke:#4a148c,color:#000
+    style F fill:#f3e5f5,stroke:#4a148c,color:#000
+    style G fill:#f3e5f5,stroke:#4a148c,color:#000
+    style H fill:#b39ddb,stroke:#311b92,color:#000
+    style I fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style J fill:#a5d6a7,stroke:#1b5e20,color:#000
+```
+
 #### 시나리오
 1. K-Fold 3으로 빠른 교차검증
 2. Epoch 10
@@ -291,6 +461,32 @@ python scripts/train.py \
 ---
 
 ### 3.4 전략 4: 초고속 실험 (Single Model)
+
+#### 실행 파이프라인
+
+```mermaid
+graph LR
+    A[명령어 실행<br/>--mode single] --> B[Config 로드]
+    B --> C[데이터 증강 50%]
+    C --> D[Train/Val 8:2 분할]
+    D --> E[모델 로드]
+    E --> F[학습 Epoch 5<br/>grad_acc_steps=10]
+    F --> G[평가 + 체크포인트]
+    G --> H[Test 추론]
+    H --> I[HF 보정 + Solar API]
+    I --> J[submission.csv]
+
+    style A fill:#e1f5ff,stroke:#01579b,color:#000
+    style B fill:#e1f5ff,stroke:#01579b,color:#000
+    style C fill:#fff3e0,stroke:#e65100,color:#000
+    style D fill:#fff3e0,stroke:#e65100,color:#000
+    style E fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style F fill:#f3e5f5,stroke:#4a148c,color:#000
+    style G fill:#ffccbc,stroke:#bf360c,color:#000
+    style H fill:#b39ddb,stroke:#311b92,color:#000
+    style I fill:#c8e6c9,stroke:#1b5e20,color:#000
+    style J fill:#a5d6a7,stroke:#1b5e20,color:#000
+```
 
 #### 시나리오
 1. K-Fold 없이 단일 학습
