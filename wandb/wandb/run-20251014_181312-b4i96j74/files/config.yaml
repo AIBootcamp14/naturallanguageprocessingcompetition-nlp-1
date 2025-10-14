@@ -1,0 +1,231 @@
+_wandb:
+    value:
+        cli_version: 0.22.2
+        e:
+            vxo6cur9ouih5g9p15gftr8ejnnynrm5:
+                args:
+                    - --mode
+                    - kfold
+                    - --models
+                    - kobart
+                    - --epochs
+                    - "10"
+                    - --batch_size
+                    - "16"
+                    - --gradient_accumulation_steps
+                    - "10"
+                    - --learning_rate
+                    - "7.568e-5"
+                    - --warmup_ratio
+                    - "0.1196"
+                    - --weight_decay
+                    - "0.0922"
+                    - --scheduler_type
+                    - polynomial
+                    - --use_augmentation
+                    - --augmentation_ratio
+                    - "0.5"
+                    - --augmentation_methods
+                    - back_translation
+                    - paraphrase
+                    - --k_folds
+                    - "5"
+                    - --experiment_name
+                    - kobart_ultimate_kfold
+                    - --seed
+                    - "42"
+                    - --resume
+                codePath: scripts/train.py
+                codePathLocal: scripts/train.py
+                cpu_count: 6
+                cpu_count_logical: 12
+                cudaVersion: "12.6"
+                disk:
+                    /:
+                        total: "1081101176832"
+                        used: "328331259904"
+                email: ieyeppo.job@gmail.com
+                executable: /home/ieyeppo/.pyenv/versions/nlp_py3_11_9/bin/python
+                git:
+                    commit: ac3244816738c3176837f2875ec1563be1c53055
+                    remote: git@github.com:iejob/natural-language-processing-competition.git
+                gpu: NVIDIA GeForce RTX 4090
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Ada
+                      memoryTotal: "25757220864"
+                      name: NVIDIA GeForce RTX 4090
+                      uuid: GPU-b2b9e31d-4ca9-4907-d713-96771c28a1dd
+                host: PotG
+                memory:
+                    total: "33656340480"
+                os: Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39
+                program: /home/ieyeppo/AI_Lab/natural-language-processing-competition/scripts/train.py
+                python: CPython 3.11.9
+                root: /home/ieyeppo/AI_Lab/natural-language-processing-competition/wandb
+                startedAt: "2025-10-14T09:13:12.165958Z"
+                writerId: vxo6cur9ouih5g9p15gftr8ejnnynrm5
+        m: []
+        python_version: 3.11.9
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+                - 5
+                - 11
+                - 35
+                - 49
+                - 53
+                - 71
+                - 95
+                - 98
+            "3":
+                - 2
+                - 13
+                - 15
+                - 16
+            "4": 3.11.9
+            "5": 0.22.2
+            "10":
+                - 20
+            "12": 0.22.2
+            "13": linux-x86_64
+augmentation_methods:
+    value:
+        - back_translation
+        - paraphrase
+augmentation_ratio:
+    value: 0.5
+batch_size:
+    value: 16
+config:
+    value: configs/train_config.yaml
+correction_models:
+    value:
+        - gogamza/kobart-base-v2
+        - digit82/kobart-summarization
+correction_strategy:
+    value: quality_based
+correction_threshold:
+    value: 0.3
+debug:
+    value: false
+dev_data:
+    value: data/raw/dev.csv
+ensemble_strategy:
+    value: weighted_avg
+ensemble_weights:
+    value: null
+epochs:
+    value: 10
+experiment_name:
+    value: kobart_ultimate_kfold
+fold_seed:
+    value: 42
+gradient_accumulation_steps:
+    value: 10
+ignore_checkpoint:
+    value: false
+k_folds:
+    value: 5
+label_smoothing:
+    value: null
+learning_rate:
+    value: 7.568e-05
+length_penalty:
+    value: null
+lora_rank:
+    value: 16
+max_grad_norm:
+    value: null
+max_new_tokens:
+    value: null
+max_train_samples:
+    value: null
+min_new_tokens:
+    value: null
+mode:
+    value: kfold
+models:
+    value:
+        - kobart
+no_repeat_ngram_size:
+    value: null
+no_wandb:
+    value: false
+num_beams:
+    value: null
+optimization_method:
+    value: quantization
+optimize_inference:
+    value: false
+optuna_pruner:
+    value: median
+optuna_sampler:
+    value: tpe
+optuna_timeout:
+    value: 7200
+optuna_trials:
+    value: 100
+output_dir:
+    value: experiments/20251014/20251014_181311_kobart_ultimate_kfold
+prompt_strategy:
+    value: zero_shot_simple
+quality_threshold:
+    value: 0.7
+quantization_bits:
+    value: 8
+repetition_penalty:
+    value: null
+resume:
+    value: true
+resume_from:
+    value: null
+save_visualizations:
+    value: false
+scheduler_type:
+    value: polynomial
+seed:
+    value: 42
+solar_api_key:
+    value: null
+solar_model:
+    value: solar-1-mini-chat
+temperature:
+    value: null
+top_k:
+    value: null
+top_p:
+    value: null
+train_data:
+    value: data/raw/train.csv
+tta_num_aug:
+    value: 1
+tta_strategies:
+    value:
+        - paraphrase
+use_augmentation:
+    value: true
+use_batch_optimization:
+    value: false
+use_full_finetuning:
+    value: false
+use_onnx:
+    value: false
+use_pretrained_correction:
+    value: false
+use_solar_api:
+    value: false
+use_tta:
+    value: false
+use_wandb:
+    value: true
+validate_data_quality:
+    value: false
+wandb_project:
+    value: dialogue-summarization
+warmup_ratio:
+    value: 0.1196
+weight_decay:
+    value: 0.0922
