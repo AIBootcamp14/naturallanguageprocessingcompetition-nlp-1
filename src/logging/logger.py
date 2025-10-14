@@ -31,13 +31,11 @@ class Logger:                                    # Logger 클래스 정의
     def _is_progress_line(self, message: str) -> bool:
         """
         메시지가 tqdm 진행률 표시줄인지 확인
-        퍼센티지(%), it/s, s/it 등이 포함된 라인을 감지
+        it/s, s/it 등이 포함된 라인만 진행률로 감지
         """
-        progress_indicators = ['%|', 'it/s', 's/it', '/s]', '|', '[00:']
-        # 진행률 지표가 포함되어 있고, 숫자가 포함된 경우만 진행률로 간주
-        has_indicator = any(indicator in message for indicator in progress_indicators)
-        has_digit = any(c.isdigit() for c in message)
-        return has_indicator and has_digit
+        # 진행률 표시줄의 명확한 지표만 사용 (it/s, s/it)
+        progress_indicators = ['it/s', 's/it', 'it/s]', 's/it]']
+        return any(indicator in message for indicator in progress_indicators)
 
     # ---------------------- 퍼센티지 추출 함수 ---------------------- #
     def _extract_percentage(self, message: str) -> float:
@@ -82,12 +80,8 @@ class Logger:                                    # Logger 클래스 정의
             if current_percent is not None:
                 self.last_progress_percent = current_percent
 
-            # 콘솔에는 출력 (터미널에서 진행률 확인용)
-            if self.print_also and print_also:
-                timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                line = f"{timestamp} | {clean_message}\n"
-                self.original_stdout.write(line)
-
+            # 진행률은 로그 파일에도 콘솔에도 기록하지 않음
+            # tqdm이 직접 터미널에 출력하도록 함
             return  # 로그 파일에는 기록하지 않고 함수 종료
         else:
             # 진행률이 아닌 일반 메시지가 오면 진행률 상태 초기화
