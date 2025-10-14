@@ -233,6 +233,10 @@ def main():
     logger = Logger(log_path, print_also=True)
     logger.start_redirect()
 
+    # ✅ 실행 명령어 저장
+    from src.utils.core.path_resolver import save_command_to_experiment
+    save_command_to_experiment(output_dir, verbose=False)
+
     try:
         logger.write("=" * 60)
         logger.write(f"추론 시작")

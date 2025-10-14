@@ -315,6 +315,12 @@ python scripts/train.py \
 **단계 3: 추론 (Solar API + HF 보정)** (2-3시간)
 
 ```bash
+# ⚠️ [날짜] 부분은 실제 실험 폴더의 날짜로 직접 수정하세요
+# 예시: experiments/[날짜]/... → experiments/20251014/20251014_154616_kobart_ultimate_kfold/kobart/final_model
+#
+# 💡 TIP: 다음 명령어로 최신 폴더 찾기
+# ls -lt experiments/$(ls experiments/ | tail -1) | grep kobart_ultimate_kfold
+
 python scripts/inference.py \
   --model experiments/[날짜]/kobart_ultimate_kfold/kobart/final_model \
   --test_data data/raw/test.csv \
@@ -325,7 +331,10 @@ python scripts/inference.py \
   --max_new_tokens 100 \
   --num_beams 4 \
   --batch_size 16 \
-  --output submissions/kobart_ultimate_final.csv
+  --output submissions/kobart_ultimate_final.csv \
+  --resume  # ✅ 이전 단계에서 중단된 경우 이어서 실행
+
+# 📋 실행된 명령어는 자동으로 experiments/날짜/실행폴더/command.txt에 저장됩니다
 ```
 
 ---

@@ -601,6 +601,10 @@ def setup_environment(args):
     output_dir.mkdir(parents=True, exist_ok=True)
     args.output_dir = str(output_dir)
 
+    # ✅ 실행 명령어 저장
+    from src.utils.core.path_resolver import save_command_to_experiment
+    save_command_to_experiment(output_dir, verbose=False)
+
     # 로거 설정
     log_path = output_dir / "train.log"
     logger = Logger(log_path, print_also=True)
