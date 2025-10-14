@@ -24,11 +24,16 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # ---------------------- 서드파티 라이브러리 ---------------------- #
+import warnings
 import pandas as pd
 import torch
 import numpy as np
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 from tqdm import tqdm
+
+# Transformers 경고 메시지 필터링
+warnings.filterwarnings("ignore", message=".*max_new_tokens.*max_length.*")
+warnings.filterwarnings("ignore", message=".*num_labels.*id2label.*")
 
 # ---------------------- 프로젝트 모듈 ---------------------- #
 from src.config import load_config
