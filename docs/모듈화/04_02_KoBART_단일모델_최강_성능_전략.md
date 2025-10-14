@@ -228,6 +228,7 @@ graph TB
 
 ```bash
 # ==================== 전략 1: 절대 최고 성능 (Optuna 최적화 반영) ==================== #
+# ✅ 체크포인트 Resume 지원: 중단 시 --resume 옵션 추가하여 이어서 실행 가능
 python scripts/train.py \
   --mode optuna \
   --models kobart \
@@ -260,10 +261,12 @@ python scripts/train.py \
   --correction_threshold 0.3 \
   --save_visualizations \
   --experiment_name kobart_ultimate \
-  --seed 42
+  --seed 42 \
+  --resume  # ✅ 중단 후 이어서 실행 (완료된 Trial 자동 건너뛰기)
 
 # 예상 시간: 12-15시간 (Optuna 20 trials, 기존 대비 50% 단축)
 # 예상 ROUGE Sum: 1.30-1.42 (현재 1.048 → +24-35%, 최적화 반영 + HuggingFace 보정)
+# 💾 체크포인트: Trial 완료마다 자동 저장, 중단 시 완료된 Trial부터 Resume 가능
 ```
 
 ---
@@ -369,6 +372,7 @@ graph TB
 
 ```bash
 # ==================== 전략 2: 균형잡힌 고성능 (Optuna 최적화 반영) ==================== #
+# ✅ 체크포인트 Resume 지원: 중단 시 --resume 옵션 추가하여 이어서 실행 가능
 python scripts/train.py \
   --mode kfold \
   --models kobart \
@@ -398,10 +402,12 @@ python scripts/train.py \
   --correction_strategy quality_based \
   --correction_threshold 0.3 \
   --experiment_name kobart_balanced \
-  --seed 42
+  --seed 42 \
+  --resume  # ✅ 중단 후 이어서 실행 (완료된 Fold 자동 건너뛰기)
 
 # 예상 시간: 3-4시간 (기존 대비 43% 단축, epochs 15→7)
 # 예상 ROUGE Sum: 1.24-1.35 (현재 1.048 → +18-29%, 최적화 반영 + HuggingFace 보정)
+# 💾 체크포인트: Fold 완료마다 자동 저장, 중단 시 완료된 Fold부터 Resume 가능
 ```
 
 ---
@@ -443,6 +449,7 @@ graph LR
 
 ```bash
 # ==================== 전략 3: 빠른 고성능 (Optuna 최적화 반영) ==================== #
+# ✅ 체크포인트 Resume 지원: 중단 시 --resume 옵션 추가하여 이어서 실행 가능
 python scripts/train.py \
   --mode kfold \
   --models kobart \
@@ -470,10 +477,12 @@ python scripts/train.py \
   --correction_strategy quality_based \
   --correction_threshold 0.3 \
   --experiment_name kobart_fast_high \
-  --seed 42
+  --seed 42 \
+  --resume  # ✅ 중단 후 이어서 실행 (완료된 Fold 자동 건너뛰기)
 
 # 예상 시간: 1.5-2시간 (기존 대비 33% 단축, epochs 10→7)
 # 예상 ROUGE Sum: 1.18-1.28 (현재 1.048 → +13-22%, 최적화 반영 + HuggingFace 보정)
+# 💾 체크포인트: Fold 완료마다 자동 저장, 중단 시 완료된 Fold부터 Resume 가능
 ```
 
 ---
@@ -515,6 +524,7 @@ graph LR
 
 ```bash
 # ==================== 전략 4: 초고속 실험 (Optuna 최적화 반영) ==================== #
+# ✅ 체크포인트 Resume 지원: 중단 시 --resume 옵션 추가하여 이어서 실행 가능
 python scripts/train.py \
   --mode single \
   --models kobart \
@@ -540,10 +550,12 @@ python scripts/train.py \
   --correction_strategy quality_based \
   --correction_threshold 0.3 \
   --experiment_name kobart_ultrafast \
-  --seed 42
+  --seed 42 \
+  --resume  # ✅ 중단 후 이어서 실행 (Epoch 자동 Resume)
 
 # 예상 시간: 30-45분 (기존 대비 33% 단축)
 # 예상 ROUGE Sum: 1.13-1.20 (현재 1.048 → +8-15%, 최적화 반영 + HuggingFace 보정)
+# 💾 체크포인트: Epoch 완료마다 자동 저장, 중단 시 완료된 Epoch부터 Resume 가능
 ```
 
 ---
@@ -651,6 +663,7 @@ def postprocess_summary(text: str) -> str:
 
 ```bash
 # ==================== 긴급 30분 버전 (Optuna 최적화 반영) ==================== #
+# ✅ 체크포인트 Resume 지원: 중단 시 --resume 옵션 추가하여 이어서 실행 가능
 python scripts/train.py \
   --mode single \
   --models kobart \
@@ -674,10 +687,12 @@ python scripts/train.py \
   --correction_strategy quality_based \
   --correction_threshold 0.3 \
   --experiment_name kobart_emergency \
-  --seed 42
+  --seed 42 \
+  --resume  # ✅ 중단 후 이어서 실행 (Epoch 자동 Resume)
 
 # 예상 시간: 20-30분 (기존 대비 43% 단축)
 # 예상 ROUGE Sum: 1.11-1.17 (현재 1.048 → +6-12%, 최적화 반영 + HuggingFace 보정)
+# 💾 체크포인트: Epoch 완료마다 자동 저장, 중단 시 완료된 Epoch부터 Resume 가능
 ```
 
 ---
