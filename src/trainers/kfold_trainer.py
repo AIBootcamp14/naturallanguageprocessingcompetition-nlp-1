@@ -43,8 +43,19 @@ class KFoldTrainer(BaseTrainer):
         self.log(f"📋 Fold Seed: {self.args.fold_seed}")
         self.log("=" * 60)
 
+        # ✅ --resume_from 옵션 처리
+        checkpoint_base_dir = self.output_dir
+        if hasattr(self.args, 'resume_from') and self.args.resume_from:
+            # --resume_from이 체크포인트 디렉토리를 가리키는 경우 상위 폴더 사용
+            resume_path = Path(self.args.resume_from)
+            if resume_path.name == 'checkpoints':
+                checkpoint_base_dir = resume_path.parent
+            else:
+                checkpoint_base_dir = Path(self.args.resume_from)
+            self.log(f"🔄 Resume from: {checkpoint_base_dir}")
+
         # ✅ 체크포인트 관리자 초기화
-        checkpoint_dir = self.output_dir / "checkpoints"
+        checkpoint_dir = checkpoint_base_dir / "checkpoints"
         self.checkpoint_manager = KFoldCheckpointManager(
             checkpoint_dir=str(checkpoint_dir),
             n_folds=self.args.k_folds
