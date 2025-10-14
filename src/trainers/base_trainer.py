@@ -149,6 +149,13 @@ class BaseTrainer(ABC):
         Args:
             config: Config 객체
         """
+        # 실험 이름 설정 (모드명으로 설정)
+        if hasattr(self.args, 'mode') and self.args.mode:
+            if not hasattr(config, 'experiment'):
+                from omegaconf import OmegaConf
+                config.experiment = OmegaConf.create({})
+            config.experiment.name = self.args.mode
+
         # 기본 학습 설정
         if hasattr(self.args, 'epochs') and self.args.epochs is not None:
             config.training.epochs = self.args.epochs
