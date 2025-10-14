@@ -225,3 +225,84 @@ class BaseTrainer(ABC):
                 from omegaconf import OmegaConf
                 config.inference = OmegaConf.create({})
             config.inference.no_repeat_ngram_size = self.args.no_repeat_ngram_size
+
+        if hasattr(self.args, 'max_new_tokens') and self.args.max_new_tokens is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.generate_max_new_tokens = self.args.max_new_tokens
+
+        if hasattr(self.args, 'min_new_tokens') and self.args.min_new_tokens is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            config.inference.generate_min_new_tokens = self.args.min_new_tokens
+
+        # 데이터 증강
+        if hasattr(self.args, 'use_augmentation') and self.args.use_augmentation:
+            if not hasattr(config, 'augmentation'):
+                from omegaconf import OmegaConf
+                config.augmentation = OmegaConf.create({})
+            config.augmentation.enabled = True
+
+        if hasattr(self.args, 'augmentation_ratio') and self.args.augmentation_ratio is not None:
+            if not hasattr(config, 'augmentation'):
+                from omegaconf import OmegaConf
+                config.augmentation = OmegaConf.create({})
+            config.augmentation.ratio = self.args.augmentation_ratio
+
+        if hasattr(self.args, 'augmentation_methods') and self.args.augmentation_methods is not None:
+            if not hasattr(config, 'augmentation'):
+                from omegaconf import OmegaConf
+                config.augmentation = OmegaConf.create({})
+            config.augmentation.methods = self.args.augmentation_methods
+
+        # Solar API
+        if hasattr(self.args, 'use_solar_api') and self.args.use_solar_api:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            if not hasattr(config.inference, 'solar_api'):
+                config.inference.solar_api = OmegaConf.create({})
+            config.inference.solar_api.enabled = True
+
+        if hasattr(self.args, 'solar_model') and self.args.solar_model is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            if not hasattr(config.inference, 'solar_api'):
+                config.inference.solar_api = OmegaConf.create({})
+            config.inference.solar_api.model = self.args.solar_model
+
+        # HuggingFace 보정
+        if hasattr(self.args, 'use_pretrained_correction') and self.args.use_pretrained_correction:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            if not hasattr(config.inference, 'pretrained_correction'):
+                config.inference.pretrained_correction = OmegaConf.create({})
+            config.inference.pretrained_correction.enabled = True
+
+        if hasattr(self.args, 'correction_models') and self.args.correction_models is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            if not hasattr(config.inference, 'pretrained_correction'):
+                config.inference.pretrained_correction = OmegaConf.create({})
+            config.inference.pretrained_correction.models = self.args.correction_models
+
+        if hasattr(self.args, 'correction_strategy') and self.args.correction_strategy is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            if not hasattr(config.inference, 'pretrained_correction'):
+                config.inference.pretrained_correction = OmegaConf.create({})
+            config.inference.pretrained_correction.strategy = self.args.correction_strategy
+
+        if hasattr(self.args, 'correction_threshold') and self.args.correction_threshold is not None:
+            if not hasattr(config, 'inference'):
+                from omegaconf import OmegaConf
+                config.inference = OmegaConf.create({})
+            if not hasattr(config.inference, 'pretrained_correction'):
+                config.inference.pretrained_correction = OmegaConf.create({})
+            config.inference.pretrained_correction.threshold = self.args.correction_threshold

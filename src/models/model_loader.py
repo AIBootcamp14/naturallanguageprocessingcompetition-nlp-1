@@ -145,7 +145,8 @@ class ModelLoader:
             print(msg)
 
         model = AutoModelForSeq2SeqLM.from_pretrained(      # Seq2Seq 모델 로드
-            checkpoint
+            checkpoint,
+            ignore_mismatched_sizes=True                    # 크기 불일치 경고 무시
         )
 
         # -------------- 특수 토큰에 따른 임베딩 크기 조정 -------------- #

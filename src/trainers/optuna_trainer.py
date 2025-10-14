@@ -70,7 +70,8 @@ class OptunaTrainer(BaseTrainer):
             study_name=f"optuna_{model_name}_{self.args.experiment_name}",
             storage=None,
             direction="maximize",
-            logger=self.logger
+            logger=self.logger,
+            output_dir=self.args.output_dir  # 명령행 인자의 output_dir 전달
         )
 
         # 튜닝 실행

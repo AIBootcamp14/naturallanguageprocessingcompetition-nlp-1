@@ -41,7 +41,8 @@ class OptunaOptimizer:
         study_name: Optional[str] = None,
         storage: Optional[str] = None,
         direction: str = "maximize",
-        logger=None
+        logger=None,
+        output_dir: Optional[str] = None
     ):
         """
         초기화
@@ -56,6 +57,7 @@ class OptunaOptimizer:
             storage: Study 저장소 (SQLite/PostgreSQL)
             direction: 최적화 방향 ("maximize" or "minimize")
             logger: Logger 인스턴스
+            output_dir: 출력 디렉토리 (체크포인트 저장 경로, None이면 config 기본값 사용)
         """
         self.config = config
         self.train_df = train_df
@@ -66,6 +68,7 @@ class OptunaOptimizer:
         self.storage = storage
         self.direction = direction
         self.logger = logger
+        self.output_dir = output_dir
 
         # Optuna Study
         self.study: Optional[optuna.Study] = None
@@ -151,6 +154,10 @@ class OptunaOptimizer:
             config.training.warmup_ratio = params['warmup_ratio']
             config.training.weight_decay = params['weight_decay']
             config.training.lr_scheduler_type = params['scheduler_type']
+
+            # 출력 디렉토리 설정 (명령행 인자가 우선)
+            if self.output_dir is not None:
+                config.training.output_dir = self.output_dir
 
             # Inference 파라미터 업데이트 (KoBART는 inference 섹션 사용)
             if hasattr(config, 'inference'):
