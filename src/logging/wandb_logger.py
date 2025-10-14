@@ -95,8 +95,22 @@ class WandbLogger:
         # 초기화되지 않은 경우
         if not self.is_initialized:
             return  # 함수 종료
-        
+
         wandb.log(metrics, step=step)            # WandB에 메트릭 로깅
+
+
+    # 텍스트 로깅 함수 정의
+    def log_text(self, message: str, level: str = "info"):
+        """
+        텍스트 메시지 로깅 (WandB에는 로깅하지 않음, 호환성 유지용)
+
+        Args:
+            message: 로그 메시지
+            level: 로그 레벨 (info, warning, error 등)
+        """
+        # WandB에는 일반 텍스트를 직접 로깅하지 않음
+        # 이 메서드는 base_trainer.py와의 호환성을 위해 존재
+        pass
     
     
     # 모델 로깅 함수 정의
