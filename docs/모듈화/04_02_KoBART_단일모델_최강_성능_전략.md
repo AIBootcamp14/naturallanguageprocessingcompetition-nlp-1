@@ -99,17 +99,17 @@ graph TB
 
 ```mermaid
 graph TB
-    subgraph "입력 계층"
+    subgraph input["🔵 입력 계층"]
         A[명령어 실행<br/>--mode optuna] --> B[Config 로드<br/>kobart.yaml]
         A1[학습 데이터<br/>train.csv] --> C[데이터 로드]
     end
 
-    subgraph "데이터 처리 계층"
+    subgraph processing["🟠 데이터 처리 계층"]
         C --> D[데이터 증강 50%<br/>back_translation + paraphrase]
         D --> E[Train/Eval 분할]
     end
 
-    subgraph "Optuna 최적화 계층"
+    subgraph optimization["🟣 Optuna 최적화 계층"]
         B --> F[OptunaOptimizer 초기화<br/>100 trials]
         E --> F
         F --> G[Trial 1~100 반복]
@@ -127,7 +127,7 @@ graph TB
         P --> G
     end
 
-    subgraph "결과 저장 계층"
+    subgraph results["🟣 결과 저장 계층"]
         G --> R[최적화 완료]
         R --> S[best_params.json 저장<br/>learning_rate, epochs, etc.]
         R --> T[all_trials.csv 저장<br/>100개 trial 결과]
@@ -135,8 +135,8 @@ graph TB
         R --> V[시각화 생성<br/>optimization_history.html<br/>param_importances.html]
     end
 
-    subgraph "중요 정보"
-        W[⚠️ Optuna는 최적 파라미터만 찾음<br/>K-Fold는 실행되지 않음<br/>별도로 kfold 모드 실행 필요]
+    subgraph warning["⚠️ 중요 정보"]
+        W[Optuna는 최적 파라미터만 찾음<br/>K-Fold는 실행되지 않음<br/>별도로 kfold 모드 실행 필요]
     end
 
     style A fill:#e1f5ff,stroke:#01579b,color:#000
@@ -266,17 +266,17 @@ python scripts/train.py \
 
 ```mermaid
 graph TB
-    subgraph "입력 계층"
+    subgraph input["🔵 입력 계층"]
         A[명령어 실행<br/>--mode kfold] --> B[Config 로드<br/>kobart.yaml]
         A1[학습 데이터<br/>train.csv] --> C[데이터 로드]
     end
 
-    subgraph "데이터 처리 계층"
+    subgraph processing["🟠 데이터 처리 계층"]
         C --> D[데이터 증강 50%<br/>back_translation + paraphrase]
         D --> E[K-Fold 분할<br/>5-Fold, seed=42]
     end
 
-    subgraph "K-Fold 학습 계층 (Fold 1~5 반복)"
+    subgraph training["🟣 K-Fold 학습 계층 (Fold 1~5 반복)"]
         B --> F[Fold 1/5 시작]
         E --> F
         F --> G[Train/Val 분할]
@@ -292,19 +292,19 @@ graph TB
         N -->|No| P[앙상블 준비]
     end
 
-    subgraph "앙상블 계층"
+    subgraph ensemble["🟢 앙상블 계층"]
         P --> Q[Fold 1~5 모델 로드]
         Q --> R[Test 데이터 추론<br/>각 Fold 예측]
         R --> S[Soft Voting<br/>평균 확률 기반 선택]
     end
 
-    subgraph "추론 고도화 계층"
+    subgraph inference["🟢 추론 고도화 계층"]
         S --> T[HuggingFace 보정<br/>gogamza/kobart-base-v2<br/>digit82/kobart-summarization<br/>quality_based 전략]
         T --> U[Solar API 앙상블<br/>solar-1-mini-chat<br/>배치 처리]
         U --> V[후처리<br/>99.6% 완전한 문장]
     end
 
-    subgraph "결과 저장 계층"
+    subgraph results["🟣 결과 저장 계층"]
         V --> W[submission.csv 생성<br/>ID, summary]
         L --> X[로그 저장<br/>train.log, metrics.json]
     end
