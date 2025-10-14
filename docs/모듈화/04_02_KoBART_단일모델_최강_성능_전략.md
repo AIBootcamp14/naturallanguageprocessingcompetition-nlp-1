@@ -183,13 +183,14 @@ graph LR
 |------|-----|----------|------|
 | `--mode` | optuna | Optuna 최적화 모드 | 최적 하이퍼파라미터 자동 탐색 |
 | `--models` | kobart | KoBART 단일 모델 | 속도(99초) × 성능(1.048) 최고 |
-| `--optuna_trials` | 20 | Optuna 시행 횟수 | 20회 효율적 탐색 (100→20, Trial 11에서 최적값 발견) |
-| `--epochs` | 7 | 학습 에폭 | Optuna 최적값 (30→7, 시간 76.7% 단축) |
+| `--optuna_trials` | 20 | Optuna 시행 횟수 | 20회 효율적 탐색 (100→20, Trial 4에서 최적값 발견) |
+| `--epochs` | 10 | 학습 에폭 | Optuna 최적값 (Trial 4, ROUGE-L 0.4598) |
 | `--batch_size` | 16 | 배치 크기 | GPU 메모리 최적 활용 |
 | `--gradient_accumulation_steps` | 10 | 그래디언트 누적 | 효과적 배치 160 (16×10) |
-| `--learning_rate` | 9.14e-5 | 학습률 | Optuna 최적값 (5e-5→9.14e-5, 약 1.8배) |
-| `--warmup_ratio` | 0.00136 | Warmup 비율 | Optuna 최적값 (0.1→0.00136, 거의 불필요) |
-| `--weight_decay` | 0.0995 | 가중치 감쇠 | Optuna 최적값 (0.01→0.0995, 약 10배) |
+| `--learning_rate` | 7.568e-5 | 학습률 | Optuna 최적값 (Trial 4) |
+| `--warmup_ratio` | 0.1196 | Warmup 비율 | Optuna 최적값 (Trial 4, 기존 대비 88배) |
+| `--weight_decay` | 0.0922 | 가중치 감쇠 | Optuna 최적값 (Trial 4) |
+| `--scheduler_type` | polynomial | 학습률 스케줄러 | Optuna 최적값 (Trial 4) |
 | `--max_grad_norm` | 1.0 | 그래디언트 클리핑 | 학습 안정화 |
 | `--label_smoothing` | 0.1 | 레이블 스무딩 | 과적합 방지 |
 | `--use_augmentation` | - | 데이터 증강 활성화 | 일반화 능력 향상 |
@@ -199,9 +200,9 @@ graph LR
 | `--fold_seed` | 42 | Fold 시드 | 재현 가능성 |
 | `--max_new_tokens` | 100 | 생성 최대 토큰 | 한국어 요약 최적 길이 |
 | `--min_new_tokens` | 30 | 생성 최소 토큰 | 너무 짧은 요약 방지 |
-| `--num_beams` | 4 | Beam Search | Optuna 최적값 (5→4, 속도↑ 품질 유지) |
+| `--num_beams` | 6 | Beam Search | Optuna 최적값 (Trial 4) |
 | `--repetition_penalty` | 1.5 | 반복 억제 | 반복 문장 강력 방지 |
-| `--length_penalty` | 0.938 | 길이 페널티 | Optuna 최적값 (1.0→0.938, 약간 짧게) |
+| `--length_penalty` | 0.9214 | 길이 페널티 | Optuna 최적값 (Trial 4) |
 | `--no_repeat_ngram_size` | 3 | N-gram 반복 금지 | 3-gram 반복 방지 |
 | `--use_solar_api` | - | Solar API 통합 | 고품질 번역/요약 보정 |
 | `--use_pretrained_correction` | - | HuggingFace 보정 활성화 | 사전학습 모델 보정 (PRD 04, 12) |
@@ -233,13 +234,13 @@ python scripts/train.py \
   --models kobart \
   --optuna_trials 20 \
   --optuna_timeout 10800 \
-  --epochs 7 \
+  --epochs 10 \
   --batch_size 16 \
   --gradient_accumulation_steps 10 \
-  --learning_rate 9.14e-5 \
-  --warmup_ratio 0.00136 \
-  --weight_decay 0.0995 \
-  --scheduler_type cosine \
+  --learning_rate 7.568e-5 \
+  --warmup_ratio 0.1196 \
+  --weight_decay 0.0922 \
+  --scheduler_type polynomial \
   --max_grad_norm 1.0 \
   --label_smoothing 0.1 \
   --use_augmentation \
@@ -249,9 +250,9 @@ python scripts/train.py \
   --fold_seed 42 \
   --max_new_tokens 100 \
   --min_new_tokens 30 \
-  --num_beams 4 \
+  --num_beams 6 \
   --repetition_penalty 1.5 \
-  --length_penalty 0.938 \
+  --length_penalty 0.9214 \
   --no_repeat_ngram_size 3 \
   --use_solar_api \
   --use_pretrained_correction \
@@ -279,7 +280,7 @@ python scripts/train.py \
   --mode optuna \
   --models kobart \
   --optuna_trials 20 \
-  --epochs 7 \
+  --epochs 10 \
   --batch_size 16 \
   --gradient_accumulation_steps 10 \
   --use_augmentation \
@@ -296,13 +297,13 @@ python scripts/train.py \
 python scripts/train.py \
   --mode kfold \
   --models kobart \
-  --epochs 7 \
+  --epochs 10 \
   --batch_size 16 \
   --gradient_accumulation_steps 10 \
-  --learning_rate 9.14e-5 \
-  --warmup_ratio 0.00136 \
-  --weight_decay 0.0995 \
-  --scheduler_type cosine \
+  --learning_rate 7.568e-5 \
+  --warmup_ratio 0.1196 \
+  --weight_decay 0.0922 \
+  --scheduler_type polynomial \
   --use_augmentation \
   --augmentation_ratio 0.5 \
   --augmentation_methods back_translation paraphrase \
@@ -329,7 +330,8 @@ python scripts/inference.py \
   --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
   --correction_strategy quality_based \
   --max_new_tokens 100 \
-  --num_beams 4 \
+  --num_beams 6 \
+  --length_penalty 0.9214 \
   --batch_size 16 \
   --output submissions/kobart_ultimate_final.csv \
   --resume  # ✅ 이전 단계에서 중단된 경우 이어서 실행

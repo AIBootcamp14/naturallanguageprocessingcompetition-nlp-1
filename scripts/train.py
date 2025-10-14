@@ -148,6 +148,14 @@ def parse_arguments():
         help='레이블 스무딩 (None: config 파일 값 사용)'
     )
 
+    parser.add_argument(
+        '--scheduler_type',
+        type=str,
+        default=None,
+        choices=['linear', 'cosine', 'cosine_with_restarts', 'polynomial', 'constant', 'constant_with_warmup'],
+        help='학습률 스케줄러 타입 (None: config 파일 값 사용)'
+    )
+
     # ==================== 생성 파라미터 ====================
     parser.add_argument(
         '--max_new_tokens',
