@@ -494,6 +494,26 @@ def parse_arguments():
         help='디버그 모드 (적은 데이터)'
     )
 
+    # ==================== 체크포인트 및 Resume (PRD 04) ====================
+    parser.add_argument(
+        '--resume',
+        action='store_true',
+        help='체크포인트에서 이어서 실행 (중단된 학습 재개)'
+    )
+
+    parser.add_argument(
+        '--resume_from',
+        type=str,
+        default=None,
+        help='특정 체크포인트 디렉토리에서 Resume (None: 자동 탐지)'
+    )
+
+    parser.add_argument(
+        '--ignore_checkpoint',
+        action='store_true',
+        help='체크포인트 무시하고 처음부터 시작'
+    )
+
     # ==================== 데이터 경로 ====================
     parser.add_argument(
         '--train_data',
