@@ -79,9 +79,12 @@ class OptunaOptimizer:
         self.best_value: Optional[float] = None
 
         # ✅ 체크포인트 관리자 초기화
-        checkpoint_dir = self.output_dir if self.output_dir else "checkpoints"
+        if self.output_dir:
+            checkpoint_dir = Path(self.output_dir) / "checkpoints"
+        else:
+            checkpoint_dir = Path("checkpoints")
         self.checkpoint_manager = OptunaCheckpointManager(
-            checkpoint_dir=checkpoint_dir,
+            checkpoint_dir=str(checkpoint_dir),
             study_name=self.study_name
         )
 
