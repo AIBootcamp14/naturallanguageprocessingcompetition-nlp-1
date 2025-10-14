@@ -62,13 +62,15 @@ def generate_summaries(model: BartForConditionalGeneration,
             fnames.extend(batch['ID'])
 
             # Generate - baseline.ipynb Cell 42와 동일한 파라미터 사용
+            # Exp #4: length_penalty 추가 (GNMT 길이 정규화)
             generated_ids = model.generate(
                 input_ids=batch['input_ids'].to(device),
                 attention_mask=batch['attention_mask'].to(device),
                 no_repeat_ngram_size=config['inference']['no_repeat_ngram_size'],  # 2
                 early_stopping=config['inference']['early_stopping'],  # True
                 max_length=config['inference']['generate_max_length'],  # 100
-                num_beams=config['inference']['num_beams']  # 4
+                num_beams=config['inference']['num_beams'],  # 4
+                length_penalty=config['inference'].get('length_penalty', 1.0)  # GNMT (기본값 1.0)
             )
 
             # Decode - skip_special_tokens=False로 특수 토큰 포함
