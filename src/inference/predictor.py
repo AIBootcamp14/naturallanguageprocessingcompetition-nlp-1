@@ -67,7 +67,22 @@ def postprocess_summary(text: str) -> str:
     if not text:                                        # 빈 문자열 처리
         return text
 
-    # -------------- 0. 불필요한 접두사 제거 -------------- #
+    # -------------- 0. 원본 대화 복사 패턴 제거 (최우선) -------------- #
+    # test_312 같은 경우: "고객: ... 상담사: ... 요약: ..." 형태
+    # 원본 대화가 그대로 포함된 경우 제거
+
+    # 패턴 1: "고객/상담사/의사/환자: ... 요약:" 형태 (원본 + 요약 혼합)
+    dialogue_copy_pattern = r'^(고객|상담사|의사|환자|직원|손님|학생|교수|친구|A|B|#Person\d+#)\s*:\s*.+?\s+(요약|Summary)\s*[:：]'
+    if re.search(dialogue_copy_pattern, text, flags=re.DOTALL):
+        # "요약:" 또는 "Summary:" 이후 부분만 추출
+        match = re.search(r'(요약|Summary)\s*[:：]\s*(.+)', text, flags=re.DOTALL)
+        if match:
+            text = match.group(2).strip()
+        else:
+            # 요약 부분이 없으면 빈 문자열 (원본만 복사한 경우)
+            text = ""
+
+    # -------------- 0-1. 불필요한 접두사 제거 -------------- #
     # 모든 형태의 접두사 제거
     patterns = [
         r'^대화\s*(내용)?\s*요약\s*[:：]\s*\n*',
