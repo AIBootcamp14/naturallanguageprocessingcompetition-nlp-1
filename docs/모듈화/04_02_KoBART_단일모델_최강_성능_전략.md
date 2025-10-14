@@ -269,6 +269,66 @@ python scripts/train.py \
 # 💾 체크포인트: Trial 완료마다 자동 저장, 중단 시 완료된 Trial부터 Resume 가능
 ```
 
+#### 단계별 실행 명령어 (권장)
+
+위 통합 명령어는 Optuna + K-Fold + 추론을 한 번에 실행합니다. 더 세밀한 제어를 원하시면 아래 단계별 명령어를 사용하세요:
+
+**단계 1: Optuna 하이퍼파라미터 최적화** (10-12시간)
+
+```bash
+python scripts/train.py \
+  --mode optuna \
+  --models kobart \
+  --optuna_trials 20 \
+  --epochs 7 \
+  --batch_size 16 \
+  --gradient_accumulation_steps 10 \
+  --use_augmentation \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --experiment_name kobart_ultimate_optuna \
+  --seed 42 \
+  --resume
+```
+
+**단계 2: 최적 파라미터로 K-Fold 5 학습** (2.5-3시간)
+
+```bash
+python scripts/train.py \
+  --mode kfold \
+  --models kobart \
+  --epochs 7 \
+  --batch_size 16 \
+  --gradient_accumulation_steps 10 \
+  --learning_rate 9.14e-5 \
+  --warmup_ratio 0.00136 \
+  --weight_decay 0.0995 \
+  --scheduler_type cosine \
+  --use_augmentation \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --k_folds 5 \
+  --experiment_name kobart_ultimate_kfold \
+  --seed 42 \
+  --resume
+```
+
+**단계 3: 추론 (Solar API + HF 보정)** (2-3시간)
+
+```bash
+python scripts/inference.py \
+  --model experiments/[날짜]/kobart_ultimate_kfold/kobart/final_model \
+  --test_data data/raw/test.csv \
+  --use_solar_api \
+  --use_pretrained_correction \
+  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
+  --correction_strategy quality_based \
+  --max_new_tokens 100 \
+  --num_beams 4 \
+  --batch_size 16 \
+  --output submissions/kobart_ultimate_final.csv
+```
+
 ---
 
 ### 3.2 전략 2: 균형잡힌 고성능 (K-Fold + 중간 Epoch)
@@ -410,6 +470,50 @@ python scripts/train.py \
 # 💾 체크포인트: Fold 완료마다 자동 저장, 중단 시 완료된 Fold부터 Resume 가능
 ```
 
+#### 단계별 실행 명령어 (권장)
+
+위 통합 명령어는 K-Fold 학습과 추론을 한 번에 실행합니다. 더 세밀한 제어를 원하시면 아래 단계별 명령어를 사용하세요:
+
+**단계 1: K-Fold 5 학습** (2.5-3시간)
+
+```bash
+python scripts/train.py \
+  --mode kfold \
+  --models kobart \
+  --epochs 7 \
+  --batch_size 16 \
+  --gradient_accumulation_steps 10 \
+  --learning_rate 9.14e-5 \
+  --warmup_ratio 0.00136 \
+  --weight_decay 0.0995 \
+  --scheduler_type cosine \
+  --max_grad_norm 1.0 \
+  --label_smoothing 0.1 \
+  --use_augmentation \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --k_folds 5 \
+  --experiment_name kobart_balanced_kfold \
+  --seed 42 \
+  --resume
+```
+
+**단계 2: 추론 (Solar API + HF 보정)** (0.5-1시간)
+
+```bash
+python scripts/inference.py \
+  --model experiments/[날짜]/kobart_balanced_kfold/kobart/final_model \
+  --test_data data/raw/test.csv \
+  --use_solar_api \
+  --use_pretrained_correction \
+  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
+  --correction_strategy quality_based \
+  --max_new_tokens 100 \
+  --num_beams 4 \
+  --batch_size 16 \
+  --output submissions/kobart_balanced_final.csv
+```
+
 ---
 
 ### 3.3 전략 3: 빠른 고성능 (K-Fold 3 + 적은 Epoch)
@@ -485,6 +589,48 @@ python scripts/train.py \
 # 💾 체크포인트: Fold 완료마다 자동 저장, 중단 시 완료된 Fold부터 Resume 가능
 ```
 
+#### 단계별 실행 명령어 (권장)
+
+위 통합 명령어는 K-Fold 학습과 추론을 한 번에 실행합니다. 더 세밀한 제어를 원하시면 아래 단계별 명령어를 사용하세요:
+
+**단계 1: K-Fold 3 학습** (1-1.5시간)
+
+```bash
+python scripts/train.py \
+  --mode kfold \
+  --models kobart \
+  --epochs 7 \
+  --batch_size 16 \
+  --gradient_accumulation_steps 10 \
+  --learning_rate 9.14e-5 \
+  --warmup_ratio 0.00136 \
+  --weight_decay 0.0995 \
+  --scheduler_type cosine \
+  --use_augmentation \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --k_folds 3 \
+  --experiment_name kobart_fast_high_kfold \
+  --seed 42 \
+  --resume
+```
+
+**단계 2: 추론 (Solar API + HF 보정)** (0.5시간)
+
+```bash
+python scripts/inference.py \
+  --model experiments/[날짜]/kobart_fast_high_kfold/kobart/final_model \
+  --test_data data/raw/test.csv \
+  --use_solar_api \
+  --use_pretrained_correction \
+  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
+  --correction_strategy quality_based \
+  --max_new_tokens 100 \
+  --num_beams 4 \
+  --batch_size 16 \
+  --output submissions/kobart_fast_high_final.csv
+```
+
 ---
 
 ### 3.4 전략 4: 초고속 실험 (Single Model)
@@ -558,6 +704,47 @@ python scripts/train.py \
 # 💾 체크포인트: Epoch 완료마다 자동 저장, 중단 시 완료된 Epoch부터 Resume 가능
 ```
 
+#### 단계별 실행 명령어 (권장)
+
+위 통합 명령어는 학습과 추론을 한 번에 실행합니다. 더 세밀한 제어를 원하시면 아래 단계별 명령어를 사용하세요:
+
+**단계 1: Single 모델 학습** (20-30분)
+
+```bash
+python scripts/train.py \
+  --mode single \
+  --models kobart \
+  --epochs 5 \
+  --batch_size 16 \
+  --gradient_accumulation_steps 10 \
+  --learning_rate 9.14e-5 \
+  --warmup_ratio 0.00136 \
+  --weight_decay 0.0995 \
+  --scheduler_type cosine \
+  --use_augmentation \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --experiment_name kobart_ultrafast_single \
+  --seed 42 \
+  --resume
+```
+
+**단계 2: 추론 (Solar API + HF 보정)** (10-15분)
+
+```bash
+python scripts/inference.py \
+  --model experiments/[날짜]/kobart_ultrafast_single/kobart/final_model \
+  --test_data data/raw/test.csv \
+  --use_solar_api \
+  --use_pretrained_correction \
+  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
+  --correction_strategy quality_based \
+  --max_new_tokens 100 \
+  --num_beams 4 \
+  --batch_size 16 \
+  --output submissions/kobart_ultrafast_final.csv
+```
+
 ---
 
 ## 4. 추론 시 성능 향상 전략
@@ -575,13 +762,14 @@ KoBART로 빠르게 학습 → 추론 시 Solar API + HuggingFace 보정 동시 
 
 #### 구현 방법
 
-**⚠️ 주의**: Solar API는 현재 명령행 옵션으로 지원되지 않습니다. Config 파일을 통해 설정해야 합니다.
+**✅ Solar API + HuggingFace 동시 사용 추론 명령어**
 
 ```bash
-# ==================== HuggingFace 보정 추론 (Optuna 최적화 반영) ==================== #
+# ==================== Solar API + HuggingFace 보정 추론 (Optuna 최적화 반영) ==================== #
 python scripts/inference.py \
   --model experiments/.../kobart/final_model \
   --test_data data/raw/test.csv \
+  --use_solar_api \
   --use_pretrained_correction \
   --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
   --correction_strategy quality_based \
@@ -592,19 +780,18 @@ python scripts/inference.py \
   --length_penalty 0.938 \
   --repetition_penalty 1.5 \
   --batch_size 16 \
-  --output submissions/kobart_hf_corrected.csv
+  --output submissions/kobart_solar_hf_corrected.csv
 ```
 
 | 옵션 | 값 | 설명 |
 |------|-----|------|
+| `--use_solar_api` | - | Solar API 앙상블 활성화 |
 | `--use_pretrained_correction` | - | HuggingFace 보정 활성화 |
 | `--correction_models` | gogamza/kobart-base-v2 digit82/kobart-summarization | HF 보정 모델 |
 | `--correction_strategy` | quality_based | 품질 기반 보정 전략 |
 | `--correction_threshold` | 0.3 | 품질 임계값 |
 
-**Solar API 사용 방법**:
-- Config 파일(`configs/train_config.yaml` 또는 모델별 config)의 `inference.solar_api` 섹션에서 설정
-- 학습 시 `--use_solar_api` 플래그 사용 (추론 시 자동 적용)
+**참고**: Solar API와 HuggingFace 보정은 모두 명령행 옵션으로 지원됩니다. 두 옵션을 동시에 사용하면 추가 3-5% 성능 향상이 가능합니다.
 
 ### 4.2 HuggingFace 사전학습 모델 보정 전략 (PRD 04, 12)
 
@@ -693,6 +880,47 @@ python scripts/train.py \
 # 예상 시간: 20-30분 (기존 대비 43% 단축)
 # 예상 ROUGE Sum: 1.11-1.17 (현재 1.048 → +6-12%, 최적화 반영 + HuggingFace 보정)
 # 💾 체크포인트: Epoch 완료마다 자동 저장, 중단 시 완료된 Epoch부터 Resume 가능
+```
+
+#### 단계별 실행 명령어 (권장)
+
+위 통합 명령어는 학습과 추론을 한 번에 실행합니다. 더 세밀한 제어를 원하시면 아래 단계별 명령어를 사용하세요:
+
+**단계 1: 긴급 단일 모델 학습** (10-15분)
+
+```bash
+python scripts/train.py \
+  --mode single \
+  --models kobart \
+  --epochs 3 \
+  --batch_size 16 \
+  --gradient_accumulation_steps 10 \
+  --learning_rate 9.14e-5 \
+  --warmup_ratio 0.00136 \
+  --weight_decay 0.0995 \
+  --scheduler_type cosine \
+  --use_augmentation \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --experiment_name kobart_emergency_single \
+  --seed 42 \
+  --resume
+```
+
+**단계 2: 추론 (Solar API + HF 보정)** (10-15분)
+
+```bash
+python scripts/inference.py \
+  --model experiments/[날짜]/kobart_emergency_single/kobart/final_model \
+  --test_data data/raw/test.csv \
+  --use_solar_api \
+  --use_pretrained_correction \
+  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
+  --correction_strategy quality_based \
+  --max_new_tokens 100 \
+  --num_beams 4 \
+  --batch_size 16 \
+  --output submissions/kobart_emergency_final.csv
 ```
 
 ---
