@@ -1246,6 +1246,5 @@ python scripts/train.py \
 ---
 
 **작성일**: 2025-10-14
-**작성자**: AI 실험 분석 시스템
 **실험 ID**: 20251013_205042_strategy6_kobart_solar_api
 **제출 ID**: 20251014_021349_inference_kobart_bs16_beam5_maxnew100_rep1.5_ngram3

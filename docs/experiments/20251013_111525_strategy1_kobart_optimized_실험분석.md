@@ -1590,5 +1590,4 @@ files_to_modify = [
 ---
 
 **작성일**: 2025-10-13
-**작성자**: AI 실험 분석 시스템
 **실험 ID**: 20251013_111525_strategy1_kobart_optimized
