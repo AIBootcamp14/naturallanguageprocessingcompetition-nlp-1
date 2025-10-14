@@ -18,6 +18,7 @@ from src.config import load_config, load_model_config
 from src.models import load_model_and_tokenizer
 from src.data import DialogueSummarizationDataset
 from src.training import create_trainer
+from src.checkpoints.kfold_checkpoint import KFoldCheckpointManager
 
 
 # ==================== KFoldTrainer ==================== #
@@ -41,6 +42,32 @@ class KFoldTrainer(BaseTrainer):
         self.log(f"📋 모델: {self.args.models[0]}")
         self.log(f"📋 Fold Seed: {self.args.fold_seed}")
         self.log("=" * 60)
+
+        # ✅ 체크포인트 관리자 초기화
+        checkpoint_dir = self.output_dir / "checkpoints"
+        self.checkpoint_manager = KFoldCheckpointManager(
+            checkpoint_dir=str(checkpoint_dir),
+            n_folds=self.args.k_folds
+        )
+
+        # ✅ 완료된 Fold 확인
+        completed_folds = self.checkpoint_manager.get_completed_folds()
+        if completed_folds:
+            self.log(f"\n🔄 체크포인트에서 Resume: {len(completed_folds)}/{self.args.k_folds} Fold 이미 완료")
+            self.log(f"  완료된 Fold: {completed_folds}")
+
+        # ✅ 모든 Fold 완료 확인
+        if self.checkpoint_manager.is_complete():
+            self.log("\n✅ 모든 Fold가 이미 완료되었습니다. 저장된 결과를 로드합니다.")
+            fold_results = list(self.checkpoint_manager.get_all_fold_results().values())
+            avg_metrics = self.checkpoint_manager.get_average_metrics()
+            return {
+                'mode': 'kfold',
+                'model': self.args.models[0],
+                'k_folds': self.args.k_folds,
+                'fold_results': fold_results,
+                'avg_metrics': avg_metrics
+            }
 
         # 1. 전체 데이터 로드 (K-Fold는 train 데이터만 사용)
         self.log("\n[1/3] 전체 데이터 로딩...")
@@ -68,8 +95,17 @@ class KFoldTrainer(BaseTrainer):
         fold_results = []
 
         for fold_idx, (train_indices, val_indices) in enumerate(kf.split(train_df)):
+            # ✅ 이미 완료된 Fold는 건너뛰기
+            if fold_idx in completed_folds:
+                self.log(f"\n⏭️  Fold {fold_idx + 1}/{self.args.k_folds} - 이미 완료됨 (건너뜀)")
+                # 저장된 결과 로드
+                saved_result = self.checkpoint_manager.get_fold_result(fold_idx)
+                if saved_result:
+                    fold_results.append(saved_result)
+                continue
+
             self.log(f"\n{'=' * 40}")
-            # FIXME: Corrupted log message
+            self.log(f"📌 Fold {fold_idx + 1}/{self.args.k_folds} 학습 시작")
             self.log(f"{'=' * 40}")
 
             # Fold별 데이터 분할
@@ -88,9 +124,18 @@ class KFoldTrainer(BaseTrainer):
             )
             fold_results.append(fold_result)
 
+            # ✅ Fold 완료 후 체크포인트 저장
+            if 'eval_metrics' in fold_result:
+                self.checkpoint_manager.save_fold_result(
+                    fold=fold_idx,
+                    metrics=fold_result['eval_metrics'],
+                    model_path=fold_result.get('model_path')
+                )
+                self.log(f"💾 Fold {fold_idx + 1} 체크포인트 저장 완료")
+
             # Fold 결과 출력
             if 'eval_metrics' in fold_result:
-                # FIXME: Corrupted log message
+                self.log(f"\n📊 Fold {fold_idx + 1} 평가 결과:")
                 for key, value in fold_result['eval_metrics'].items():
                     if 'rouge' in key.lower():
                         self.log(f"    {key}: {value:.4f}")
