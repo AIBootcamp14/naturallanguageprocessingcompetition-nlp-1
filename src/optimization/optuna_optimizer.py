@@ -207,10 +207,26 @@ class OptunaOptimizer:
 
             # 8. ROUGE-L F1 추출
             rouge_l_f1 = 0.0
-            if 'eval_rouge_l_f1' in metrics:
-                rouge_l_f1 = metrics['eval_rouge_l_f1']
-            elif 'rouge_l_f1' in metrics:
-                rouge_l_f1 = metrics['rouge_l_f1']
+            # 다양한 키 형식 시도 (대소문자 구분)
+            possible_keys = [
+                'eval_rougeL',      # HuggingFace 기본 형식
+                'eval_rouge_l',     # 소문자 형식
+                'eval_rouge_l_f1',  # F1 명시 형식
+                'rougeL',           # prefix 없는 형식
+                'rouge_l',
+                'rouge_l_f1'
+            ]
+
+            for key in possible_keys:
+                if key in metrics:
+                    rouge_l_f1 = metrics[key]
+                    self._log(f"  → 메트릭 '{key}' 사용: {rouge_l_f1:.4f}")
+                    break
+
+            if rouge_l_f1 == 0.0:
+                # 메트릭을 찾지 못한 경우 디버깅 정보 출력
+                self._log(f"  ⚠️  ROUGE-L 메트릭을 찾을 수 없습니다")
+                self._log(f"  사용 가능한 메트릭: {list(metrics.keys())}")
 
             self._log(f"Trial {trial.number} 완료")
             self._log(f"  - ROUGE-L F1: {rouge_l_f1:.4f}")
