@@ -95,91 +95,70 @@ graph TB
 
 ### 3.1 전략 1: 절대 최고 성능 (Optuna + K-Fold + Full)
 
-#### 실행 파이프라인
+#### 실행 파이프라인 (3단계 전체)
 
 ```mermaid
 graph TB
-    subgraph Input["입력 계층"]
-        A[명령어 실행<br/>--mode optuna --resume] --> B[Config 로드<br/>kobart.yaml]
-        A1[학습 데이터<br/>train.csv] --> C[데이터 로드]
+    subgraph Step1["🔸 단계 1: Optuna 최적화 (10-12시간)"]
+        A[명령어 실행<br/>--mode optuna --resume] --> CP1{Optuna<br/>체크포인트?}
+        CP1 -->|Yes| CP2[완료된 Trial 로드]
+        CP1 -->|No| B[Config 로드]
+        CP2 --> B
+        B --> C[데이터 증강 50%]
+        C --> D[Trial 1~20 반복<br/>💾 Trial마다 저장]
+        D --> E[최적 파라미터 탐색<br/>learning_rate, epochs, etc.]
+        E --> F[💾 best_params.json<br/>저장 완료]
     end
 
-    subgraph DataProcess["데이터 처리 계층"]
-        C --> D[데이터 증강 50%<br/>back_translation + paraphrase]
-        D --> E[Train/Eval 분할]
+    subgraph Step2["🔹 단계 2: K-Fold 5 학습 (2.5-3시간)"]
+        F --> G[명령어 실행<br/>--mode kfold --resume<br/>최적 파라미터 적용]
+        G --> CP3{KFold<br/>체크포인트?}
+        CP3 -->|Yes| CP4[완료된 Fold 로드]
+        CP3 -->|No| H[5-Fold 분할]
+        CP4 --> H
+        H --> I[Fold 1~5 학습<br/>💾 Fold마다 저장]
+        I --> J[5개 모델 생성<br/>앙상블 준비]
     end
 
-    subgraph Checkpoint1["체크포인트 확인 계층"]
-        B --> CP1{체크포인트<br/>존재?}
-        CP1 -->|Yes| CP2[완료된 Trial 로드<br/>이어서 실행]
-        CP1 -->|No| F[OptunaOptimizer 초기화<br/>20 trials]
-        CP2 --> F
+    subgraph Step3["🔺 단계 3: 추론 + 보정 (2-3시간)"]
+        J --> K[명령어 실행<br/>scripts/inference.py]
+        K --> L[5-Fold 앙상블<br/>Soft Voting]
+        L --> M[HuggingFace 보정<br/>quality_based]
+        M --> N[Solar API 앙상블<br/>고품질 보정]
+        N --> O[후처리<br/>99.6% 완전 문장]
+        O --> P[💾 submission.csv<br/>최종 제출 파일]
     end
 
-    subgraph Optimization["Optuna 최적화 계층"]
-        E --> F
-        F --> G[Trial 반복<br/>완료된 Trial 건너뛰기]
-        G --> H{각 Trial마다}
-        H --> I[하이퍼파라미터 샘플링<br/>learning_rate, epochs, warmup_ratio<br/>weight_decay, scheduler_type<br/>num_beams, length_penalty]
-        I --> J[모델 로드<br/>digit82/kobart-summarization]
-        J --> K[Dataset 생성<br/>encoder_max_len=512<br/>decoder_max_len=128]
-        K --> L[Trainer 생성<br/>Seq2SeqTrainer]
-        L --> M[학습 실행<br/>Epoch 7 + Early Stopping]
-        M --> N[평가 ROUGE-L F1]
-        N --> CP3[💾 Trial 체크포인트 저장<br/>optuna_checkpoint.pkl]
-        CP3 --> O{ROUGE-L F1<br/>최고 점수?}
-        O -->|Yes| P[최적 파라미터 저장]
-        O -->|No| Q[다음 Trial]
-        Q --> G
-        P --> G
+    subgraph Info["중요 정보"]
+        Q[💾 각 단계마다 Resume 가능<br/>단계 1→2→3 순차 실행<br/>전체 소요 시간: 15-18시간]
     end
 
-    subgraph Results["결과 저장 계층"]
-        G --> R[최적화 완료]
-        R --> S[best_params.json 저장<br/>learning_rate, epochs, etc.]
-        R --> T[all_trials.csv 저장<br/>20개 trial 결과]
-        R --> U[study_stats.json 저장<br/>완료/Pruned/실패 통계]
-        R --> V[시각화 생성<br/>optimization_history.html<br/>param_importances.html]
-    end
+    style Step1 fill:#e8f5e9,stroke:#1b5e20,color:#000
+    style Step2 fill:#e1f5ff,stroke:#01579b,color:#000
+    style Step3 fill:#fff3e0,stroke:#e65100,color:#000
+    style Info fill:#ffebee,stroke:#c62828,color:#000
 
-    subgraph Warning["중요 정보"]
-        W[💾 중단 시 --resume으로 재실행<br/>완료된 Trial 자동 건너뛰기<br/>K-Fold는 별도 실행 필요]
-    end
-
-    style Input fill:#e1f5ff,stroke:#01579b,color:#000
-    style DataProcess fill:#fff3e0,stroke:#e65100,color:#000
-    style Checkpoint1 fill:#f3e5f5,stroke:#4a148c,color:#000
-    style Optimization fill:#e8f5e9,stroke:#1b5e20,color:#000
-    style Results fill:#c8e6c9,stroke:#2e7d32,color:#000
-    style Warning fill:#ffebee,stroke:#c62828,color:#000
-
-    style A fill:#90caf9,stroke:#1976d2,color:#000
-    style A1 fill:#90caf9,stroke:#1976d2,color:#000
-    style B fill:#90caf9,stroke:#1976d2,color:#000
-    style C fill:#ffcc80,stroke:#f57c00,color:#000
-    style D fill:#ffcc80,stroke:#f57c00,color:#000
-    style E fill:#ffcc80,stroke:#f57c00,color:#000
+    style A fill:#81c784,stroke:#388e3c,color:#000
     style CP1 fill:#ba68c8,stroke:#7b1fa2,color:#fff
     style CP2 fill:#ce93d8,stroke:#7b1fa2,color:#000
-    style F fill:#81c784,stroke:#388e3c,color:#000
-    style G fill:#81c784,stroke:#388e3c,color:#000
-    style H fill:#81c784,stroke:#388e3c,color:#000
-    style I fill:#a5d6a7,stroke:#388e3c,color:#000
-    style J fill:#a5d6a7,stroke:#388e3c,color:#000
-    style K fill:#ffcc80,stroke:#f57c00,color:#000
-    style L fill:#81c784,stroke:#388e3c,color:#000
-    style M fill:#81c784,stroke:#388e3c,color:#000
-    style N fill:#ffab91,stroke:#e64a19,color:#000
+    style B fill:#a5d6a7,stroke:#388e3c,color:#000
+    style C fill:#a5d6a7,stroke:#388e3c,color:#000
+    style D fill:#81c784,stroke:#388e3c,color:#000
+    style E fill:#81c784,stroke:#388e3c,color:#000
+    style F fill:#66bb6a,stroke:#2e7d32,color:#fff
+    style G fill:#90caf9,stroke:#1976d2,color:#000
     style CP3 fill:#ba68c8,stroke:#7b1fa2,color:#fff
-    style O fill:#fff59d,stroke:#f9a825,color:#000
+    style CP4 fill:#ce93d8,stroke:#7b1fa2,color:#000
+    style H fill:#81d4fa,stroke:#0288d1,color:#000
+    style I fill:#90caf9,stroke:#1976d2,color:#000
+    style J fill:#64b5f6,stroke:#1976d2,color:#000
+    style K fill:#ffcc80,stroke:#f57c00,color:#000
+    style L fill:#ffb74d,stroke:#f57c00,color:#000
+    style M fill:#ffa726,stroke:#f57c00,color:#000
+    style N fill:#ff9800,stroke:#e65100,color:#000
+    style O fill:#ffcc80,stroke:#f57c00,color:#000
     style P fill:#66bb6a,stroke:#2e7d32,color:#fff
-    style Q fill:#90caf9,stroke:#1976d2,color:#000
-    style R fill:#66bb6a,stroke:#2e7d32,color:#fff
-    style S fill:#ce93d8,stroke:#7b1fa2,color:#000
-    style T fill:#ce93d8,stroke:#7b1fa2,color:#000
-    style U fill:#ce93d8,stroke:#7b1fa2,color:#000
-    style V fill:#ce93d8,stroke:#7b1fa2,color:#000
-    style W fill:#ef9a9a,stroke:#c62828,color:#000
+    style Q fill:#ef9a9a,stroke:#c62828,color:#000
 ```
 
 #### 시나리오
