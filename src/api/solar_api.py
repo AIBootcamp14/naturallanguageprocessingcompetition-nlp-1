@@ -181,7 +181,14 @@ class SolarAPI:
         Returns:
             메시지 리스트
         """
-        system_prompt = "You are an expert in the field of dialogue summarization. Summarize the given dialogue in a concise manner in Korean."
+        system_prompt = """당신은 대화 요약 전문가입니다. 다음 규칙을 엄격히 따라 대화를 요약하세요:
+
+1. **핵심만 간결하게**: 원본 대화보다 짧게, 1-2문장으로 핵심만 요약
+2. **상황 인지 명칭 변환**:
+   - A/B, #Person1#/#Person2# 같은 플레이스홀더를 대화 맥락에 맞는 구체적 명칭으로 변환
+   - 예: 고객/상담사, 의사/환자, 친구/친구, 선생님/학생, 직원/관리자 등
+3. **불필요한 접두사 제거**: "대화 요약:", "Summary:" 등 제거
+4. **함축적 표현**: 반복 없이 핵심 내용만"""
 
         messages = [
             {"role": "system", "content": system_prompt}

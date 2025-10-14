@@ -68,17 +68,19 @@ def postprocess_summary(text: str) -> str:
         return text
 
     # -------------- 0. 불필요한 접두사 제거 -------------- #
-    # "대화 요약:", "대화 내용 요약:", "Summary:", "요약:", "대화 상대" 제거
+    # 모든 형태의 접두사 제거
     patterns = [
-        r'^대화\s*(내용)?\s*요약\s*:\s*',
-        r'^Summary\s*:\s*',
-        r'^요약\s*:\s*',
-        r'^대화\s*:\s*',
-        r'^대화\s*상대\s+',
+        r'^대화\s*(내용)?\s*요약\s*[:：]\s*\n*',
+        r'^Summary\s*[:：]\s*\n*',
+        r'^요약\s*[:：]\s*\n*',
+        r'^대화\s*[:：]\s*\n*',
+        r'^대화\s*상대\s+[A-Z가-힣]*\s*(가|는|이|을|를)\s*',
+        r'^대화에서는?\s+',
+        r'^대화\s*참여자들은?\s+',
     ]
     for pattern in patterns:
         text = re.sub(pattern, '', text, flags=re.IGNORECASE)
-    text = text.lstrip('\n ')
+    text = text.lstrip('\n\t ')
 
     # -------------- 1. 반복된 점들 제거 -------------- #
     # "... . . ." 또는 연속된 점 패턴 제거
