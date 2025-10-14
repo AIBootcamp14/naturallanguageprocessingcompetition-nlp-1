@@ -67,10 +67,11 @@ python scripts/train.py \
 - 체크포인트가 있으면: 완료된 작업 건너뛰고 이어서 실행
 - 체크포인트가 없으면: 처음부터 시작 (경고 없음)
 
-#### `--resume_from`
-특정 체크포인트 디렉토리에서 Resume
+#### `--resume_from` ⚠️ (향후 지원 예정)
+특정 체크포인트 디렉토리에서 Resume (현재 미구현)
 
 ```bash
+# ⚠️ 현재 버전에서는 지원되지 않음 (향후 추가 예정)
 python scripts/train.py \
   --mode optuna \
   --models kobart \
@@ -79,9 +80,13 @@ python scripts/train.py \
   --resume_from experiments/20251014/20251014_143000_kobart_ultimate/checkpoints
 ```
 
-**사용 시나리오**:
-- 다른 실험의 체크포인트를 이어받을 때
-- 명시적으로 체크포인트 경로를 지정하고 싶을 때
+**현재 상태**:
+- 명령행 옵션은 정의되어 있으나 실제 구현은 안 됨
+- 자동 탐지(`--resume`)만 지원됨
+- 향후 버전에서 구현 예정
+
+**대안**:
+- 현재는 `--output_dir` 옵션으로 출력 폴더를 명시한 후 `--resume` 사용
 
 #### `--ignore_checkpoint`
 체크포인트 무시하고 처음부터 시작
@@ -518,28 +523,31 @@ python scripts/train.py \
 
 ---
 
-### 4.2 시나리오 2: 다른 실험의 체크포인트 이어받기
+### 4.2 시나리오 2: 다른 실험의 체크포인트 이어받기 ⚠️ (향후 지원)
 
 **상황**: 이전 실험의 Optuna 결과를 이어받아 추가 Trial 실행
 
+**현재 버전 대안**:
 ```bash
 # 1단계: 이전 실험 체크포인트 위치 확인
 ls experiments/20251014/20251014_120000_kobart_ultimate/checkpoints/
 # 출력: optuna_kobart_ultimate_checkpoint.pkl
 
-# 2단계: --resume_from으로 명시적으로 지정
+# 2단계: --output_dir로 이전 실험 폴더를 명시적으로 지정
 python scripts/train.py \
   --mode optuna \
   --models kobart \
   --optuna_trials 30 \  # ✅ 20 → 30으로 증가
   ... (기존 옵션 동일) ... \
-  --experiment_name kobart_ultimate_extended \
+  --output_dir experiments/20251014/20251014_120000_kobart_ultimate \
+  --experiment_name kobart_ultimate \
   --seed 42 \
-  --resume \
-  --resume_from experiments/20251014/20251014_120000_kobart_ultimate/checkpoints
+  --resume
 
 # 결과: 이전 20 trials + 추가 10 trials = 총 30 trials 실행
 ```
+
+**주의**: `--resume_from` 옵션은 현재 미구현 상태이며, 향후 버전에서 추가될 예정입니다.
 
 ---
 
@@ -814,9 +822,9 @@ print(f'완료된 Fold: {progress[\"completed_folds\"]}/{progress[\"total_folds\
 
 | 명령 | 옵션 | 설명 |
 |------|------|------|
-| Resume | `--resume` | 체크포인트에서 이어서 실행 |
-| 특정 경로 Resume | `--resume_from {경로}` | 특정 체크포인트에서 Resume |
-| 처음부터 시작 | `--ignore_checkpoint` | 체크포인트 무시 |
+| Resume | `--resume` | 체크포인트에서 이어서 실행 (자동 탐지) |
+| 특정 경로 Resume | `--resume_from {경로}` ⚠️ | ⚠️ 미구현 (향후 지원 예정) |
+| 처음부터 시작 | `--ignore_checkpoint` | 체크포인트 무시하고 새로 시작 |
 
 ---
 
