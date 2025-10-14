@@ -57,58 +57,21 @@ class OptunaTrainer(BaseTrainer):
 
         self.log(f"   Config 로드 완료: {model_name}")
 
-        # 3. Dataset 준비 (나중에 내부에서 생성)
-        self.log("\n데이터셋 준비 중...")
-
-        # Tokenizer는 튜닝 과정에서 필요하므로, 데이터프레임만 직접 사용
-        self.train_df = train_df
-        self.eval_df = eval_df
-
-        # 4. Optuna Optimizer 초기화
+        # 3. Optuna Optimizer 초기화
         self.log(f"\n[3/3] Optuna 튜닝 시작...")
 
-        # Dataset 생성 함수 (Optuna 내부에서 사용)
-        def create_datasets(tokenizer, config):
-            """Dataset 생성 함수 제공"""
-            model_type = config.model.get('type', 'encoder_decoder')
-
-            train_dataset = DialogueSummarizationDataset(
-                dialogues=self.train_df['dialogue'].tolist(),
-                summaries=self.train_df['summary'].tolist(),
-                tokenizer=tokenizer,
-                encoder_max_len=config.tokenizer.encoder_max_len,
-                decoder_max_len=config.tokenizer.decoder_max_len,
-                preprocess=True,
-                model_type=model_type
-            )
-
-            eval_dataset = DialogueSummarizationDataset(
-                dialogues=self.eval_df['dialogue'].tolist(),
-                summaries=self.eval_df['summary'].tolist(),
-                tokenizer=tokenizer,
-                encoder_max_len=config.tokenizer.encoder_max_len,
-                decoder_max_len=config.tokenizer.decoder_max_len,
-                preprocess=True,
-                model_type=model_type
-            )
-
-            return train_dataset, eval_dataset
-
-        # Optuna Optimizer 초기화
+        # Optuna Optimizer 초기화 (데이터프레임 전달)
         optimizer = OptunaOptimizer(
             config=config,
-            train_dataset=None,  # Objective 내부에서 생성
-            val_dataset=None,    # Objective 내부에서 생성
+            train_df=train_df,
+            eval_df=eval_df,
             n_trials=self.args.optuna_trials,
             timeout=self.args.optuna_timeout,
             study_name=f"optuna_{model_name}_{self.args.experiment_name}",
-            storage=None,  # 로컬 저장
+            storage=None,
             direction="maximize",
-            logger=self.logger.logger if hasattr(self.logger, 'logger') else None
+            logger=self.logger
         )
-
-        # Dataset 생성 함수를 optimizer에 전달
-        optimizer.create_datasets = create_datasets
 
         # 튜닝 실행
         study = optimizer.optimize()
