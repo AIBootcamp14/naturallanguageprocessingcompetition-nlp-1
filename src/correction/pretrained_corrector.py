@@ -39,7 +39,8 @@ class PretrainedCorrector:
         correction_strategy: str = "quality_based",
         quality_threshold: float = 0.3,
         device: Optional[torch.device] = None,
-        logger=None
+        logger=None,
+        checkpoint_dir: Optional[str] = None
     ):
         """
         Args:
@@ -53,6 +54,7 @@ class PretrainedCorrector:
             quality_threshold: 품질 임계값 (0.0~1.0)
             device: 추론 디바이스 (None이면 자동 감지)
             logger: Logger 인스턴스
+            checkpoint_dir: 체크포인트 디렉토리 (선택)
         """
         self.model_names = model_names
         self.correction_strategy = correction_strategy
@@ -76,6 +78,12 @@ class PretrainedCorrector:
         # -------------- 앙상블 전략 초기화 -------------- #
         from src.correction.ensemble_strategies import get_ensemble_strategy
         self.ensemble = get_ensemble_strategy(correction_strategy)
+
+        # -------------- 체크포인트 관리자 초기화 -------------- #
+        self.checkpoint_manager = None
+        if checkpoint_dir:
+            from src.checkpoints.correction_checkpoint import CorrectionCheckpointManager
+            self.checkpoint_manager = CorrectionCheckpointManager(checkpoint_dir)
 
     # ---------------------- 모든 모델 로드 메서드 ---------------------- #
     def _load_all_models(self):

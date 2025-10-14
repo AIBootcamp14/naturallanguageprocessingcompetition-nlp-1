@@ -152,6 +152,19 @@ def main():
         help="품질 임계값 (0.0~1.0)"
     )
 
+    # ==================== 체크포인트 Resume 옵션 ====================
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="체크포인트에서 이어서 실행"
+    )
+    parser.add_argument(
+        "--resume_from",
+        type=str,
+        default=None,
+        help="특정 체크포인트 디렉토리에서 Resume"
+    )
+
     args = parser.parse_args()
 
     # -------------- 출력 디렉토리 설정 -------------- #
@@ -188,8 +201,18 @@ def main():
     if args.use_pretrained_correction:
         options.append("hf")
 
-    # 출력 디렉토리 자동 생성 (지정되지 않은 경우)
-    if args.output_dir is None:
+    # ✅ --resume_from 옵션 처리
+    if args.resume_from:
+        # --resume_from이 체크포인트 디렉토리를 가리키는 경우 상위 폴더 사용
+        resume_path = Path(args.resume_from)
+        if resume_path.name == 'checkpoints':
+            output_dir = resume_path.parent
+        else:
+            output_dir = Path(args.resume_from)
+        # Resume 시에는 기존 폴더 사용
+        output_dir.mkdir(parents=True, exist_ok=True)
+    elif args.output_dir is None:
+        # 출력 디렉토리 자동 생성 (지정되지 않은 경우)
         from datetime import datetime
         date_folder = datetime.now().strftime("%Y%m%d")
 
@@ -200,10 +223,10 @@ def main():
         folder_name = "_".join(folder_parts)
 
         output_dir = Path(f"experiments/{date_folder}/{folder_name}")
+        output_dir.mkdir(parents=True, exist_ok=True)
     else:
         output_dir = Path(args.output_dir)
-
-    output_dir.mkdir(parents=True, exist_ok=True)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     # -------------- Logger 초기화 -------------- #
     log_path = output_dir / "inference.log"
@@ -308,6 +331,11 @@ def main():
         # 대화 추출
         dialogues = test_df['dialogue'].tolist()
 
+        # 체크포인트 디렉토리 설정
+        inference_checkpoint_dir = None
+        if args.resume or args.resume_from:
+            inference_checkpoint_dir = str(output_dir / "checkpoints")
+
         # 배치 예측 수행 (HF 보정 포함)
         summaries = predictor.predict_batch(
             dialogues=dialogues,
@@ -317,6 +345,7 @@ def main():
             correction_models=args.correction_models if args.use_pretrained_correction else None,
             correction_strategy=args.correction_strategy,
             correction_threshold=args.correction_threshold,
+            checkpoint_dir=inference_checkpoint_dir,
             **generation_kwargs  # 생성 파라미터 오버라이드
         )
 

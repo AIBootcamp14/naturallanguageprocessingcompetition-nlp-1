@@ -364,7 +364,10 @@ def augment_data(
     summaries: List[str],
     methods: List[str] = ["shuffle"],
     samples_per_method: int = 1,
-    logger=None
+    logger=None,
+    checkpoint_dir: Optional[str] = None,
+    resume: bool = True,
+    save_interval: int = 100
 ) -> Tuple[List[str], List[str]]:
     """
     편의 함수: 데이터 증강
@@ -375,12 +378,15 @@ def augment_data(
         methods: 증강 방법 리스트
         samples_per_method: 방법당 샘플 수
         logger: Logger 인스턴스
+        checkpoint_dir: 체크포인트 디렉토리 (선택)
+        resume: 체크포인트에서 이어서 실행 여부
+        save_interval: 체크포인트 저장 주기
 
     Returns:
         (증강된 dialogues, 증강된 summaries)
     """
-    augmenter = DataAugmenter(logger=logger)
-    return augmenter.augment(dialogues, summaries, methods, samples_per_method)
+    augmenter = DataAugmenter(logger=logger, checkpoint_dir=checkpoint_dir)
+    return augmenter.augment(dialogues, summaries, methods, samples_per_method, resume, save_interval)
 
 
 # 개별 증강기 클래스들
