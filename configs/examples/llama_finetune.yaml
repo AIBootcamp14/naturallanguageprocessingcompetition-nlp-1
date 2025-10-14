@@ -10,14 +10,6 @@ experiment:
   name: "llama_3.2_finetune"
   description: "Llama-3.2-Korean-3B QLoRA 파인튜닝"
   seed: 42
-  use_wandb: true
-  wandb_project: "nlp-competition"
-  wandb_entity: ieyeppo
-  wandb_tags:
-    - "llm"
-    - "llama"
-    - "qlora"
-    - "causal_lm"
 
 
 # ==================== 모델 설정 (Model Configuration) ==================== #
@@ -231,18 +223,21 @@ chat_templates:
 # ==================== WandB 설정 ==================== #
 wandb:
   enabled: true
-  project: "dialogue-summarization-finetuning"
-  entity: null
+  project: "nlp-competition"
+  entity: "ieyeppo"
+  tags:
+    - "llm"
+    - "llama"
+    - "qlora"
+    - "causal_lm"
+    - "dialogue-summarization"
+    - "korean-nlp"
+    - "lora-r16"
 
   name_template: "{nickname}_ep{epochs}_bs{effective_bs}_lr{lr}_{timestamp}"
 
   groups:
     causal_lm: "decoder-only-qlora"
-
-  base_tags:
-    - "dialogue-summarization"
-    - "korean-nlp"
-    - "lora-r16"
 
   metrics:
     train:

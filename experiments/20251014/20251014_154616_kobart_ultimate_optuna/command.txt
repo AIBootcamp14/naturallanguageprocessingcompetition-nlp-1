@@ -1,0 +1,17 @@
+# 실행 시각: 2025-10-14 15:46:16
+# 실행 경로: /home/ieyeppo/AI_Lab/20251014_154616_kobart_ultimate_optuna
+
+# 실행 명령어:
+python scripts/train.py \
+  --mode optuna \
+  --models kobart \
+  --optuna_trials 20 \
+  --epochs 10 \
+  --batch_size 16 \
+  --gradient_accumulation_steps 10 \
+  --use_augmentation \
+  --augmentation_ratio 0.5 \
+  --augmentation_methods back_translation paraphrase \
+  --experiment_name kobart_ultimate_optuna \
+  --seed 42 \
+  --resume
