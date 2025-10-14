@@ -141,6 +141,21 @@ class QualityEvaluator:
 
         quality_scores["candidate_quality"] = candidate_quality
 
+        # -------------- 단계 4: dialogue 유사도 페널티 적용 -------------- #
+        # dialogue와 너무 유사한 요약에 페널티 부과
+        if dialogues:
+            self._log("  [4/4] dialogue 유사도 페널티 적용 중...")
+            for model_name, summaries in reference_summaries.items():
+                quality_key = f"{model_name}_quality"
+                if quality_key in quality_scores:
+                    for i in range(len(summaries)):
+                        # 요약과 dialogue의 ROUGE 계산
+                        dialogue_similarity = self._compute_rouge_f1(summaries[i], dialogues[i])
+
+                        # dialogue와 너무 유사하면 품질 점수 대폭 감소
+                        if dialogue_similarity > 0.8:
+                            quality_scores[quality_key][i] *= 0.1  # 90% 페널티
+
         self._log("  ✅ 평가 완료")
         return quality_scores
 

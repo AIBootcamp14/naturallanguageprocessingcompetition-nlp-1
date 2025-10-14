@@ -230,7 +230,63 @@ class PretrainedCorrector:
             **generation_kwargs
         )
 
-        return summaries
+        # -------------- dialogue 필터링 -------------- #
+        filtered_summaries = []
+        filtered_count = 0
+        for dialogue, summary in zip(dialogues, summaries):
+            if self._is_dialogue_copy(dialogue, summary):
+                # dialogue를 그대로 복사한 경우 빈 문자열 반환
+                filtered_summaries.append("")           # 빈 요약 (품질 평가에서 낮은 점수)
+                filtered_count += 1
+            else:
+                filtered_summaries.append(summary)
+
+        if filtered_count > 0:
+            self._log(f"  ⚠️  {filtered_count}개 샘플이 dialogue 복사로 감지되어 필터링됨")
+
+        return filtered_summaries
+
+    # ---------------------- dialogue 복사 감지 메서드 ---------------------- #
+    def _is_dialogue_copy(self, dialogue: str, summary: str, threshold: float = 0.9) -> bool:
+        """
+        요약이 dialogue를 그대로 복사한 것인지 검사
+
+        Args:
+            dialogue: 원본 대화
+            summary: 생성된 요약
+            threshold: 유사도 임계값 (0.9 이상이면 복사로 간주)
+
+        Returns:
+            True if summary is a copy of dialogue
+        """
+        from difflib import SequenceMatcher
+
+        # -------------- 0. 빈 문자열 체크 -------------- #
+        if not summary.strip():
+            return False                                # 빈 문자열은 복사 아님
+
+        # -------------- 1. 길이 비율 체크 -------------- #
+        len_ratio = len(summary) / (len(dialogue) + 1e-6)
+        if len_ratio > 0.7:                             # 요약이 원본의 70% 이상이면 의심
+            # 2. 문자열 유사도 체크
+            similarity = SequenceMatcher(None, dialogue, summary).ratio()
+            if similarity > threshold:
+                return True
+
+        # -------------- 3. #Person1#, #Person2# 태그 체크 -------------- #
+        if "#Person1#" in summary or "#Person2#" in summary:
+            # 요약에 대화 태그가 남아있으면 복사로 간주
+            return True
+
+        # -------------- 4. 대화 형식 패턴 체크 -------------- #
+        # "Person1: ... Person2: ..." 형식 감지
+        import re
+        dialogue_pattern = r'(Person\d+[:：]|#Person\d+#[:：])'
+        matches = re.findall(dialogue_pattern, summary)
+        if len(matches) >= 2:                           # 2개 이상의 화자 태그가 있으면 대화문
+            return True
+
+        return False
 
     # ---------------------- 로깅 헬퍼 메서드 ---------------------- #
     def _log(self, msg: str):

@@ -61,7 +61,7 @@ class QualityBasedStrategy(EnsembleStrategy):
         threshold: float
     ) -> List[str]:
         """
-        품질이 가장 높은 요약 선택
+        품질이 가장 높은 요약 선택 (개선)
         """
         final_summaries = []
 
@@ -82,16 +82,22 @@ class QualityBasedStrategy(EnsembleStrategy):
                 quality_key = f"{model_name}_quality"
                 if quality_key in quality_scores:
                     quality = quality_scores[quality_key][i]
+
+                    # ✅ 추가: 참조 요약이 비어있거나 너무 짧으면 제외
+                    ref_summary = reference_summaries[model_name][i]
+                    if not ref_summary.strip() or len(ref_summary) < 10:
+                        continue
+
                     if quality > best_quality:
                         best_quality = quality
                         best_model = model_name
 
-            # -------------- 최종 선택 -------------- #
-            if best_model:
-                # 가장 품질 높은 참조 모델 사용
+            # -------------- 최종 선택 (개선) -------------- #
+            if best_model and best_quality > threshold:
+                # ✅ 수정: 품질이 임계값보다 높을 때만 참조 모델 사용
                 final_summaries.append(reference_summaries[best_model][i])
             else:
-                # 폴백: KoBART 사용
+                # ✅ 개선: 참조 모델 품질이 낮으면 KoBART 사용
                 final_summaries.append(candidate_summaries[i])
 
         return final_summaries
