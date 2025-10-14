@@ -68,12 +68,13 @@ def postprocess_summary(text: str) -> str:
         return text
 
     # -------------- 0. 불필요한 접두사 제거 -------------- #
-    # "대화 요약:", "대화 내용 요약:", "Summary:", "요약:" 제거
+    # "대화 요약:", "대화 내용 요약:", "Summary:", "요약:", "대화 상대" 제거
     patterns = [
         r'^대화\s*(내용)?\s*요약\s*:\s*',
         r'^Summary\s*:\s*',
         r'^요약\s*:\s*',
         r'^대화\s*:\s*',
+        r'^대화\s*상대\s+',
     ]
     for pattern in patterns:
         text = re.sub(pattern, '', text, flags=re.IGNORECASE)
