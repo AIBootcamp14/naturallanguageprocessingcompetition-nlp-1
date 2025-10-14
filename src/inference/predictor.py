@@ -35,6 +35,7 @@ def postprocess_summary(text: str) -> str:
     요약문 후처리: 불완전한 문장을 정제하여 완전한 문장으로 변환
 
     주요 처리 과정:
+    0. 불필요한 접두사 제거 ("대화 요약:", "Summary:" 등)
     1. 반복된 점들 제거 ("... . . ." 패턴)
     2. 불완전한 플레이스홀더 제거 (모든 패턴)
     3. 불완전한 마지막 문장 제거 (끊긴 문장 삭제)
@@ -48,10 +49,10 @@ def postprocess_summary(text: str) -> str:
         정제된 요약문
 
     Examples:
-        >>> postprocess_summary("Person1과 Person2는 #Mr.")
+        >>> postprocess_summary("대화 요약: Person1과 Person2는 #Mr.")
         'Person1과 Person2는.'
 
-        >>> postprocess_summary("회의 시간을 변경하자고 제")
+        >>> postprocess_summary("Summary: 회의 시간을 변경하자고 제")
         '회의 시간을 변경하자고.'
 
         >>> postprocess_summary("약속했... . . .")
@@ -60,6 +61,18 @@ def postprocess_summary(text: str) -> str:
     text = text.strip()                                 # 앞뒤 공백 제거
     if not text:                                        # 빈 문자열 처리
         return text
+
+    # -------------- 0. 불필요한 접두사 제거 -------------- #
+    # "대화 요약:", "대화 내용 요약:", "Summary:", "요약:" 제거
+    patterns = [
+        r'^대화\s*(내용)?\s*요약\s*:\s*',
+        r'^Summary\s*:\s*',
+        r'^요약\s*:\s*',
+        r'^대화\s*:\s*',
+    ]
+    for pattern in patterns:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+    text = text.lstrip('\n ')
 
     # -------------- 1. 반복된 점들 제거 -------------- #
     # "... . . ." 또는 연속된 점 패턴 제거
