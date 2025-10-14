@@ -9,10 +9,14 @@ experiment:
   name: "baseline_kobart"
   description: "대회 베이스라인 재현 실험"
   seed: 42
-  use_wandb: true
-  wandb_project: "nlp-competition"
-  wandb_entity: ieyeppo
-  wandb_tags:
+
+
+# ==================== WandB 설정 (WandB Configuration) ==================== #
+wandb:
+  enabled: true
+  project: "nlp-competition"
+  entity: "ieyeppo"
+  tags:
     - "baseline"
     - "kobart"
     - "encoder_decoder"

@@ -7,10 +7,14 @@ experiment:
   name: "default"                                       # 실험 이름
   seed: 42                                              # 랜덤 시드
   deterministic: true                                   # 결정론적 모드 활성화
-  use_wandb: false                                      # WandB 사용 여부
-  wandb_project: "nlp-competition"                      # WandB 프로젝트 이름
-  wandb_entity: null                                    # WandB 엔티티 (팀/사용자)
-  wandb_tags: []                                        # WandB 태그 리스트
+
+
+# ---------------------- WandB 설정 ---------------------- #
+wandb:
+  enabled: false                                        # WandB 사용 여부
+  project: "nlp-competition"                            # WandB 프로젝트 이름
+  entity: "ieyeppo"                                     # WandB 엔티티 (팀/사용자)
+  tags: []                                              # WandB 태그 리스트
 
 
 # ---------------------- 경로 설정 ---------------------- #
@@ -26,13 +30,13 @@ paths:
   submission_dir: "submissions"                         # 제출 파일 디렉토리
 
 
-# ---------------------- 학습 설정 ---------------------- #
+# ---------------------- 학습 설정 (Optuna 최적화 반영) ---------------------- #
 training:
   output_dir: "outputs"                                 # 학습 출력 디렉토리
-  epochs: 10                                            # 학습 에포크 수
+  epochs: 7                                             # Optuna 최적값: 7 (10→7, 효율적)
   batch_size: 8                                         # 배치 크기
-  learning_rate: 5e-5                                   # 학습률
-  weight_decay: 0.01                                    # 가중치 감쇠
+  learning_rate: 9.138518360133624e-05                  # Optuna 최적값: 9.14e-5 (5e-5→9.14e-5)
+  weight_decay: 0.09953784597545408                     # Optuna 최적값: 0.0995 (0.01→0.0995)
   warmup_steps: 500                                     # Warmup 스텝
   save_total_limit: 3                                   # 최대 저장 체크포인트 수
   logging_steps: 100                                    # 로깅 주기

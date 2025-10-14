@@ -17,6 +17,7 @@ from omegaconf import DictConfig, OmegaConf
 from ..models import load_model_and_tokenizer
 from ..data import DialogueSummarizationDataset
 from ..training import create_trainer
+from ..checkpoints.optuna_checkpoint import OptunaCheckpointManager
 
 
 class OptunaOptimizer:
@@ -41,7 +42,8 @@ class OptunaOptimizer:
         study_name: Optional[str] = None,
         storage: Optional[str] = None,
         direction: str = "maximize",
-        logger=None
+        logger=None,
+        output_dir: Optional[str] = None
     ):
         """
         초기화
@@ -56,6 +58,7 @@ class OptunaOptimizer:
             storage: Study 저장소 (SQLite/PostgreSQL)
             direction: 최적화 방향 ("maximize" or "minimize")
             logger: Logger 인스턴스
+            output_dir: 출력 디렉토리 (체크포인트 저장 경로, None이면 config 기본값 사용)
         """
         self.config = config
         self.train_df = train_df
@@ -66,6 +69,7 @@ class OptunaOptimizer:
         self.storage = storage
         self.direction = direction
         self.logger = logger
+        self.output_dir = output_dir
 
         # Optuna Study
         self.study: Optional[optuna.Study] = None
@@ -74,10 +78,21 @@ class OptunaOptimizer:
         self.best_params: Optional[Dict[str, Any]] = None
         self.best_value: Optional[float] = None
 
+        # ✅ 체크포인트 관리자 초기화
+        if self.output_dir:
+            checkpoint_dir = Path(self.output_dir) / "checkpoints"
+        else:
+            checkpoint_dir = Path("checkpoints")
+        self.checkpoint_manager = OptunaCheckpointManager(
+            checkpoint_dir=str(checkpoint_dir),
+            study_name=self.study_name
+        )
+
         self._log(f"OptunaOptimizer 초기화 완료")
         self._log(f"  - Study 이름: {self.study_name}")
         self._log(f"  - Trial 횟수: {self.n_trials}")
         self._log(f"  - 방향: {self.direction}")
+        self._log(f"  - 체크포인트: {self.checkpoint_manager.get_checkpoint_path()}")
 
     def _log(self, msg: str):
         """로깅 헬퍼"""
@@ -152,6 +167,10 @@ class OptunaOptimizer:
             config.training.weight_decay = params['weight_decay']
             config.training.lr_scheduler_type = params['scheduler_type']
 
+            # 출력 디렉토리 설정 (명령행 인자가 우선)
+            if self.output_dir is not None:
+                config.training.output_dir = self.output_dir
+
             # Inference 파라미터 업데이트 (KoBART는 inference 섹션 사용)
             if hasattr(config, 'inference'):
                 config.inference.num_beams = params['num_beams']
@@ -207,10 +226,26 @@ class OptunaOptimizer:
 
             # 8. ROUGE-L F1 추출
             rouge_l_f1 = 0.0
-            if 'eval_rouge_l_f1' in metrics:
-                rouge_l_f1 = metrics['eval_rouge_l_f1']
-            elif 'rouge_l_f1' in metrics:
-                rouge_l_f1 = metrics['rouge_l_f1']
+            # 다양한 키 형식 시도 (대소문자 구분)
+            possible_keys = [
+                'eval_rougeL',      # HuggingFace 기본 형식
+                'eval_rouge_l',     # 소문자 형식
+                'eval_rouge_l_f1',  # F1 명시 형식
+                'rougeL',           # prefix 없는 형식
+                'rouge_l',
+                'rouge_l_f1'
+            ]
+
+            for key in possible_keys:
+                if key in metrics:
+                    rouge_l_f1 = metrics[key]
+                    self._log(f"  → 메트릭 '{key}' 사용: {rouge_l_f1:.4f}")
+                    break
+
+            if rouge_l_f1 == 0.0:
+                # 메트릭을 찾지 못한 경우 디버깅 정보 출력
+                self._log(f"  ⚠️  ROUGE-L 메트릭을 찾을 수 없습니다")
+                self._log(f"  사용 가능한 메트릭: {list(metrics.keys())}")
 
             self._log(f"Trial {trial.number} 완료")
             self._log(f"  - ROUGE-L F1: {rouge_l_f1:.4f}")
@@ -233,7 +268,7 @@ class OptunaOptimizer:
 
     def optimize(self) -> optuna.Study:
         """
-        하이퍼파라미터 최적화 실행
+        하이퍼파라미터 최적화 실행 (체크포인트 지원)
 
         Returns:
             완료된 Optuna Study
@@ -250,22 +285,42 @@ class OptunaOptimizer:
             interval_steps=1
         )
 
-        # 2. Study 생성
-        self.study = optuna.create_study(
-            study_name=self.study_name,
-            direction=self.direction,
+        # ✅ 2. 체크포인트에서 Study 복원 또는 새로 생성
+        self.study, completed_trials = self.checkpoint_manager.resume_study(
             sampler=sampler,
             pruner=pruner,
-            storage=self.storage,
-            load_if_exists=True
+            direction=self.direction
         )
 
-        # 3. 최적화 실행
+        if completed_trials > 0:
+            self._log(f"🔄 체크포인트에서 Resume: {completed_trials}/{self.n_trials} Trial 이미 완료")
+            progress = self.checkpoint_manager.get_progress()
+            if progress:
+                self._log(f"  - 현재 최적값: {progress['best_value']:.4f}")
+                self._log(f"  - 마지막 저장: {progress['timestamp']}")
+
+        remaining_trials = self.n_trials - completed_trials
+        if remaining_trials <= 0:
+            self._log(f"✅ 모든 Trial 완료됨. 건너뜀.")
+            self.best_params = self.study.best_params if self.study.best_trial else {}
+            self.best_value = self.study.best_value if self.study.best_trial else 0.0
+            return self.study
+
+        self._log(f"  - 남은 Trial: {remaining_trials}개")
+
+        # ✅ 3. Trial 콜백에 체크포인트 저장 추가
+        def trial_callback(study, trial):
+            """Trial 완료마다 체크포인트 저장"""
+            self.checkpoint_manager.save_checkpoint(study, trial.number)
+            self._log(f"💾 Trial {trial.number} 체크포인트 저장")
+
+        # 4. 최적화 실행
         self.study.optimize(
             self.objective,
-            n_trials=self.n_trials,
+            n_trials=remaining_trials,
             timeout=self.timeout,
-            show_progress_bar=True
+            show_progress_bar=True,
+            callbacks=[trial_callback]  # ✅ 체크포인트 콜백 추가
         )
 
         # 4. 최적 파라미터 저장

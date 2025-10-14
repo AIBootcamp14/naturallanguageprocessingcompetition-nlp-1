@@ -11,17 +11,22 @@ PRD 04: 성능 개선 전략 구현
 
 import random
 from typing import List, Tuple, Optional
+from pathlib import Path
 from transformers import MarianMTModel, MarianTokenizer, pipeline
 import re
+import pandas as pd
+
+from src.checkpoints.augmentation_checkpoint import AugmentationCheckpointManager
 
 
 class DataAugmenter:
     """데이터 증강 시스템"""
 
-    def __init__(self, logger=None):
+    def __init__(self, logger=None, checkpoint_dir: Optional[str] = None):
         """
         Args:
             logger: Logger 인스턴스
+            checkpoint_dir: 체크포인트 저장 디렉토리 (선택)
         """
         self.logger = logger
         self._log("DataAugmenter 초기화")
@@ -41,6 +46,11 @@ class DataAugmenter:
             'sample': DialogueSamplingAugmenter()
         }
 
+        # ✅ 체크포인트 관리자
+        self.checkpoint_manager = None
+        if checkpoint_dir:
+            self.checkpoint_manager = AugmentationCheckpointManager(checkpoint_dir)
+
     def _log(self, msg: str):
         """로깅 헬퍼"""
         if self.logger:
@@ -53,10 +63,12 @@ class DataAugmenter:
         dialogues: List[str],
         summaries: List[str],
         methods: List[str] = ["shuffle"],
-        samples_per_method: int = 1
+        samples_per_method: int = 1,
+        resume: bool = True,
+        save_interval: int = 100
     ) -> Tuple[List[str], List[str]]:
         """
-        데이터 증강 실행
+        데이터 증강 실행 (체크포인트 지원)
 
         Args:
             dialogues: 대화 리스트
@@ -64,19 +76,34 @@ class DataAugmenter:
             methods: 증강 방법 리스트
                      ["back_translate", "paraphrase", "shuffle", "synonym", "sample"]
             samples_per_method: 방법당 생성할 샘플 수
+            resume: 체크포인트에서 이어서 실행 여부
+            save_interval: 체크포인트 저장 주기 (기본: 100개마다)
 
         Returns:
             (증강된 dialogues, 증강된 summaries)
         """
-        augmented_dialogues = []
-        augmented_summaries = []
+        original_size = len(dialogues)
+        target_augmented_count = original_size * len(methods) * samples_per_method
+        total_target_size = original_size + target_augmented_count
+
+        # ✅ 체크포인트 확인 및 로드
+        if resume and self.checkpoint_manager:
+            checkpoint = self.checkpoint_manager.load_checkpoint()
+            if checkpoint and self.checkpoint_manager.is_complete(total_target_size):
+                self._log("✅ 증강 데이터 체크포인트 발견. 로드 중...")
+                aug_data = checkpoint['augmented_data']
+                return aug_data['dialogue'].tolist(), aug_data['summary'].tolist()
 
         self._log(f"\n데이터 증강 시작")
         self._log(f"  - 원본 데이터: {len(dialogues)}개")
         self._log(f"  - 증강 방법: {methods}")
         self._log(f"  - 방법당 샘플 수: {samples_per_method}")
+        self._log(f"  - 목표 데이터 크기: {total_target_size}개")
 
-        for dialogue, summary in zip(dialogues, summaries):
+        augmented_dialogues = []
+        augmented_summaries = []
+
+        for idx, (dialogue, summary) in enumerate(zip(dialogues, summaries)):
             # 원본 추가
             augmented_dialogues.append(dialogue)
             augmented_summaries.append(summary)
@@ -106,6 +133,44 @@ class DataAugmenter:
                     except Exception as e:
                         self._log(f"증강 실패 ({method}): {str(e)}")
                         continue
+
+            # ✅ 주기적으로 체크포인트 저장
+            if self.checkpoint_manager and (idx + 1) % save_interval == 0:
+                current_df = pd.DataFrame({
+                    'dialogue': augmented_dialogues,
+                    'summary': augmented_summaries
+                })
+                progress = {
+                    'completed': len(augmented_dialogues),
+                    'total': total_target_size,
+                    'ratio': len(augmented_dialogues) / total_target_size,
+                    'original_size': original_size
+                }
+                self.checkpoint_manager.save_checkpoint(
+                    augmented_data=current_df,
+                    progress=progress,
+                    methods=methods
+                )
+                self._log(f"💾 증강 체크포인트 저장: {idx+1}/{original_size} 원본 처리 완료 (총 {len(augmented_dialogues)}개)")
+
+        # ✅ 최종 저장
+        if self.checkpoint_manager:
+            final_df = pd.DataFrame({
+                'dialogue': augmented_dialogues,
+                'summary': augmented_summaries
+            })
+            progress = {
+                'completed': len(augmented_dialogues),
+                'total': total_target_size,
+                'ratio': 1.0,
+                'original_size': original_size
+            }
+            self.checkpoint_manager.save_checkpoint(
+                augmented_data=final_df,
+                progress=progress,
+                methods=methods
+            )
+            self._log(f"💾 증강 최종 체크포인트 저장 완료")
 
         self._log(f"데이터 증강 완료: {len(augmented_dialogues)}개")
         return augmented_dialogues, augmented_summaries
@@ -299,7 +364,10 @@ def augment_data(
     summaries: List[str],
     methods: List[str] = ["shuffle"],
     samples_per_method: int = 1,
-    logger=None
+    logger=None,
+    checkpoint_dir: Optional[str] = None,
+    resume: bool = True,
+    save_interval: int = 100
 ) -> Tuple[List[str], List[str]]:
     """
     편의 함수: 데이터 증강
@@ -310,12 +378,15 @@ def augment_data(
         methods: 증강 방법 리스트
         samples_per_method: 방법당 샘플 수
         logger: Logger 인스턴스
+        checkpoint_dir: 체크포인트 디렉토리 (선택)
+        resume: 체크포인트에서 이어서 실행 여부
+        save_interval: 체크포인트 저장 주기
 
     Returns:
         (증강된 dialogues, 증강된 summaries)
     """
-    augmenter = DataAugmenter(logger=logger)
-    return augmenter.augment(dialogues, summaries, methods, samples_per_method)
+    augmenter = DataAugmenter(logger=logger, checkpoint_dir=checkpoint_dir)
+    return augmenter.augment(dialogues, summaries, methods, samples_per_method, resume, save_interval)
 
 
 # 개별 증강기 클래스들

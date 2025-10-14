@@ -285,6 +285,7 @@ class Predictor:
         correction_models: Optional[List[str]] = None,  # ✅ HF 모델 리스트
         correction_strategy: str = "quality_based",     # ✅ 보정 전략
         correction_threshold: float = 0.3,              # ✅ 품질 임계값
+        checkpoint_dir: Optional[str] = None,           # ✅ 체크포인트 디렉토리
         **generation_kwargs                             # 생성 파라미터 (선택적)
     ) -> List[str]:
         """
@@ -297,6 +298,7 @@ class Predictor:
             use_pretrained_correction: HuggingFace 사전학습 모델 보정 사용 여부
             correction_models: 보정에 사용할 HF 모델 리스트 (예: ["gogamza/kobart-base-v2"])
             correction_strategy: 보정 전략 (quality_based, threshold, voting, weighted)
+            checkpoint_dir: 체크포인트 디렉토리 (선택)
             correction_threshold: 품질 임계값 (0.0~1.0)
             **generation_kwargs: 생성 파라미터 오버라이드
 
@@ -405,12 +407,19 @@ class Predictor:
                 # PretrainedCorrector 초기화
                 from src.correction import create_pretrained_corrector
 
+                # 체크포인트 디렉토리 설정 (HF correction 서브디렉토리)
+                correction_checkpoint_dir = None
+                if checkpoint_dir:
+                    from pathlib import Path
+                    correction_checkpoint_dir = str(Path(checkpoint_dir) / "hf_correction")
+
                 corrector = create_pretrained_corrector(
                     model_names=correction_models,
                     correction_strategy=correction_strategy,
                     quality_threshold=correction_threshold,
                     device=self.device,
-                    logger=self.logger
+                    logger=self.logger,
+                    checkpoint_dir=correction_checkpoint_dir
                 )
 
                 # 보정 수행

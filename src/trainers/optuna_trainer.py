@@ -60,6 +60,17 @@ class OptunaTrainer(BaseTrainer):
         # 3. Optuna Optimizer 초기화
         self.log(f"\n[3/3] Optuna 튜닝 시작...")
 
+        # ✅ --resume_from 옵션 처리
+        optimizer_output_dir = self.args.output_dir
+        if hasattr(self.args, 'resume_from') and self.args.resume_from:
+            # --resume_from이 체크포인트 디렉토리를 가리키는 경우 상위 폴더 사용
+            resume_path = Path(self.args.resume_from)
+            if resume_path.name == 'checkpoints':
+                optimizer_output_dir = str(resume_path.parent)
+            else:
+                optimizer_output_dir = self.args.resume_from
+            self.log(f"🔄 Resume from: {optimizer_output_dir}")
+
         # Optuna Optimizer 초기화 (데이터프레임 전달)
         optimizer = OptunaOptimizer(
             config=config,
@@ -70,7 +81,8 @@ class OptunaTrainer(BaseTrainer):
             study_name=f"optuna_{model_name}_{self.args.experiment_name}",
             storage=None,
             direction="maximize",
-            logger=self.logger
+            logger=self.logger,
+            output_dir=optimizer_output_dir  # resume_from 적용된 경로 전달
         )
 
         # 튜닝 실행

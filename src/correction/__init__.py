@@ -36,7 +36,8 @@ def create_pretrained_corrector(
     correction_strategy="quality_based",
     quality_threshold=0.3,
     device=None,
-    logger=None
+    logger=None,
+    checkpoint_dir=None
 ):
     """
     편의 함수: PretrainedCorrector 인스턴스 생성
@@ -47,6 +48,7 @@ def create_pretrained_corrector(
         quality_threshold: 품질 임계값 (0.0~1.0)
         device: 추론 디바이스
         logger: Logger 인스턴스
+        checkpoint_dir: 체크포인트 디렉토리 (선택)
 
     Returns:
         PretrainedCorrector 인스턴스
@@ -56,5 +58,6 @@ def create_pretrained_corrector(
         correction_strategy=correction_strategy,
         quality_threshold=quality_threshold,
         device=device,
-        logger=logger
+        logger=logger,
+        checkpoint_dir=checkpoint_dir
     )
