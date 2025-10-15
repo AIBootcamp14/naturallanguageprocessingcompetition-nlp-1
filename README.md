@@ -17,9 +17,6 @@ NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기�
 | [`docs/COMPETITION_FINAL_REPORT.md`](docs/COMPETITION_FINAL_REPORT.md) | 대회 개요, 최종 결과, 실험 요약 |
 | [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) | Baseline ~ Exp #7까지 상세 실험 기록 |
 | [`docs/LESSONS_LEARNED.md`](docs/LESSONS_LEARNED.md) | 실험 교훈, Best Practices, 재사용 가능한 체크리스트 |
-| [`docs/ARCHIVE.md`](docs/ARCHIVE.md) | 프로젝트 아카이브, 디스크 관리, 재현 가이드 |
-| [`docs/NEXT_STEPS.md`](docs/NEXT_STEPS.md) | 향후 개선 방향, 미시도 아이디어 |
-| [`docs/RESTART_GUIDE.md`](docs/RESTART_GUIDE.md) | 재시작 전략, Phase별 체크리스트 |
 
 ## 빠른 시작
 1. 저장소 루트로 이동해 환경을 구성합니다.
@@ -164,14 +161,17 @@ naturallanguageprocessingcompetition-nlp-1/
 
 **교훈**: 증강 없이 가중치를 사용하면 안 됩니다.
 
-### 3. Dev vs Test 불일치
+### 3. Dev 강건성의 중요성
 
-| 실험 | Dev ROUGE-1 | Test Score | 상관관계 |
-|------|-------------|------------|----------|
-| Exp #7-A | 36.18% | 47.41 | Dev 낮음, Test 높음 |
-| Exp #7-F | 36.43% | 46.62 | Dev 높음, Test 낮음 |
+| 실험 | Dev ROUGE-1 | Test Score (Public) | Private 성능 |
+|------|-------------|---------------------|--------------|
+| Exp #7-A | 36.18% | 47.41 | 최고 점수 달성 |
+| Exp #7-F | 36.43% | 46.62 | 상대적으로 낮음 |
 
-**교훈**: Dev는 학습 분포 영향을 받으므로 Test 제출 결과만 신뢰해야 합니다.
+**핵심 발견**:
+- 대회 종료 후 private 점수에서 dev셋에 강건했던 모델(데이터 증강)이 최고 성능을 기록했습니다.
+- Exp #7-F의 실패는 Dev가 높아서가 아니라, WeightedRandomSampler가 학습 분포를 왜곡해 일반화를 해쳤기 때문입니다.
+- **교훈**: Dev 강건성(Loss Gap, 분포 왜곡 없는 학습)이 최종 성능(private 점수)의 핵심 지표였습니다.
 
 ### 4. 단순함의 효과
 
@@ -191,16 +191,12 @@ naturallanguageprocessingcompetition-nlp-1/
 - **실험 추적**: Weights & Biases (선택)
 - **버전 관리**: Git, GitHub
 
-## 스토리지 & 운영 정책
-- **용량 관리**: 작업 전 `du -sh /Competition/NLP`로 디스크 사용량(150GB 한도)을 확인합니다.
-- **산출물 관리**: 최고 성능 checkpoint만 보존하고(`submission_exp7a/checkpoint-2068/`), 나머지는 정리했습니다 (21GB → 8.5GB, 12.5GB 절감).
-- **외부 백업**: 최종 결과 파일은 GitHub에 커밋하고, 대용량 checkpoint는 별도 문서에 경로를 명시했습니다.
-- **실험 추적**: 핵심 실험만 `docs/EXPERIMENT_LOG.md`에 남기고, Wandb 로그는 최근 5개 run만 보존했습니다.
 
 ## 개인 회고
 - Length Penalty 조정만으로 +11.35점 개선이 가능했던 점이 가장 인상적이었습니다. 복잡한 기법보다 기본 파라미터 튜닝의 중요성을 깨달았습니다.
-- WeightedRandomSampler 실험(Exp #7-F)에서 Dev ROUGE는 높지만 Test Score가 낮은 현상을 겪으며, Dev 점수에 의존하지 말고 Loss Gap과 Test 제출 결과를 신뢰해야 함을 배웠습니다.
-- 대회 종료 후 공개된 private 점수에서 dev셋에 강건했던 모델들(데이터 증강 적용)의 점수가 가장 높게 나왔습니다. 결국 증강이 성능 향상에 큰 도움이 된 것이었습니다.
+- 가장 중요한 교훈은 **Dev 강건성이 최종 성능의 핵심 지표**였다는 점입니다. 대회 종료 후 private 점수에서 dev셋에 강건했던 모델(데이터 증강, Exp #7-A)이 최고 성능을 기록했습니다.
+- WeightedRandomSampler 실험(Exp #7-F)의 실패는 "Dev 점수가 높아서"가 아니라, 샘플링이 학습 분포를 왜곡해 일반화를 저해했기 때문이었습니다. Loss Gap과 분포 왜곡 여부를 함께 확인하는 것이 중요합니다.
+- 데이터 증강(Exp #7-A)은 public 점수에서는 소폭 낮았지만(-0.06), private 점수에서 가장 높았습니다. 결국 증강을 통한 dev 강건성이 실제 성능 향상의 핵심이었습니다.
 - 후처리 개선 실패: Special token 추가나 후처리 개선 아이디어가 있었지만, 제출 횟수 소진으로 충분히 검증하지 못했습니다.
 
 ## 라이선스
