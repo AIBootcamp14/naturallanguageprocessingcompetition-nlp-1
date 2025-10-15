@@ -69,12 +69,15 @@ class ModelTrainer:
         # -------------- WandB Logger 초기화 -------------- #
         self.wandb_logger = None                        # WandB Logger 초기값
         if use_wandb and hasattr(config, 'wandb') and config.wandb.enabled:
+            # tags 안전하게 가져오기 (없으면 빈 리스트)
+            tags = config.experiment.get('tags', []) if hasattr(config, 'experiment') else []
+
             self.wandb_logger = WandbLogger(            # WandB Logger 생성
                 project_name=config.wandb.project,
                 entity=config.wandb.entity,
                 experiment_name=config.experiment.name,
                 config=dict(config),                    # OmegaConf를 dict로 변환
-                tags=config.experiment.tags
+                tags=tags
             )
 
         # -------------- ROUGE Calculator 초기화 -------------- #

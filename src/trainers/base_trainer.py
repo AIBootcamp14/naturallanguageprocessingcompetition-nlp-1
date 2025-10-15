@@ -155,6 +155,9 @@ class BaseTrainer(ABC):
                 from omegaconf import OmegaConf
                 config.experiment = OmegaConf.create({})
             config.experiment.name = self.args.mode
+            # tags가 없으면 빈 리스트로 초기화
+            if 'tags' not in config.experiment:
+                config.experiment.tags = []
 
         # 기본 학습 설정
         if hasattr(self.args, 'epochs') and self.args.epochs is not None:
