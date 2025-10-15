@@ -399,9 +399,31 @@ def main():
         help="Solar API 배치 간 대기 시간 (초)"
     )
     parser.add_argument(
+        "--solar_use_voting",
+        action="store_true",
+        help="Solar API K-Fold 방식 다중 샘플링 사용"
+    )
+    parser.add_argument(
+        "--solar_n_samples",
+        type=int,
+        default=3,
+        help="Solar API 샘플링 횟수 (voting 사용 시)"
+    )
+    parser.add_argument(
         "--resume",
         action="store_true",
         help="체크포인트에서 이어서 실행"
+    )
+    parser.add_argument(
+        "--skip_kfold",
+        action="store_true",
+        help="K-Fold 앙상블 건너뛰기 (체크포인트 필수)"
+    )
+    parser.add_argument(
+        "--kfold_checkpoint",
+        type=str,
+        default=None,
+        help="재사용할 K-Fold 체크포인트 경로 (예: experiments/.../checkpoints/kfold_checkpoint.pkl)"
     )
 
     args = parser.parse_args()
@@ -483,14 +505,31 @@ def main():
         summaries = None
         kfold_checkpoint = None
 
-        if checkpoint_dir:
+        # 외부 체크포인트 지정 시 로드
+        if args.kfold_checkpoint:
+            logger.write(f"\n[3/6] 📂 외부 K-Fold 체크포인트 로드: {args.kfold_checkpoint}")
+            try:
+                with open(args.kfold_checkpoint, 'rb') as f:
+                    kfold_checkpoint = pickle.load(f)
+                logger.write(f"  ✅ 로드 성공: {len(kfold_checkpoint['summaries'])}개 요약")
+                summaries = kfold_checkpoint['summaries']
+            except Exception as e:
+                logger.write(f"  ❌ 로드 실패: {e}")
+                raise
+
+        # 기존 체크포인트 확인
+        elif checkpoint_dir:
             kfold_checkpoint = load_inference_checkpoint(checkpoint_dir, 'kfold', logger)
 
-        if kfold_checkpoint:
+        if kfold_checkpoint and not args.kfold_checkpoint:
             logger.write(f"\n[3/6] ✅ K-Fold 앙상블 체크포인트에서 복원")
             logger.write(f"  - 복원된 요약 수: {len(kfold_checkpoint['summaries'])}")
             summaries = kfold_checkpoint['summaries']
-        else:
+        elif args.skip_kfold and summaries is not None:
+            logger.write(f"\n[3/6] ⏭️  K-Fold 앙상블 건너뛰기 (외부 체크포인트 사용)")
+        elif args.skip_kfold:
+            raise ValueError("--skip_kfold 사용 시 --kfold_checkpoint 또는 --resume이 필요합니다")
+        elif summaries is None:
             logger.write(f"\n[3/6] K-Fold 앙상블 추론 실행...")
             logger.write(f"  - 앙상블 방법: {args.ensemble_method}")
             logger.write(f"  - 배치 크기: {args.batch_size}")
@@ -619,11 +658,17 @@ def main():
                 )
 
                 # Solar API로 요약 생성
-                logger.write(f"\n  Solar API 배치 요약 생성 중...")
+                if args.solar_use_voting:
+                    logger.write(f"\n  Solar API 배치 요약 생성 중 (🔄 K-Fold 방식 {args.solar_n_samples}회 샘플링)...")
+                else:
+                    logger.write(f"\n  Solar API 배치 요약 생성 중...")
+
                 solar_summaries = solar_api.summarize_batch(
                     dialogues=dialogues,
                     batch_size=args.solar_batch_size,
-                    delay=args.solar_delay
+                    delay=args.solar_delay,
+                    use_voting=args.solar_use_voting,
+                    n_samples=args.solar_n_samples
                 )
 
                 # KoBART 요약과 Solar 요약 앙상블 (가중 평균)
