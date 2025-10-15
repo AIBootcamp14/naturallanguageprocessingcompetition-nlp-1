@@ -14,6 +14,7 @@
 4. [실패 사례 심층 분석](#실패-사례-심층-분석)
 5. [성공 요인 분석](#성공-요인-분석)
 6. [재사용 가능한 체크리스트](#재사용-가능한-체크리스트)
+7. [대안 접근법에서 배운 교훈: Causal LM 탐색](#대안-접근법에서-배운-교훈-causal-lm-탐색)
 
 ---
 
@@ -834,10 +835,63 @@ else:
 
 ---
 
+## 대안 접근법에서 배운 교훈: Causal LM 탐색
+
+KoBART 중심 전략 외에도 Causal LM(Llama/Qwen) 계열을 탐색하며 LLM 파인튜닝의 실전 교훈을 축적했습니다.
+
+### 핵심 교훈
+
+**1. LLM 파인튜닝은 3축 정합이 필수**
+- **Template 정합**: 학습 시 chat template과 추론 시 input format 일치 필수
+- **Collator 정합**: Completion-only loss (프롬프트 제외, 응답만 학습)
+- **평가 정합**: Eval_loss가 아닌 생성 기반 지표(ROUGE/BLEU) 사용
+
+**2. 모델 크기보다 언어 적합성이 중요**
+- Llama-3.2-Korean-3B가 Qwen2.5-7B보다 높은 성능
+- "큰 모델 = 좋은 성능"은 오해
+- 한국어 강화 모델 선택이 파라미터 수보다 중요
+
+**3. 다국어 문제는 디코딩 제약으로 해결**
+- 프롬프트만으로는 불충분 (멀티링궐 모델 특성)
+- 화이트리스트 (prefix_allowed_tokens_fn) 또는 정적 로짓 마스크
+- bad_words_ids는 서브워드 우회 가능성 존재
+
+**4. 리소스 제약은 전략적 선택으로 극복**
+- RTX 3090 24GB: 8B → QLoRA, 3B/4B → LoRA
+- GPU Util이 아닌 tokens/sec로 효율 판단
+- 모델 크기별 최적화 전략 분리
+
+**5. Seq2Seq가 여전히 유리한 영역 존재**
+- 요약 태스크는 KoBART/KoT5가 안정적
+- Causal LM은 증강/후편집/재랭킹 도구로 활용
+- 하이브리드 전략이 가장 효율적
+
+**6. 환경 안정화가 실험의 토대**
+- transformers-accelerate 버전 정합 필수
+- Dataloader 최적화 (num_workers, persistent_workers)
+- Gradient norm 분포 기반 max_grad_norm 튜닝
+
+### 재사용 가능한 체크리스트
+
+Causal LM 사용 시:
+- [ ] Chat template 학습/추론 일치 확인
+- [ ] DataCollatorForCompletionOnlyLM 사용
+- [ ] metric_for_best_model="rouge_sum" 설정
+- [ ] 다국어 토큰 제약 (화이트리스트) 적용
+- [ ] 언어 적합성 우선 모델 선택
+- [ ] 리소스별 QLoRA/LoRA 전략 수립
+
+### 참고 자료
+
+이 교훈들의 상세 기록과 코드 예시는 [CAUSAL_LM_JOURNEY.md](CAUSAL_LM_JOURNEY.md)를 참조하세요.
+
+---
+
 ## 관련 문서
 
 - `COMPETITION_FINAL_REPORT.md` - 대회 최종 결과
 - `EXPERIMENT_LOG.md` - 전체 실험 상세 기록
+- `CAUSAL_LM_JOURNEY.md` - Causal LM 탐색 상세 기록
 
 ---
 
