@@ -588,6 +588,14 @@ def main():
                     logger
                 )
 
+                # CSV 체크포인트도 저장 (이어서 실행 가능하도록)
+                kfold_csv_path = checkpoint_dir / "kfold_summaries.csv"
+                pd.DataFrame({
+                    'fname': test_df['fname'],
+                    'summary': summaries
+                }).to_csv(kfold_csv_path, index=False, encoding='utf-8')
+                logger.write(f"💾 K-Fold CSV 체크포인트 저장: {kfold_csv_path}")
+
         # -------------- 4. HuggingFace 보정 (선택적) -------------- #
         hf_checkpoint = None
         if checkpoint_dir and args.use_pretrained_correction:
@@ -636,6 +644,14 @@ def main():
                         },
                         logger
                     )
+
+                    # CSV 체크포인트도 저장
+                    hf_csv_path = checkpoint_dir / "hf_correction_summaries.csv"
+                    pd.DataFrame({
+                        'fname': test_df['fname'],
+                        'summary': summaries
+                    }).to_csv(hf_csv_path, index=False, encoding='utf-8')
+                    logger.write(f"💾 HuggingFace CSV 체크포인트 저장: {hf_csv_path}")
             except Exception as e:
                 logger.write(f"❌ HuggingFace 보정 실패: {e}")
                 logger.write("  ⚠️  보정 없이 진행")
@@ -709,6 +725,14 @@ def main():
                         },
                         logger
                     )
+
+                    # CSV 체크포인트도 저장
+                    solar_csv_path = checkpoint_dir / "solar_api_summaries.csv"
+                    pd.DataFrame({
+                        'fname': test_df['fname'],
+                        'summary': summaries
+                    }).to_csv(solar_csv_path, index=False, encoding='utf-8')
+                    logger.write(f"💾 Solar API CSV 체크포인트 저장: {solar_csv_path}")
 
             except ImportError as e:
                 logger.write(f"❌ Solar API 모듈 임포트 실패: {e}")
