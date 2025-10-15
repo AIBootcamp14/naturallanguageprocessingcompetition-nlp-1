@@ -4,25 +4,34 @@ Optuna 최적화 시스템 테스트
 PRD 13: Optuna 하이퍼파라미터 최적화 전략 구현
 """
 
+# ------------------------- 표준 라이브러리 ------------------------- #
 import sys
 from pathlib import Path
 
+# 프로젝트 루트 경로 설정
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# ------------------------- 서드파티 라이브러리 ------------------------- #
 import optuna
 from omegaconf import OmegaConf
+
+# ------------------------- 프로젝트 모듈 ------------------------- #
 from src.optimization import OptunaOptimizer, create_optuna_optimizer
 
 
+# ==================== 테스트 함수 정의 ==================== #
+# ---------------------- OptunaOptimizer 초기화 테스트 ---------------------- #
 def test_optuna_optimizer_init():
     """OptunaOptimizer 초기화 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 1: OptunaOptimizer 초기화")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
-        # Mock config
+        # Mock config 생성
         config = OmegaConf.create({
             'model': {
                 'name': 'test_model',
@@ -53,7 +62,7 @@ def test_optuna_optimizer_init():
             }
         })
 
-        # Mock 데이터셋 (None으로 테스트)
+        # OptunaOptimizer 인스턴스 생성
         optimizer = OptunaOptimizer(
             config=config,
             train_dataset=None,
@@ -62,17 +71,21 @@ def test_optuna_optimizer_init():
             study_name="test_study"
         )
 
+        # 성공 메시지 출력
         print("✅ OptunaOptimizer 초기화 성공")
         print(f"  - Study 이름: {optimizer.study_name}")
         print(f"  - Trial 횟수: {optimizer.n_trials}")
         print(f"  - 방향: {optimizer.direction}")
 
+        # -------------- 검증 -------------- #
+        # 초기화 값 검증
         assert optimizer.study_name == "test_study", "Study 이름이 다름"
         assert optimizer.n_trials == 10, "Trial 횟수가 다름"
         assert optimizer.direction == "maximize", "방향이 다름"
 
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -80,13 +93,17 @@ def test_optuna_optimizer_init():
         return False
 
 
+# ---------------------- 탐색 공간 생성 테스트 ---------------------- #
 def test_create_search_space():
     """탐색 공간 생성 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 2: 탐색 공간 생성")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # Mock config 생성
         config = OmegaConf.create({
             'model': {
                 'name': 'test_model',
@@ -114,6 +131,7 @@ def test_create_search_space():
             }
         })
 
+        # OptunaOptimizer 생성
         optimizer = OptunaOptimizer(
             config=config,
             train_dataset=None,
@@ -128,11 +146,13 @@ def test_create_search_space():
         # 탐색 공간 샘플링
         params = optimizer.create_search_space(trial)
 
+        # -------------- 샘플링 결과 출력 -------------- #
         print("샘플링된 파라미터:")
         for key, value in params.items():
             print(f"  - {key}: {value}")
 
-        # 검증: 필수 파라미터 존재
+        # -------------- 검증 -------------- #
+        # 필수 파라미터 존재 확인
         required_params = [
             'learning_rate', 'batch_size', 'num_epochs',
             'warmup_ratio', 'weight_decay', 'scheduler_type',
@@ -156,6 +176,7 @@ def test_create_search_space():
 
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -163,13 +184,17 @@ def test_create_search_space():
         return False
 
 
+# ---------------------- 탐색 공간 범위 테스트 ---------------------- #
 def test_search_space_ranges():
     """탐색 공간 범위 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 3: 탐색 공간 범위 검증")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # Mock config 생성
         config = OmegaConf.create({
             'model': {
                 'name': 'test_model',
@@ -197,6 +222,7 @@ def test_search_space_ranges():
             }
         })
 
+        # OptunaOptimizer 생성
         optimizer = OptunaOptimizer(
             config=config,
             train_dataset=None,
@@ -212,9 +238,9 @@ def test_search_space_ranges():
             trial = study.ask()
             params = optimizer.create_search_space(trial)
             samples.append(params)
-            study.tell(trial, 0.5)  # Dummy value
+            study.tell(trial, 0.5)
 
-        # 범위 검증
+        # -------------- 범위 검증 -------------- #
         print("파라미터 범위 확인:")
 
         # Learning rate: 1e-6 ~ 1e-4
@@ -246,6 +272,7 @@ def test_search_space_ranges():
 
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -253,13 +280,17 @@ def test_search_space_ranges():
         return False
 
 
+# ---------------------- Sampler 및 Pruner 설정 테스트 ---------------------- #
 def test_sampler_and_pruner():
     """Sampler 및 Pruner 설정 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 4: Sampler 및 Pruner 설정")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # Optuna 라이브러리 import
         from optuna.samplers import TPESampler
         from optuna.pruners import MedianPruner
 
@@ -290,6 +321,7 @@ def test_sampler_and_pruner():
 
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -297,13 +329,17 @@ def test_sampler_and_pruner():
         return False
 
 
+# ---------------------- Best params 메서드 테스트 ---------------------- #
 def test_best_params_methods():
     """Best params 메서드 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 5: Best params 메서드")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # Mock config 생성
         config = OmegaConf.create({
             'model': {'name': 'test'},
             'training': {
@@ -322,6 +358,7 @@ def test_best_params_methods():
             }
         })
 
+        # OptunaOptimizer 생성
         optimizer = OptunaOptimizer(
             config=config,
             train_dataset=None,
@@ -329,7 +366,8 @@ def test_best_params_methods():
             n_trials=1
         )
 
-        # optimize() 전에는 에러
+        # -------------- optimize() 전 에러 확인 -------------- #
+        # optimize() 전에는 에러 발생해야 함
         try:
             optimizer.get_best_params()
             print("❌ optimize() 전에 get_best_params() 호출 가능 (예상: 에러)")
@@ -337,6 +375,7 @@ def test_best_params_methods():
         except ValueError as e:
             print(f"✓ optimize() 전 에러 발생: {str(e)}")
 
+        # -------------- Mock 결과 설정 -------------- #
         # Mock 결과 설정
         optimizer.best_params = {'learning_rate': 3e-5, 'batch_size': 32}
         optimizer.best_value = 0.45
@@ -348,6 +387,7 @@ def test_best_params_methods():
         print(f"✓ get_best_params(): {best_params}")
         print(f"✓ get_best_value(): {best_value}")
 
+        # -------------- 검증 -------------- #
         assert best_params == {'learning_rate': 3e-5, 'batch_size': 32}, "best_params 불일치"
         assert best_value == 0.45, "best_value 불일치"
 
@@ -355,6 +395,7 @@ def test_best_params_methods():
 
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -362,17 +403,21 @@ def test_best_params_methods():
         return False
 
 
+# ---------------------- 결과 저장 테스트 ---------------------- #
 def test_save_results():
     """결과 저장 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 6: 결과 저장")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
         import tempfile
         import shutil
         import json
 
+        # Mock config 생성
         config = OmegaConf.create({
             'model': {'name': 'test'},
             'training': {
@@ -391,6 +436,7 @@ def test_save_results():
             }
         })
 
+        # OptunaOptimizer 생성
         optimizer = OptunaOptimizer(
             config=config,
             train_dataset=None,
@@ -398,22 +444,24 @@ def test_save_results():
             n_trials=1
         )
 
+        # -------------- Mock Study 생성 -------------- #
         # Mock Study 생성
         study = optuna.create_study(direction="maximize")
         for i in range(3):
             trial = study.ask()
-            study.tell(trial, 0.4 + i * 0.05)  # 0.4, 0.45, 0.5
+            study.tell(trial, 0.4 + i * 0.05)
 
         optimizer.study = study
         optimizer.best_params = study.best_params
         optimizer.best_value = study.best_value
 
+        # -------------- 파일 저장 -------------- #
         # 임시 디렉토리에 저장
         temp_dir = tempfile.mkdtemp()
 
         optimizer.save_results(temp_dir)
 
-        # 파일 확인
+        # 파일 존재 확인
         best_params_path = Path(temp_dir) / "best_params.json"
         trials_csv_path = Path(temp_dir) / "all_trials.csv"
         stats_path = Path(temp_dir) / "study_stats.json"
@@ -422,6 +470,7 @@ def test_save_results():
         assert trials_csv_path.exists(), "all_trials.csv 없음"
         assert stats_path.exists(), "study_stats.json 없음"
 
+        # -------------- 파일 내용 확인 -------------- #
         # 내용 확인
         with open(best_params_path, 'r') as f:
             best_data = json.load(f)
@@ -440,6 +489,7 @@ def test_save_results():
 
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -447,13 +497,17 @@ def test_save_results():
         return False
 
 
+# ---------------------- create_optuna_optimizer 편의 함수 테스트 ---------------------- #
 def test_create_optuna_optimizer():
     """create_optuna_optimizer 편의 함수 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 7: create_optuna_optimizer 편의 함수")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # Mock config 생성
         config = OmegaConf.create({
             'model': {'name': 'test'},
             'training': {
@@ -472,6 +526,7 @@ def test_create_optuna_optimizer():
             }
         })
 
+        # 편의 함수로 Optimizer 생성
         optimizer = create_optuna_optimizer(
             config=config,
             train_dataset=None,
@@ -484,11 +539,13 @@ def test_create_optuna_optimizer():
         print(f"  - Trial 횟수: {optimizer.n_trials}")
         print(f"  - Study 이름: {optimizer.study_name}")
 
+        # -------------- 검증 -------------- #
         assert optimizer.n_trials == 20, "Trial 횟수 불일치"
         assert optimizer.study_name == "test_convenience", "Study 이름 불일치"
 
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -496,12 +553,17 @@ def test_create_optuna_optimizer():
         return False
 
 
+# ==================== 메인 실행부 ==================== #
+# ---------------------- 전체 테스트 실행 함수 ---------------------- #
 def main():
     """전체 테스트 실행"""
+    # 테스트 시작 헤더 출력
     print("\n" + "="*70)
     print(" "*22 + "Optuna 최적화 시스템 테스트 시작")
     print("="*70)
 
+    # -------------- 테스트 실행 -------------- #
+    # 테스트 결과 수집용 리스트
     results = []
     results.append(("OptunaOptimizer 초기화", test_optuna_optimizer_init()))
     results.append(("탐색 공간 생성", test_create_search_space()))
@@ -511,18 +573,21 @@ def main():
     results.append(("결과 저장", test_save_results()))
     results.append(("create_optuna_optimizer 함수", test_create_optuna_optimizer()))
 
-    # 결과 요약
+    # -------------- 결과 요약 출력 -------------- #
     print("\n" + "="*70)
     print(" "*25 + "테스트 결과 요약")
     print("="*70)
 
+    # 통과한 테스트 개수 계산
     passed = sum(1 for _, result in results if result)
     total = len(results)
 
+    # 각 테스트 결과 출력
     for test_name, result in results:
         status = "✅ 통과" if result else "❌ 실패"
         print(f"{status}: {test_name}")
 
+    # 최종 요약 출력
     print("="*70)
     print(f"총 {total}개 테스트 중 {passed}개 통과 ({passed/total*100:.0f}%)")
     print("="*70)
@@ -532,9 +597,11 @@ def main():
     print("- 실제 optimize() 테스트는 데이터셋과 모델이 필요합니다")
     print("- 이 테스트는 초기화 및 설정 기능만 검증합니다")
 
+    # 전체 테스트 통과 여부 반환
     return passed == total
 
 
+# ---------------------- 메인 진입점 ---------------------- #
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    success = main()  # 전체 테스트 실행
+    sys.exit(0 if success else 1)  # 성공 시 0, 실패 시 1 반환
