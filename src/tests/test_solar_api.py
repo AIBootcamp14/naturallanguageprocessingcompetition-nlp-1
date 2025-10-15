@@ -287,11 +287,78 @@ def test_cache_operations():
 
 
 # ---------------------- create_solar_api 편의 함수 테스트 ---------------------- #
+def test_remove_placeholders():
+    """플레이스홀더 제거 테스트"""
+    # 테스트 헤더 출력
+    print("\n" + "=" * 60)
+    print("테스트 7: 플레이스홀더 제거 및 대체")
+    print("=" * 60)
+
+    # -------------- 테스트 실행 -------------- #
+    try:
+        # SolarAPI 인스턴스 생성
+        api = SolarAPI(api_key=None)
+
+        # -------------- 테스트 케이스 -------------- #
+        test_cases = [
+            # 한글 + 알파벳 패턴
+            ("친구 A와 친구 B가 대화함", "친구와 친구가 대화함"),
+            ("상사 A가 비서 B에게 지시함", "상사가 비서에게 지시함"),
+            ("고객 A가 직원 B에게 문의함", "고객이 직원에게 문의함"),
+
+            # #Person# 패턴
+            ("#Person1#과 #Person2#가 만남", "화자과 화자가 만남"),
+
+            # 단독 알파벳
+            ("대화 중 A가 말함", "대화 중 화자가 말함"),
+            ("그리고 B가 답변함", "그리고 화자가 답변함"),
+
+            # 복합 패턴
+            ("친구 A와 상사 B, 그리고 C가 모임", "친구와 상사, 그리고 화자가 모임"),
+        ]
+
+        print("플레이스홀더 제거 테스트:")
+        all_passed = True
+
+        for i, (input_text, expected_output) in enumerate(test_cases, 1):
+            result = api._validate_and_fix_summary(input_text, "")
+
+            # 알파벳이나 #Person# 패턴이 제거되었는지 확인
+            has_placeholder = bool(
+                ' A' in result or ' B' in result or ' C' in result or
+                '#Person' in result
+            )
+
+            passed = not has_placeholder
+            status = "✅" if passed else "❌"
+            all_passed = all_passed and passed
+
+            print(f"  {status} 케이스 {i}:")
+            print(f"     입력:  {input_text}")
+            print(f"     결과:  {result}")
+            if not passed:
+                print(f"     기대:  {expected_output}")
+
+        if all_passed:
+            print("\n✅ 플레이스홀더 제거 성공")
+        else:
+            print("\n⚠️  일부 케이스 실패")
+
+        return all_passed
+
+    # -------------- 예외 처리 -------------- #
+    except Exception as e:
+        print(f"❌ 실패: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
 def test_create_solar_api():
     """create_solar_api 편의 함수 테스트"""
     # 테스트 헤더 출력
     print("\n" + "=" * 60)
-    print("테스트 7: create_solar_api 편의 함수")
+    print("테스트 8: create_solar_api 편의 함수")
     print("=" * 60)
 
     # -------------- 테스트 실행 -------------- #
@@ -335,6 +402,7 @@ def main():
     results.append(("스마트 절단", test_smart_truncate()))
     results.append(("Few-shot 프롬프트 생성", test_build_few_shot_prompt()))
     results.append(("캐시 동작", test_cache_operations()))
+    results.append(("플레이스홀더 제거", test_remove_placeholders()))
     results.append(("create_solar_api 함수", test_create_solar_api()))
 
     # -------------- 결과 요약 출력 -------------- #

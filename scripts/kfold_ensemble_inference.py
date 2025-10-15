@@ -14,6 +14,7 @@ K-Fold 모델 앙상블 추론 스크립트
 
 # ---------------------- 표준 라이브러리 ---------------------- #
 import sys
+import os
 import argparse
 from pathlib import Path
 from datetime import datetime
@@ -22,6 +23,18 @@ import pickle
 # 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+# .env 파일에서 환경 변수 로드
+try:
+    from dotenv import load_dotenv
+    env_path = project_root / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"✅ .env 파일 로드 성공: {env_path}")
+    else:
+        print(f"⚠️  .env 파일 없음: {env_path}")
+except ImportError:
+    print("⚠️  python-dotenv 미설치 - 환경 변수 수동 설정 필요")
 
 # ---------------------- 서드파티 라이브러리 ---------------------- #
 import warnings
@@ -410,6 +423,12 @@ def main():
         help="Solar API 샘플링 횟수 (voting 사용 시)"
     )
     parser.add_argument(
+        "--solar_max_tokens",
+        type=int,
+        default=200,
+        help="Solar API 생성 최대 토큰 수"
+    )
+    parser.add_argument(
         "--resume",
         action="store_true",
         help="체크포인트에서 이어서 실행"
@@ -575,6 +594,14 @@ def main():
                     logger
                 )
 
+                # CSV 체크포인트도 저장 (이어서 실행 가능하도록)
+                kfold_csv_path = checkpoint_dir / "kfold_summaries.csv"
+                pd.DataFrame({
+                    'fname': test_df['fname'],
+                    'summary': summaries
+                }).to_csv(kfold_csv_path, index=False, encoding='utf-8')
+                logger.write(f"💾 K-Fold CSV 체크포인트 저장: {kfold_csv_path}")
+
         # -------------- 4. HuggingFace 보정 (선택적) -------------- #
         hf_checkpoint = None
         if checkpoint_dir and args.use_pretrained_correction:
@@ -623,6 +650,14 @@ def main():
                         },
                         logger
                     )
+
+                    # CSV 체크포인트도 저장
+                    hf_csv_path = checkpoint_dir / "hf_correction_summaries.csv"
+                    pd.DataFrame({
+                        'fname': test_df['fname'],
+                        'summary': summaries
+                    }).to_csv(hf_csv_path, index=False, encoding='utf-8')
+                    logger.write(f"💾 HuggingFace CSV 체크포인트 저장: {hf_csv_path}")
             except Exception as e:
                 logger.write(f"❌ HuggingFace 보정 실패: {e}")
                 logger.write("  ⚠️  보정 없이 진행")
@@ -668,7 +703,8 @@ def main():
                     batch_size=args.solar_batch_size,
                     delay=args.solar_delay,
                     use_voting=args.solar_use_voting,
-                    n_samples=args.solar_n_samples
+                    n_samples=args.solar_n_samples,
+                    max_tokens=args.solar_max_tokens
                 )
 
                 # KoBART 요약과 Solar 요약 앙상블 (가중 평균)
@@ -696,6 +732,14 @@ def main():
                         },
                         logger
                     )
+
+                    # CSV 체크포인트도 저장
+                    solar_csv_path = checkpoint_dir / "solar_api_summaries.csv"
+                    pd.DataFrame({
+                        'fname': test_df['fname'],
+                        'summary': summaries
+                    }).to_csv(solar_csv_path, index=False, encoding='utf-8')
+                    logger.write(f"💾 Solar API CSV 체크포인트 저장: {solar_csv_path}")
 
             except ImportError as e:
                 logger.write(f"❌ Solar API 모듈 임포트 실패: {e}")
