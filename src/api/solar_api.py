@@ -86,7 +86,32 @@ class SolarAPI:
         original = text
         modified = text
 
-        # 1. 한글 + 알파벳 조합 제거 (예: "친구 A" → "친구")
+        # 1. "친구 A와 친구 B" → "두 친구" (동일 역할 2명 패턴)
+        # 가장 먼저 처리해야 함 (다른 패턴보다 우선)
+        same_role_patterns = [
+            (r'(친구|동료|연인|형제|자매)\s+([A-D])와\s+\1\s+([A-D])(?=[가이와과에한의은는을를도께부까]|\s)', r'두 \1'),
+            (r'(상사|비서|직원|관리자|팀원)\s+([A-D])와\s+\1\s+([A-D])(?=[가이와과에한의은는을를도께부까]|\s)', r'두 \1'),
+            (r'(고객|손님|구매자|회원)\s+([A-D])와\s+\1\s+([A-D])(?=[가이와과에한의은는을를도께부까]|\s)', r'두 \1'),
+            (r'(학생|선생님|교수)\s+([A-D])와\s+\1\s+([A-D])(?=[가이와과에한의은는을를도께부까]|\s)', r'두 \1'),
+        ]
+
+        for pattern, replacement in same_role_patterns:
+            modified = re.sub(pattern, replacement, modified, flags=re.IGNORECASE)
+
+        # 2. "친구 Francis" → "Francis" (역할 + 이름 → 이름만)
+        # 이름 앞의 불필요한 역할 제거
+        role_name_patterns = [
+            # 영어 이름: Francis, Mary, Tom, Sarah 등
+            r'(친구|동료|연인|상사|비서|직원|고객|손님)\s+([A-Z][a-z]+)(?=[가이와과에한의은는을를도께부까]|\s|$|,|\.)',
+            # Mr./Ms./Mrs. + 성: Mr. Polly, Ms. Dawson
+            r'(친구|동료|연인|상사|비서|직원|고객|손님)\s+(Mr\.|Ms\.|Mrs\.)\s+([A-Z][a-z]+)(?=[가이와과에한의은는을를도께부까]|\s|$|,|\.)',
+        ]
+
+        for pattern in role_name_patterns:
+            # 이름만 남기기
+            modified = re.sub(pattern, lambda m: m.group(2) if len(m.groups()) == 2 else f"{m.group(2)} {m.group(3)}", modified, flags=re.IGNORECASE)
+
+        # 3. 한글 + 알파벳 조합 제거 (예: "친구 A" → "친구")
         # 조사 포함: 가, 이, 와, 과, 에게, 한테, 의, 은, 는, 을, 를, 도, 께서, 부터, 까지
         korean_letter_patterns = [
             # 가족/친구
@@ -262,7 +287,7 @@ class SolarAPI:
             메시지 리스트
         """
         # 프롬프트 버전 (캐시 무효화용)
-        PROMPT_VERSION = "v3.3_role_analysis_with_examples"
+        PROMPT_VERSION = "v3.4_강화된_post_processing"
 
         system_prompt = f"""[{PROMPT_VERSION}] 당신은 대화 요약 전문가입니다.
 
@@ -627,7 +652,7 @@ Summary:"""
             raise RuntimeError("Solar API 클라이언트가 초기화되지 않음")
 
         # 캐시 확인 (프롬프트 버전 포함)
-        PROMPT_VERSION = "v3.3_role_analysis_with_examples"
+        PROMPT_VERSION = "v3.4_강화된_post_processing"
         cache_key_string = f"{PROMPT_VERSION}_{dialogue}"
         cache_key = hashlib.md5(cache_key_string.encode()).hexdigest()
         if cache_key in self.cache:
@@ -774,8 +799,8 @@ Summary:"""
         example_dialogue: Optional[str] = None,
         example_summary: Optional[str] = None,
         n_samples: int = 3,
-        temperature: float = 0.3,
-        top_p: float = 0.5
+        temperature: float = 0.1,
+        top_p: float = 0.3
     ) -> str:
         """
         K-Fold 방식 다중 샘플링 요약 (Self-Consistency)
@@ -797,7 +822,7 @@ Summary:"""
             raise RuntimeError("Solar API 클라이언트가 초기화되지 않음")
 
         # 캐시 확인 (프롬프트 버전 + n_samples 포함)
-        PROMPT_VERSION = "v3.3_role_analysis_with_examples"
+        PROMPT_VERSION = "v3.4_강화된_post_processing"
         cache_key_string = f"{PROMPT_VERSION}_voting_{n_samples}_{dialogue}"
         cache_key = hashlib.md5(cache_key_string.encode()).hexdigest()
         if cache_key in self.cache:
