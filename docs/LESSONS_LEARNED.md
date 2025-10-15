@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 목차
+## 목차
 
 1. [개요](#개요)
 2. [핵심 교훈 Top 5](#핵심-교훈-top-5)
@@ -33,7 +33,7 @@
 
 ## 핵심 교훈 Top 5
 
-### 1. Loss Gap이 진실을 말한다 ⭐⭐⭐
+### 1. Loss Gap이 진실을 말한다
 
 #### 정의
 ```
@@ -44,28 +44,28 @@ Loss Gap = Train Loss - Eval Loss
 
 | Loss Gap | 의미 | 조치 |
 |----------|------|------|
-| **양수 (+0.15 이상)** | Train > Eval, 정상 학습 | ✅ 제출 고려 |
-| **작은 양수 (+0.0~+0.15)** | 거의 수렴, 과적합 조짐 | ⚠️ 신중하게 제출 |
-| **음수 (-)** | Train < Eval, 과적합 | ❌ 제출 금지 |
+| **양수 (+0.15 이상)** | Train > Eval, 정상 학습 | 제출 고려 |
+| **작은 양수 (+0.0~+0.15)** | 거의 수렴, 과적합 조짐 | 신중하게 제출 |
+| **음수 (-)** | Train < Eval, 과적합 | 제출 금지 |
 
 #### 실험 증거
 
 | 실험 | Train Loss | Eval Loss | Loss Gap | Test 점수 | 결과 |
 |------|------------|-----------|----------|-----------|------|
-| **Exp #7-A** | 1.0278 | 0.5255 | **+0.50** | 47.41 | ✅ 성공 |
-| Exp #7-C | 0.9519 | 0.5474 | +0.40 | (스킵) | ⏭️ 사전 예측 |
-| Exp #7-F | 1.0008 | 0.5293 | +0.47 | 46.62 | ❌ 실패* |
+| **Exp #7-A** | 1.0278 | 0.5255 | **+0.50** | **47.41** | 성공 |
+| Exp #7-C | 0.9519 | 0.5474 | +0.40 | (스킵) | 사전 예측 |
+| Exp #7-F | 1.0008 | 0.5293 | +0.47 | 46.62 | 실패* |
 
 **\*주의**: Exp #7-F는 Loss Gap이 양수였지만 실패했습니다. 이는 **Train 분포 왜곡** (WeightedSampler)으로 인한 것으로, Loss Gap만으로는 충분하지 않을 수 있습니다.
 
 #### Best Practice
 
-✅ **DO**:
-- Loss Gap +0.15 이상 유지
+**DO**:
+- Loss Gap **+0.15 이상** 유지
 - Eval Loss와 Train Loss를 매 epoch 추적
 - Loss Gap 감소 추세 시 Early Stopping
 
-❌ **DON'T**:
+**DON'T**:
 - Loss Gap만 믿고 제출 (분포 왜곡 확인 필요)
 - 음수 Loss Gap인데 제출
 - Loss Gap 없이 Dev ROUGE만 보고 판단
@@ -81,16 +81,16 @@ loss_gap = train_loss - eval_loss
 print(f"Loss Gap: {loss_gap:+.4f}")
 
 if loss_gap >= 0.15:
-    print("✅ 건강한 학습 - 제출 고려")
+    print("건강한 학습 - 제출 고려")
 elif loss_gap >= 0.0:
-    print("⚠️ 주의 - 과적합 조짐, 신중하게 제출")
+    print("주의 - 과적합 조짐, 신중하게 제출")
 else:
-    print("❌ 과적합 - 제출 금지")
+    print("과적합 - 제출 금지")
 ```
 
 ---
 
-### 2. WeightedRandomSampler의 치명적 함정 ⭐⭐⭐
+### 2. WeightedRandomSampler의 치명적 함정
 
 #### 문제 패턴
 
@@ -105,7 +105,7 @@ Epoch당 500회 반복 노출
 ↓
 Train 분포 ≠ Test 분포 (자연 분포)
 ↓
-Test 성능 하락 ❌
+Test 성능 하락
 ```
 
 #### 실패 사례: Exp #7-F
@@ -127,20 +127,20 @@ Test 성능 하락 ❌
 
 #### Best Practice
 
-✅ **DO**:
+**DO**:
 - **증강 + 가중치 없음** (가장 안전)
 - 모든 카테고리를 균등하게 증강 (300~500개)
 - 자연 분포로 학습
 - Loss Gap 양수 유지
 
-❌ **DON'T**:
+**DON'T**:
 - 증강 없이 가중치만 사용 (절대 금지!)
 - 가중치 3.0배 이상 (암기 위험)
 - Dev ROUGE만 보고 성공 판단
 
 #### 올바른 증강 전략
 
-**Option 1: 균등 증강 (추천 ⭐⭐⭐)**
+**Option 1: 균등 증강 (추천)**
 ```python
 # 모든 카테고리를 500개로 증강
 target_samples = 500
@@ -182,14 +182,14 @@ sampler = WeightedRandomSampler(weights, len(weights))
 
 ---
 
-### 3. Dev ROUGE ≠ Test Score ⭐⭐
+### 3. Dev ROUGE ≠ Test Score
 
 #### 실험 증거
 
 | 실험 | Dev ROUGE-1 | Test Score | 상관관계 |
 |------|-------------|------------|----------|
-| Exp #7-A | 36.18% | 47.41 | Dev 낮음, Test 높음 |
-| Exp #7-F | **36.43%** | 46.62 | Dev 높음, Test 낮음 ❌ |
+| Exp #7-A | 36.18% | **47.41** | Dev 낮음, Test 높음 |
+| Exp #7-F | **36.43%** | 46.62 | Dev 높음, Test 낮음 |
 
 **결론**: Dev ROUGE와 Test Score는 **역상관** 가능!
 
@@ -209,13 +209,13 @@ sampler = WeightedRandomSampler(weights, len(weights))
 
 #### Best Practice
 
-✅ **DO**:
+**DO**:
 - **Test 제출만이 유일한 진실**
 - Loss Gap을 우선 지표로 활용
 - Dev는 상대적 비교만 (같은 조건 내)
-- 제출 전 Loss Gap +0.15 이상 확인
+- 제출 전 Loss Gap **+0.15 이상** 확인
 
-❌ **DON'T**:
+**DON'T**:
 - Dev ROUGE 높다고 무조건 제출
 - Dev ROUGE만 보고 성공/실패 판단
 - Dev와 Test 점수를 동일하게 신뢰
@@ -232,22 +232,22 @@ checklist = {
 }
 
 if all(checklist.values()):
-    print("✅ 제출 조건 충족")
+    print("제출 조건 충족")
 else:
-    print("❌ 제출 보류")
+    print("제출 보류")
     print(f"미충족 조건: {[k for k, v in checklist.items() if not v]}")
 ```
 
 ---
 
-### 4. 증강 vs 가중치 ⭐⭐⭐
+### 4. 증강 vs 가중치
 
 #### 비교표
 
 | 방법 | 메커니즘 | 데이터 | 다양성 | 일반화 | 과적합 위험 |
 |------|----------|--------|--------|--------|-------------|
-| **증강** | 새로운 샘플 생성 | ↑ 증가 | ↑ 높음 | ✅ 향상 | ✅ 낮음 |
-| **가중치** | 같은 샘플 반복 | - 유지 | ↓ 낮음 | ❌ 저하 | ❌ 높음 |
+| **증강** | 새로운 샘플 생성 | ↑ 증가 | ↑ 높음 | 향상 | 낮음 |
+| **가중치** | 같은 샘플 반복 | - 유지 | ↓ 낮음 | 저하 | 높음 |
 
 #### 성공 패턴: Exp #7-A (47.41점)
 
@@ -265,7 +265,7 @@ training:
 
 results:
   loss_gap: +0.50          # 안정적
-  test_score: 47.41        # 성공 ✅
+  test_score: 47.41        # 성공
 ```
 
 #### 실패 패턴: Exp #7-F (46.62점)
@@ -285,7 +285,7 @@ training:
 
 results:
   loss_gap: +0.47          # 표면적 양수
-  test_score: 46.62        # 실패 ❌
+  test_score: 46.62        # 실패
 ```
 
 #### Best Practice
@@ -297,7 +297,7 @@ results:
 
 ---
 
-### 5. 단순함의 가치 (KISS 원칙) ⭐⭐⭐
+### 5. 단순함의 가치 (KISS 원칙)
 
 **KISS**: Keep It Simple, Stupid
 
@@ -305,9 +305,9 @@ results:
 
 | 접근법 | 복잡도 | 소요시간 | 점수 변화 | 효율성 |
 |--------|--------|----------|-----------|--------|
-| **LP=0.5** | ⭐ 매우 낮음 | 12초 | **+0.35** | ⭐⭐⭐ 최고 |
-| 데이터 증강 | ⭐⭐⭐ 높음 | 3시간 | -0.06 | ⭐ 낮음 |
-| 가중치 조정 | ⭐⭐ 중간 | 3시간 | -0.79 | ❌ 역효과 |
+| **LP=0.5** | 매우 낮음 | 12초 | **+0.35** | 최고 |
+| 데이터 증강 | 높음 | 3시간 | -0.06 | 낮음 |
+| 가중치 조정 | 중간 | 3시간 | -0.79 | 역효과 |
 
 **인사이트**:
 - 가장 간단한 변경(LP=0.5)이 가장 큰 효과
@@ -316,13 +316,13 @@ results:
 
 #### Best Practice
 
-✅ **DO**:
+**DO**:
 - Baseline부터 시작 (절대 건너뛰지 말 것)
 - **한 번에 하나씩 변경** (A/B 테스트)
 - 간단한 변경부터 시도 (Generation 파라미터 등)
 - 효과 확인 후 다음 단계
 
-❌ **DON'T**:
+**DON'T**:
 - 여러 변경사항 동시 적용
 - Baseline 없이 복잡한 기법부터 시도
 - 효과 미검증 상태에서 다음 변경
@@ -330,7 +330,7 @@ results:
 #### 권장 실험 순서
 
 ```
-Phase 1: Generation 파라미터 (12초, +0.35점) ✅
+Phase 1: Generation 파라미터 (12초, +0.35점)
   ├─ Length Penalty
   ├─ Num Beams
   └─ No Repeat N-gram
@@ -382,8 +382,8 @@ Phase 4: 모델 (3시간+, +1.0~3.0점 예상, High Risk)
 
 #### 4. 제출 전 최종 체크
 
-- [ ] Loss Gap +0.15 이상 ✅
-- [ ] WeightedSampler 사용 안 함 ✅
+- [ ] Loss Gap +0.15 이상
+- [ ] WeightedSampler 사용 안 함
 - [ ] CSV format 올바름 (`,fname,summary` 헤더)
 - [ ] 특수 토큰 제거 (`<s>`, `</s>`, `<pad>` 등)
 - [ ] 제출 횟수 여유분 확인 (최소 2회)
@@ -446,7 +446,7 @@ experiments:
 
 **기대효과**: 반복 억제 강화로 요약 품질 향상
 
-**실제결과**: 47.03점 (-0.44점) ❌
+**실제결과**: 47.03점 (-0.44점)
 
 **원인 분석**:
 1. 모델의 자연스러운 반복 패턴 과도하게 제한
@@ -466,7 +466,7 @@ experiments:
 
 **기대효과**: 소수 카테고리 학습 강화
 
-**실제결과**: Loss Gap +0.40 (#7-A: +0.50보다 낮음) → 제출 스킵 ⏭️
+**실제결과**: Loss Gap +0.40 (#7-A: +0.50보다 낮음) → 제출 스킵
 
 **원인 분석**:
 1. 가중치 5.0배는 여전히 너무 높음
@@ -480,7 +480,7 @@ experiments:
 
 ---
 
-### 실패 #3: WeightedRandomSampler 최종 (Exp #7-F) ⭐ 핵심
+### 실패 #3: WeightedRandomSampler 최종 (Exp #7-F)
 
 **변경사항**:
 - 가중치 낮춤: max 3.70배 (노동/고용), 2.50배 (환경)
@@ -488,7 +488,7 @@ experiments:
 
 **기대효과**: 가중치 낮춰서 안정적 학습
 
-**실제결과**: 46.62점 (-0.79점) ❌ **최대 실패**
+**실제결과**: 46.62점 (-0.79점) **최대 실패**
 
 **원인 분석 (4단계)**:
 
@@ -527,7 +527,7 @@ Loss Gap: +0.47 (표면적 양수)
 → Test에서는 실패
 ```
 
-**교훈 (최중요 ⭐⭐⭐)**:
+**교훈 (최중요)**:
 1. **증강 없으면 가중치 절대 사용 금지**
 2. **Loss Gap 양수 ≠ 항상 성공** (분포 확인 필요)
 3. **Dev 점수도 학습 분포 영향 받음** (Dev: 36.43%, Test: 46.62)
@@ -542,10 +542,10 @@ Loss Gap: +0.47 (표면적 양수)
 **변경사항**: `length_penalty: 1.0 → 0.5`
 
 **성공 요인**:
-1. ✅ **단순성**: 단 1줄 변경
-2. ✅ **효율성**: 12초만에 완료 (추론만 재실행)
-3. ✅ **안전성**: 학습 없이 Generation만 변경
-4. ✅ **효과성**: +0.35점 (가장 큰 개선)
+1. **단순성**: 단 1줄 변경
+2. **효율성**: 12초만에 완료 (추론만 재실행)
+3. **안전성**: 학습 없이 Generation만 변경
+4. **효과성**: +0.35점 (가장 큰 개선)
 
 **Why it worked**:
 - Length Penalty 낮추면 긴 요약 생성
@@ -578,10 +578,10 @@ for lp in generation_params["length_penalty"]:
 - LP=0.5 유지
 
 **성공 요인**:
-1. ✅ **다양성 확보**: 증강으로 새로운 샘플 생성
-2. ✅ **자연 분포 학습**: 가중치 없이 원래 분포 유지
-3. ✅ **Loss Gap 양수**: +0.50 (건강한 학습)
-4. ✅ **재현 가능**: checkpoint-2068 보존
+1. **다양성 확보**: 증강으로 새로운 샘플 생성
+2. **자연 분포 학습**: 가중치 없이 원래 분포 유지
+3. **Loss Gap 양수**: +0.50 (건강한 학습)
+4. **재현 가능**: checkpoint-2068 보존
 
 **Why it worked**:
 - 증강 데이터가 일반화 능력 향상
@@ -609,14 +609,14 @@ trainer = Trainer(train_dataset=train_dataset)  # WeightedSampler X
 
 **상황**: Exp #7-C에서 Loss Gap +0.40 (#7-A: +0.50보다 낮음)
 
-**의사결정**: 제출 스킵 ⏭️
+**의사결정**: 제출 스킵
 
 **결과**: 제출 횟수 1회 절약 (실제로 실패했을 것)
 
 **성공 요인**:
-1. ✅ **Loss Gap 비교**: 절대값이 아닌 상대적 비교
-2. ✅ **신중한 제출**: 확실할 때만 제출
-3. ✅ **제출 횟수 관리**: 12회 제한 내에서 최적화
+1. **Loss Gap 비교**: 절대값이 아닌 상대적 비교
+2. **신중한 제출**: 확실할 때만 제출
+3. **제출 횟수 관리**: 12회 제한 내에서 최적화
 
 **재사용 가능한 패턴**:
 ```python
@@ -625,11 +625,11 @@ current_loss_gap = 0.40
 best_loss_gap = 0.50
 
 if current_loss_gap < best_loss_gap - 0.05:
-    print("⏭️ Loss Gap 감소 → 제출 스킵")
+    print("Loss Gap 감소 → 제출 스킵")
 elif current_loss_gap >= best_loss_gap:
-    print("✅ Loss Gap 개선 → 제출 고려")
+    print("Loss Gap 개선 → 제출 고려")
 else:
-    print("⚠️ 미미한 개선 → 신중하게 판단")
+    print("미미한 개선 → 신중하게 판단")
 ```
 
 ---
@@ -638,7 +638,7 @@ else:
 
 ### Immediate Actions (제출 횟수 리셋 후)
 
-#### 1. 균등 증강 (Balanced Augmentation) [우선순위: ⭐⭐⭐]
+#### 1. 균등 증강 (Balanced Augmentation) [우선순위: 높음]
 
 **목표**: 모든 카테고리를 300~500개로 균등화
 
@@ -664,7 +664,7 @@ augmentation_needed = {
 
 ---
 
-#### 2. Learning Rate 튜닝 [우선순위: ⭐⭐⭐]
+#### 2. Learning Rate 튜닝 [우선순위: 높음]
 
 **목표**: 1e-5 → 3e-5 실험
 
@@ -690,7 +690,7 @@ for lr in learning_rates:
 
 ---
 
-#### 3. Extended Training [우선순위: ⭐⭐]
+#### 3. Extended Training [우선순위: 중간]
 
 **목표**: Epochs 20 → 30, Patience 3 → 5
 
@@ -710,7 +710,7 @@ for lr in learning_rates:
 
 ### Long-term Improvements
 
-#### 4. Larger Models [우선순위: ⭐, 리스크: ⭐⭐⭐]
+#### 4. Larger Models [우선순위: 낮음, 리스크: 높음]
 
 **후보 모델**:
 - `gogamza/kobart-base-v2` (더 큰 KoBART)
@@ -743,10 +743,10 @@ for lr in learning_rates:
 ### Critical Constraints
 
 **제약사항**:
-- ❌ 일일 제출 12회 완전 소진 (현재)
-- ⏰ 일일 리셋 대기 필요
-- ⚠️ Loss Gap +0.15 이상 필수
-- ⚠️ Dev ROUGE는 참고용 (신뢰도 낮음)
+- 일일 제출 12회 완전 소진 (현재)
+- 일일 리셋 대기 필요
+- Loss Gap **+0.15 이상** 필수
+- Dev ROUGE는 참고용 (신뢰도 낮음)
 
 **권장 실험 순서** (제출 횟수 리셋 후):
 1. 균등 증강 (1회 제출) → +0.8~2.0점 예상
@@ -781,9 +781,9 @@ for lr in learning_rates:
 ### 학습 후
 
 ```markdown
-- [ ] Loss Gap +0.15 이상 ✅
+- [ ] Loss Gap +0.15 이상
 - [ ] Dev ROUGE 상승 (참고용)
-- [ ] Train 분포 왜곡 없음 ✅
+- [ ] Train 분포 왜곡 없음
 - [ ] Checkpoint 저장 확인
 - [ ] Inference 실행 및 format 검증
 ```
@@ -791,8 +791,8 @@ for lr in learning_rates:
 ### 제출 전
 
 ```markdown
-- [ ] Loss Gap +0.15 이상 ✅
-- [ ] WeightedSampler 사용 안 함 ✅
+- [ ] Loss Gap +0.15 이상
+- [ ] WeightedSampler 사용 안 함
 - [ ] CSV format 올바름 (`,fname,summary`)
 - [ ] 특수 토큰 제거 (`<s>`, `</s>`, `<pad>`)
 - [ ] 제출 횟수 여유분 확인 (최소 2회)
@@ -812,17 +812,17 @@ for lr in learning_rates:
 
 ## 관련 문서
 
-- [COMPETITION_FINAL_REPORT.md](COMPETITION_FINAL_REPORT.md) - 대회 최종 결과
-- [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md) - 전체 실험 상세 기록
-- [NEXT_STEPS.md](NEXT_STEPS.md) - 향후 개선 방향
-- [RESTART_GUIDE.md](RESTART_GUIDE.md) - 재시작 가이드
-- [ARCHIVE.md](ARCHIVE.md) - 프로젝트 아카이브 가이드
+- `COMPETITION_FINAL_REPORT.md` - 대회 최종 결과
+- `EXPERIMENT_LOG.md` - 전체 실험 상세 기록
+- `NEXT_STEPS.md` - 향후 개선 방향
+- `RESTART_GUIDE.md` - 재시작 가이드
+- `ARCHIVE.md` - 프로젝트 아카이브 가이드
 
 ---
 
 **문서 버전**: 1.0
 **최종 업데이트**: 2025-10-15
 **작성자**: AI Assistant (Claude Code)
-**상태**: ✅ 최종본
+**상태**: 최종본
 
 **활용 가이드**: 이 문서는 향후 NLP 대회에서 재사용 가능한 Best Practices 집합입니다. 각 섹션의 체크리스트와 코드 예시를 복사하여 바로 사용할 수 있습니다.

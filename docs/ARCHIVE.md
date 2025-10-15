@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 목차
+## 목차
 
 1. [개요](#개요)
 2. [현재 디스크 사용량](#현재-디스크-사용량)
@@ -24,10 +24,10 @@
 
 ### 목표
 
-1. **최고 성능 checkpoint 보존** (47.41점, checkpoint-2068)
-2. **불필요한 checkpoint 정리** (실패 실험, 중간 checkpoint)
-3. **디스크 용량 절감** (21GB → 8.4GB, 12.6GB 절감)
-4. **재현 가능성 유지** (문서 + 최고 성능 모델)
+1. 최고 성능 checkpoint를 보존합니다 (**47.41점**, **checkpoint-2068**)
+2. 불필요한 checkpoint를 정리합니다 (실패 실험, 중간 checkpoint)
+3. 디스크 용량을 절감합니다 (21GB → 8.4GB, **12.6GB 절감**)
+4. 재현 가능성을 유지합니다 (문서 + 최고 성능 모델)
 
 ---
 
@@ -37,11 +37,11 @@
 
 | 항목 | 사용량 | 한도 대비 | 상태 |
 |------|--------|-----------|------|
-| **루트 전체** | 279GB | 17% (1.8TB 중) | ✅ 안전 |
-| **프로젝트 전체** | 21GB | 7.5% | ✅ 여유 있음 |
-| **150GB 한도 대비** | 21GB | 14% | ✅ 충분한 여유 |
+| **루트 전체** | 279GB | 17% (1.8TB 중) | 안전 |
+| **프로젝트 전체** | 21GB | 7.5% | 여유 있음 |
+| **150GB 한도 대비** | 21GB | 14% | 충분한 여유 |
 
-**결론**: 현재 디스크 사용량은 매우 안정적이며, 150GB 한도의 14%만 사용 중입니다.
+결론: 현재 디스크 사용량은 매우 안정적이며, 150GB 한도의 14%만 사용 중입니다.
 
 ### 프로젝트 디렉토리 구성
 
@@ -51,7 +51,7 @@
 │   ├── checkpoint-1504/     1.4GB
 │   ├── checkpoint-1692/     1.4GB
 │   ├── checkpoint-1880/     1.4GB
-│   ├── checkpoint-2068/     1.4GB  🏆 최고 성능 (47.41점)
+│   ├── checkpoint-2068/     1.4GB  [최고 성능: 47.41점]
 │   └── checkpoint-2256/     1.4GB
 ├── submission_exp7f/        7.0GB  (실패 실험)
 │   ├── checkpoint-1128/     1.4GB
@@ -93,10 +93,10 @@ checkpoint-XXXX/
 
 ### 최고 성능 Checkpoint 식별
 
-#### 🏆 보존 필수: `submission_exp7a/checkpoint-2068/`
+#### 보존 필수: `submission_exp7a/checkpoint-2068/`
 
 **성능**:
-- **Test Score**: 47.41점 (최고 2위)
+- **Test Score**: **47.41점** (최고 2위)
 - **Loss Gap**: +0.50 (안정적 학습)
 - **Dev ROUGE-1**: 36.18%
 - **Best Epoch**: 11/20
@@ -121,10 +121,10 @@ generation:
 ```
 
 **보존 이유**:
-1. ✅ 최고 성능 (47.41점)
-2. ✅ Loss Gap 양수 (+0.50, 건강한 일반화)
-3. ✅ 증강 데이터 효과 검증됨
-4. ✅ 향후 실험의 기준점
+1. 최고 성능 (**47.41점**)
+2. Loss Gap 양수 (+0.50, 건강한 일반화)
+3. 증강 데이터 효과 검증됨
+4. 향후 실험의 기준점
 
 **재현 방법**:
 ```bash
@@ -134,7 +134,7 @@ python inference.py --experiment exp7a --checkpoint checkpoint-2068
 
 ---
 
-#### ❌ 삭제 대상 Checkpoint
+#### 삭제 대상 Checkpoint
 
 **1. `submission_exp7f/` 전체 (7.0GB)**
 
@@ -146,14 +146,14 @@ python inference.py --experiment exp7a --checkpoint checkpoint-2068
 
 **2. `submission_exp7a/` 일부 (5.6GB)**
 
-**보존**: `checkpoint-2068/` (최고 성능)
+**보존**: **checkpoint-2068/** (최고 성능)
 **삭제**: 나머지 4개 checkpoint
 - `checkpoint-1504` (1.4GB)
 - `checkpoint-1692` (1.4GB)
 - `checkpoint-1880` (1.4GB)
 - `checkpoint-2256` (1.4GB)
 
-**이유**: Best Epoch 11 (checkpoint-2068)만 필요
+**이유**: Best Epoch 11 (**checkpoint-2068**)만 필요
 
 **3. `submission/` 전체 (7.0GB) - 선택적**
 
@@ -162,7 +162,7 @@ python inference.py --experiment exp7a --checkpoint checkpoint-2068
 - 재현은 코드로 가능
 - 역사적 가치만 있음
 
-**⚠️ 주의**: Baseline 재현이 필요하면 보존
+**주의**: Baseline 재현이 필요하면 보존
 
 ---
 
@@ -177,13 +177,13 @@ python inference.py --experiment exp7a --checkpoint checkpoint-2068
 | `run-20251015_015350-qak765vu` | 1.9MB | 2025-10-15 | Exp #7-F 최종 |
 | **총합** | **6.3MB** | - | 5개 run |
 
-**평가**: Wandb 로그는 무시할 수 있을 정도로 작음 (6.3MB). **삭제 불필요**.
+평가: Wandb 로그는 무시할 수 있을 정도로 작음 (6.3MB). 삭제 불필요.
 
 ---
 
 ## 정리 권장사항
 
-### 시나리오 A: 보수적 정리 (권장 ⭐⭐⭐)
+### 시나리오 A: 보수적 정리 (권장)
 
 **삭제**:
 - `submission_exp7f/` 전체 (7.0GB)
@@ -194,9 +194,9 @@ python inference.py --experiment exp7a --checkpoint checkpoint-2068
 **보존**: 최고 성능 checkpoint + baseline
 
 **장점**:
-- ✅ Baseline 재현 가능
-- ✅ 최고 성능 checkpoint 보존
-- ✅ 충분한 디스크 공간 확보
+- Baseline 재현 가능
+- 최고 성능 checkpoint 보존
+- 충분한 디스크 공간 확보
 
 **명령어**:
 ```bash
@@ -220,11 +220,11 @@ rm -rf checkpoint-1504 checkpoint-1692 checkpoint-1880 checkpoint-2256
 **남는 용량**: **1.4GB** (최고 성능 checkpoint만)
 
 **장점**:
-- ✅ 최대 디스크 공간 확보
-- ✅ 최고 성능 checkpoint만 보존
+- 최대 디스크 공간 확보
+- 최고 성능 checkpoint만 보존
 
 **단점**:
-- ⚠️ Baseline 재현 불가 (코드로는 가능)
+- Baseline 재현 불가 (코드로는 가능)
 
 **명령어**:
 ```bash
@@ -243,8 +243,8 @@ rm -rf /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/submission/
 **남는 용량**: **14GB**
 
 **장점**:
-- ✅ 최소한의 변경
-- ✅ 모든 성공 실험 보존
+- 최소한의 변경
+- 모든 성공 실험 보존
 
 **명령어**:
 ```bash
@@ -257,9 +257,9 @@ rm -rf /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/submission_ex
 
 | 시나리오 | 삭제 대상 | 절감 | 남는 크기 | 보존 | 권장도 |
 |---------|----------|------|-----------|------|--------|
-| **A (보수적)** | exp7f + exp7a 일부 | 12.6GB | 8.4GB | Best + Baseline | ⭐⭐⭐ |
-| **B (공격적)** | exp7f + exp7a 일부 + baseline | 19.6GB | 1.4GB | Best만 | ⭐⭐ |
-| **C (최소)** | exp7f만 | 7.0GB | 14GB | All success | ⭐ |
+| **A (보수적)** | exp7f + exp7a 일부 | **12.6GB** | **8.4GB** | Best + Baseline | 권장 |
+| **B (공격적)** | exp7f + exp7a 일부 + baseline | **19.6GB** | **1.4GB** | Best만 | 차선 |
+| **C (최소)** | exp7f만 | **7.0GB** | **14GB** | All success | 최소 |
 
 ---
 
@@ -289,9 +289,9 @@ echo ""
 echo "[2/6] 최고 성능 checkpoint 존재 확인..."
 BEST_CHECKPOINT="/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/submission_exp7a/checkpoint-2068"
 if [ -d "${BEST_CHECKPOINT}" ]; then
-    echo "✅ checkpoint-2068 존재함 (보존)"
+    echo "[확인] checkpoint-2068 존재함 (보존)"
 else
-    echo "❌ checkpoint-2068 없음! 정리 중단"
+    echo "[오류] checkpoint-2068 없음! 정리 중단"
     exit 1
 fi
 echo ""
@@ -301,9 +301,9 @@ echo "[3/6] 실패 실험 삭제 (submission_exp7f/)..."
 EXP7F_DIR="/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/submission_exp7f"
 if [ -d "${EXP7F_DIR}" ]; then
     rm -rf "${EXP7F_DIR}"
-    echo "✅ submission_exp7f/ 삭제 완료 (7.0GB 절감)"
+    echo "[완료] submission_exp7f/ 삭제 완료 (7.0GB 절감)"
 else
-    echo "⚠️ submission_exp7f/ 이미 없음"
+    echo "[경고] submission_exp7f/ 이미 없음"
 fi
 echo ""
 
@@ -315,12 +315,12 @@ CHECKPOINTS_TO_DELETE=("checkpoint-1504" "checkpoint-1692" "checkpoint-1880" "ch
 for CKPT in "${CHECKPOINTS_TO_DELETE[@]}"; do
     if [ -d "${CKPT}" ]; then
         rm -rf "${CKPT}"
-        echo "  ✅ ${CKPT} 삭제"
+        echo "  [완료] ${CKPT} 삭제"
     else
-        echo "  ⚠️ ${CKPT} 이미 없음"
+        echo "  [경고] ${CKPT} 이미 없음"
     fi
 done
-echo "✅ exp7a 4개 checkpoint 삭제 완료 (5.6GB 절감)"
+echo "[완료] exp7a 4개 checkpoint 삭제 완료 (5.6GB 절감)"
 echo ""
 
 # 최종 확인
@@ -333,10 +333,10 @@ echo ""
 # 보존된 checkpoint 확인
 echo "[6/6] 보존된 checkpoint 확인..."
 if [ -d "submission_exp7a/checkpoint-2068" ]; then
-    echo "✅ 최고 성능 checkpoint 보존: submission_exp7a/checkpoint-2068/"
+    echo "[확인] 최고 성능 checkpoint 보존: submission_exp7a/checkpoint-2068/"
 fi
 if [ -d "submission" ]; then
-    echo "✅ Baseline checkpoint 보존: submission/"
+    echo "[확인] Baseline checkpoint 보존: submission/"
 fi
 echo ""
 
@@ -456,7 +456,7 @@ cd /Competition/NLP/naturallanguageprocessingcompetition-nlp-1
 # 정리 전 현재 상태 커밋
 git add .
 git commit -m "$(cat <<'EOF'
-📸 대회 종료 전 최종 스냅샷
+대회 종료 전 최종 스냅샷
 
 현재 상태:
 - 최고 점수: 47.47점 (Phase 1: LP=0.5)
@@ -465,7 +465,7 @@ git commit -m "$(cat <<'EOF'
 
 다음 단계: 정리 작업 (시나리오 A)
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
@@ -476,7 +476,7 @@ EOF
 # 정리 후 최종 커밋
 git add .
 git commit -m "$(cat <<'EOF'
-🗑️ 대회 종료 후 아카이브 정리 (시나리오 A)
+대회 종료 후 아카이브 정리 (시나리오 A)
 
 정리 내용:
 - submission_exp7f/ 전체 삭제 (7.0GB 절감)
@@ -488,7 +488,7 @@ git commit -m "$(cat <<'EOF'
 - submission/ (Baseline)
 - 모든 코드 및 문서
 
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
+Generated with [Claude Code](https://claude.com/claude-code)
 
 Co-Authored-By: Claude <noreply@anthropic.com>
 EOF
@@ -634,7 +634,7 @@ python inference.py \
 ### 정리 전
 
 - [ ] 현재 디스크 사용량 확인 (`du -sh`)
-- [ ] `checkpoint-2068` 백업 확인
+- [ ] **checkpoint-2068** 백업 확인
 - [ ] `EXPERIMENT_LOG.md` 최신 상태 확인
 - [ ] Git commit (현재 상태)
 
@@ -647,9 +647,9 @@ python inference.py \
 
 ### 문서 업데이트
 
-- [ ] `COMPETITION_FINAL_REPORT.md` 최신화 ✅
-- [ ] `LESSONS_LEARNED.md` 작성 ✅
-- [ ] `ARCHIVE.md` 작성 ✅
+- [완료] `COMPETITION_FINAL_REPORT.md` 최신화
+- [완료] `LESSONS_LEARNED.md` 작성
+- [완료] `ARCHIVE.md` 작성
 - [ ] `README.md` 최종 성과 기록
 - [ ] `.gitignore` 업데이트
 
@@ -661,7 +661,7 @@ python inference.py \
 
 ### 최종 아카이브
 
-- [ ] `checkpoint-2068` 외부 백업 (선택적)
+- [ ] **checkpoint-2068** 외부 백업 (선택적)
 - [ ] 실험 로그 PDF 변환 (선택적)
 - [ ] 프로젝트 회고 작성 (선택적)
 
@@ -681,6 +681,6 @@ python inference.py \
 **문서 버전**: 1.0
 **최종 업데이트**: 2025-10-15
 **작성자**: AI Assistant (Claude Code)
-**상태**: ✅ 최종본
+**상태**: 최종본
 
-**권장 조치**: 시나리오 A (보수적 정리) 실행 → 12.6GB 절감, 최고 성능 + Baseline 보존
+**권장 조치**: 시나리오 A (보수적 정리) 실행 → **12.6GB 절감**, 최고 성능 + Baseline 보존
