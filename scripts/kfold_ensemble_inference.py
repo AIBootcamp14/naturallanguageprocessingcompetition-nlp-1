@@ -14,6 +14,7 @@ K-Fold 모델 앙상블 추론 스크립트
 
 # ---------------------- 표준 라이브러리 ---------------------- #
 import sys
+import os
 import argparse
 from pathlib import Path
 from datetime import datetime
@@ -22,6 +23,18 @@ import pickle
 # 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
+
+# .env 파일에서 환경 변수 로드
+try:
+    from dotenv import load_dotenv
+    env_path = project_root / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"✅ .env 파일 로드 성공: {env_path}")
+    else:
+        print(f"⚠️  .env 파일 없음: {env_path}")
+except ImportError:
+    print("⚠️  python-dotenv 미설치 - 환경 변수 수동 설정 필요")
 
 # ---------------------- 서드파티 라이브러리 ---------------------- #
 import warnings
