@@ -423,6 +423,12 @@ def main():
         help="Solar API 샘플링 횟수 (voting 사용 시)"
     )
     parser.add_argument(
+        "--solar_max_tokens",
+        type=int,
+        default=200,
+        help="Solar API 생성 최대 토큰 수"
+    )
+    parser.add_argument(
         "--resume",
         action="store_true",
         help="체크포인트에서 이어서 실행"
@@ -697,7 +703,8 @@ def main():
                     batch_size=args.solar_batch_size,
                     delay=args.solar_delay,
                     use_voting=args.solar_use_voting,
-                    n_samples=args.solar_n_samples
+                    n_samples=args.solar_n_samples,
+                    max_tokens=args.solar_max_tokens
                 )
 
                 # KoBART 요약과 Solar 요약 앙상블 (가중 평균)

@@ -1,5 +1,5 @@
 """
-Solar API 통합 v3.7
+Solar API 통합 v3.9
 
 대폭 개선된 버전:
 1. 프롬프트 간소화 + 강력한 경고
@@ -7,6 +7,8 @@ Solar API 통합 v3.7
 3. Post-processing 대폭 강화
 4. 이름 우선순위 강제 적용
 5. 조사 처리 완전 수정
+6. 고립된 조사 제거 (v3.8) - "가 Brian" → "Brian"
+7. 조사 연쇄 및 문장 중간 조사 완전 제거 (v3.9 신규)
 """
 
 import os
@@ -19,7 +21,7 @@ from pathlib import Path
 
 
 class SolarAPI:
-    """Solar API 클라이언트 v3.7 (대폭 개선)"""
+    """Solar API 클라이언트 v3.9 (조사 연쇄 및 문장 중간 조사 완전 제거)"""
 
     def __init__(
         self,
@@ -105,7 +107,7 @@ class SolarAPI:
 
     def _validate_and_fix_summary(self, text: str, dialogue: str) -> str:
         """
-        요약문 검증 및 강제 수정 (Post-processing v3.7)
+        요약문 검증 및 강제 수정 (Post-processing v3.9)
 
         GPT 분석 기반 대폭 개선:
         1. 이름 우선순위 강제 적용
@@ -113,6 +115,10 @@ class SolarAPI:
         3. "친구 A", "친구 B" 강제 제거
         4. 역할+이름 충돌 해결
         5. 플레이스홀더 완전 제거
+        6. 고립된 조사 제거 (v3.8) - "가 Brian" → "Brian"
+        7. 조사 연쇄 완전 제거 (v3.9 신규) - "가에게", "는에게" 등
+        8. 형용사+조사 패턴 제거 (v3.9 신규) - "보이는에게" → "보이는 사람에게"
+        9. 문장 중간 고립 조사 제거 (v3.9 신규) - ". 는" → ". "
 
         Args:
             text: Solar API 출력 텍스트
@@ -257,7 +263,89 @@ class SolarAPI:
         modified = re.sub(r'^[A-D](?=[가이와과에한의은는을를도께부까서]|\s|,|\.)', '', modified, flags=re.IGNORECASE)
 
         # ═══════════════════════════════════════════════════════════
-        # STEP 8: 정리 (공백, 구두점)
+        # STEP 7.5: 알파벳+조사 연쇄 완전 제거 (v3.8 신규)
+        # ═══════════════════════════════════════════════════════════
+
+        # "A가 Brian" → "Brian"
+        # "B는 Tom" → "Tom"
+        # 알파벳+조사를 공백과 함께 완전 제거
+        alphabet_particle_patterns = [
+            r'\b[A-D](가|이|는|은|를|을|에게|에서|에|한테|와|과|도|만|부터|까지|께|께서|의)\s+',
+            r'^[A-D](가|이|는|은|를|을|에게|에서|에|한테|와|과|도|만|부터|까지|께|께서|의)\s+',
+        ]
+
+        for pattern in alphabet_particle_patterns:
+            modified = re.sub(pattern, '', modified, flags=re.IGNORECASE)
+
+        # ═══════════════════════════════════════════════════════════
+        # STEP 7.8: 조사 연쇄 제거 (v3.9 신규)
+        # ═══════════════════════════════════════════════════════════
+
+        # "가에게" → ""
+        # "는에게" → ""
+        # "가에게의" → ""
+        # "를에게" → ""
+        particle_chain_patterns = [
+            # 조사+조사 조합 (2개)
+            r'(가|이|는|은|를|을)(에게|에서|의|와|과|한테)\s*',
+            # 조사+조사+조사 조합 (3개)
+            r'(가|이|는|은|를|을)(에게|에서|한테)(의|와|과)\s*',
+        ]
+
+        for pattern in particle_chain_patterns:
+            modified = re.sub(pattern, '', modified, flags=re.IGNORECASE)
+
+        # ═══════════════════════════════════════════════════════════
+        # STEP 7.9: 형용사/동사+조사 연쇄 제거 (v3.9 신규)
+        # ═══════════════════════════════════════════════════════════
+
+        # "피곤해 보이는에게" → "피곤해 보이는 사람에게"
+        # "이웃인와" → "이웃과"
+        adjective_particle_patterns = [
+            # "~는에게" → "~는 사람에게"
+            (r'([가-힣]+는)(에게|에서|한테)', r'\1 사람\2'),
+            # "~인와/과" → "~과/와"
+            (r'([가-힣]{2,})인(와|과)', r'\1\2'),
+            # "~인가" → "~가"
+            (r'([가-힣]{2,})인(가|이)(\s)', r'\1\2\3'),
+        ]
+
+        for pattern, replacement in adjective_particle_patterns:
+            modified = re.sub(pattern, replacement, modified, flags=re.IGNORECASE)
+
+        # ═══════════════════════════════════════════════════════════
+        # STEP 8: 문장 시작의 고립된 조사 제거 (v3.8)
+        # ═══════════════════════════════════════════════════════════
+
+        # "가 Brian의..." → "Brian의..."
+        # 주어가 완전히 사라지고 조사만 남은 경우 제거
+        isolated_particle_pattern = r'^(가|이|는|은|를|을|에게|에서|에|한테|와|과|도|만|부터|까지|께|께서|의)\s+'
+        modified = re.sub(isolated_particle_pattern, '', modified)
+
+        # ═══════════════════════════════════════════════════════════
+        # STEP 8.5: 문장 중간 고립 조사 제거 (v3.9 신규)
+        # ═══════════════════════════════════════════════════════════
+
+        # "논의함. 는 스트레스가" → "논의함. 스트레스가"
+        # ". 가 도움을" → ". 도움을"
+        middle_particle_pattern = r'([.!?])\s+(가|이|는|은|를|을|에게|에서|의|와|과|한테|도|만)\s+'
+        modified = re.sub(middle_particle_pattern, r'\1 ', modified)
+
+        # ═══════════════════════════════════════════════════════════
+        # STEP 8: 문장 시작의 고립된 조사 제거 (v3.8)
+        # ═══════════════════════════════════════════════════════════
+
+        # "가 Brian의..." → "Brian의..."
+        # 주어가 완전히 사라지고 조사만 남은 경우 제거
+        isolated_particle_pattern = r'^(가|이|는|은|를|을|에게|에서|에|한테|와|과|도|만|부터|까지|께|께서)\s+'
+        modified = re.sub(isolated_particle_pattern, '', modified)
+
+        # 공백 정리 (연속 공백 제거)
+        modified = re.sub(r'\s+', ' ', modified)
+        modified = modified.strip()
+
+        # ═══════════════════════════════════════════════════════════
+        # STEP 10: 정리 (공백, 구두점)
         # ═══════════════════════════════════════════════════════════
 
         # 연속 공백 제거
@@ -270,7 +358,7 @@ class SolarAPI:
         modified = re.sub(r'([,.])(?=[가-힣A-Za-z])', r'\1 ', modified)
 
         # ═══════════════════════════════════════════════════════════
-        # STEP 9: 검증
+        # STEP 11: 검증
         # ═══════════════════════════════════════════════════════════
 
         # 플레이스홀더 잔존 확인
@@ -358,7 +446,7 @@ class SolarAPI:
         example_summary: Optional[str] = None
     ) -> List[Dict[str, str]]:
         """
-        Few-shot 프롬프트 생성 (v3.7 - 대폭 간소화)
+        Few-shot 프롬프트 생성 (v3.9 - 포괄적 조사 제거)
 
         Args:
             dialogue: 입력 대화
@@ -369,7 +457,7 @@ class SolarAPI:
             메시지 리스트
         """
         # 프롬프트 버전
-        PROMPT_VERSION = "v3.7_simplified_with_fewshot"
+        PROMPT_VERSION = "v3.9_comprehensive_particle_removal"
 
         # 간소화된 시스템 프롬프트 (핵심만!)
         system_prompt = f"""[{PROMPT_VERSION}] 당신은 대화 요약 전문가입니다.
@@ -465,14 +553,15 @@ Summary:"""
         example_dialogue: Optional[str] = None,
         example_summary: Optional[str] = None,
         temperature: float = 0.2,
-        top_p: float = 0.3
+        top_p: float = 0.3,
+        max_tokens: int = 200
     ) -> str:
         """단일 대화 요약"""
         if not self.client:
             raise RuntimeError("Solar API 클라이언트가 초기화되지 않음")
 
         # 캐시 확인
-        PROMPT_VERSION = "v3.7_simplified_with_fewshot"
+        PROMPT_VERSION = "v3.9_comprehensive_particle_removal"
         cache_key_string = f"{PROMPT_VERSION}_{dialogue}"
         cache_key = hashlib.md5(cache_key_string.encode()).hexdigest()
         if cache_key in self.cache:
@@ -496,7 +585,7 @@ Summary:"""
                 messages=messages,
                 temperature=temperature,
                 top_p=top_p,
-                max_tokens=200
+                max_tokens=max_tokens
             )
 
             summary = response.choices[0].message.content.strip()
@@ -558,14 +647,15 @@ Summary:"""
         example_summary: Optional[str] = None,
         n_samples: int = 3,
         temperature: float = 0.1,
-        top_p: float = 0.3
+        top_p: float = 0.3,
+        max_tokens: int = 200
     ) -> str:
         """K-Fold 방식 다중 샘플링 요약"""
         if not self.client:
             raise RuntimeError("Solar API 클라이언트가 초기화되지 않음")
 
         # 캐시 확인
-        PROMPT_VERSION = "v3.7_simplified_with_fewshot"
+        PROMPT_VERSION = "v3.9_comprehensive_particle_removal"
         cache_key_string = f"{PROMPT_VERSION}_voting_{n_samples}_{dialogue}"
         cache_key = hashlib.md5(cache_key_string.encode()).hexdigest()
         if cache_key in self.cache:
@@ -602,7 +692,7 @@ Summary:"""
                             messages=messages,
                             temperature=temperature,
                             top_p=top_p,
-                            max_tokens=200
+                            max_tokens=max_tokens
                         )
 
                         summary = response.choices[0].message.content.strip()
@@ -670,7 +760,8 @@ Summary:"""
         batch_size: int = 10,
         delay: float = 1.0,
         use_voting: bool = False,
-        n_samples: int = 3
+        n_samples: int = 3,
+        max_tokens: int = 200
     ) -> List[str]:
         """배치 요약"""
         summaries = []
@@ -690,24 +781,35 @@ Summary:"""
                 self._log(f"[배치 {batch_start}-{batch_end}/{len(dialogues)}] 처리 중...")
 
                 batch_summaries = []
-                for dialogue in batch:
+                for idx, dialogue in enumerate(batch):
+                    dialogue_idx = i + idx + 1
+
+                    # 대화문 출력 (첫 100자)
+                    dialogue_preview = dialogue[:100].replace('\n', ' ')
+                    self._log(f"\n[{dialogue_idx}/{len(dialogues)}] 대화: {dialogue_preview}...")
+
                     if use_voting:
                         summary = self.summarize_with_voting(
                             dialogue,
                             example_dialogue,
                             example_summary,
-                            n_samples=n_samples
+                            n_samples=n_samples,
+                            max_tokens=max_tokens
                         )
                     else:
                         summary = self.summarize(
                             dialogue,
                             example_dialogue,
-                            example_summary
+                            example_summary,
+                            max_tokens=max_tokens
                         )
                     batch_summaries.append(summary)
 
+                    # 요약 결과 출력
+                    self._log(f"[{dialogue_idx}/{len(dialogues)}] 요약: {summary}")
+
                 summaries.extend(batch_summaries)
-                self._log(f"  ✅ 완료 (누적: {len(summaries)}/{len(dialogues)})")
+                self._log(f"\n  ✅ 배치 완료 (누적: {len(summaries)}/{len(dialogues)})")
 
                 if i + batch_size < len(dialogues):
                     time.sleep(delay)
