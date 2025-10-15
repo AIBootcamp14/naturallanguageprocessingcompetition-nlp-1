@@ -40,6 +40,9 @@ data/*.csv
 data/*.json
 !data/.gitkeep
 
+# 제출 파일은 포함 (중요!)
+!submission_exp*.csv
+
 # 모델 체크포인트 및 학습 결과물
 checkpoints/
 checkpoint/
@@ -48,6 +51,8 @@ predictions/
 output/
 outputs/
 results/
+submission_exp*/
+!submission_exp*.csv
 *.pth
 *.pt
 *.bin

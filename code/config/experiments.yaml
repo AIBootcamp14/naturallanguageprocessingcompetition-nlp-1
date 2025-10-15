@@ -1,0 +1,142 @@
+# 모든 실험 설정 통합 파일
+# 사용법: python train.py --experiment exp7a
+# 사용법: python inference.py --experiment exp7a --checkpoint checkpoint-2068
+
+defaults:
+  general:
+    data_path: /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/data
+    model_name: digit82/kobart-summarization
+
+  tokenizer:
+    bos_token: <s>
+    eos_token: </s>
+    encoder_max_len: 768
+    decoder_max_len: 100
+    special_tokens:
+      - '#Person1#'
+      - '#Person2#'
+      - '#Person3#'
+      - '#PhoneNumber#'
+      - '#Address#'
+      - '#PassportNumber#'
+
+  training:
+    do_train: true
+    do_eval: true
+    num_train_epochs: 20
+    learning_rate: 1.0e-05
+    per_device_train_batch_size: 24
+    per_device_eval_batch_size: 24
+    gradient_accumulation_steps: 3
+    gradient_checkpointing: true
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+    lr_scheduler_type: cosine
+    optim: adamw_torch
+    fp16: true
+    evaluation_strategy: epoch
+    save_strategy: epoch
+    save_total_limit: 5
+    load_best_model_at_end: true
+    early_stopping_patience: 3
+    early_stopping_threshold: 0.001
+    logging_dir: ./logs
+    logging_strategy: epoch
+    predict_with_generate: true
+    generation_max_length: 100
+    overwrite_output_dir: true
+    seed: 42
+    report_to: none
+
+  inference:
+    batch_size: 32
+    generate_max_length: 100
+    num_beams: 4
+    no_repeat_ngram_size: 2
+    early_stopping: true
+    length_penalty: 0.5
+    remove_tokens:
+      - <usr>
+      - <s>
+      - </s>
+      - <pad>
+    result_path: ./prediction/
+
+  wandb:
+    entity: bkan-ai
+    project: dialogue-summarization-competition
+
+# 개별 실험 설정 (defaults를 오버라이드)
+experiments:
+  exp7a:
+    description: "증강 데이터 학습 (가중치 없음 - 베이스라인)"
+    general:
+      output_dir: /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/submission_exp7a
+
+    data:
+      use_weights: false
+      train_file: train.csv  # augmentation_final.csv를 train.csv로 복사하여 사용
+
+    wandb:
+      name: exp7a-augmented-baseline
+      tags:
+        - exp7
+        - exp7a
+        - augmented
+        - no-weight
+        - baseline
+      group: exp7-augmented-training
+      notes: "Augmented data (13,465) with natural distribution, no weighted sampling"
+
+  exp7f:
+    description: "증강 데이터 학습 (최종 가중치 전략)"
+    general:
+      output_dir: /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/submission_exp7f
+
+    data:
+      use_weights: true
+      train_file: train.csv  # augmentation_final.csv를 train.csv로 복사하여 사용
+
+      # 가중치 설정 (최종 전략)
+      weight_config:
+        domain_threshold: 500  # 500개 이상은 1.0x 유지
+        subcluster_threshold: 300  # 300개 이상은 1.0x 유지
+
+        # 도메인 가중치 (500개 기준)
+        domain_weights:
+          '노동/고용': 3.70
+          '환경': 2.50
+          '스포츠': 2.50
+          '종교/신념': 2.50
+          '정치/정부': 2.50
+          '문화/엔터테인먼트': 1.42
+          '쇼핑/소매': 1.25
+          '과학/기술': 1.25
+          '금융/비즈니스': 1.19
+          '건강/의료': 1.0
+          '교육/학습': 1.0
+          '여행/교통': 1.0
+          '여가/라이프스타일': 1.0
+
+        # 서브클러스터 가중치 (300개 기준, 인간관계/일상에만 적용)
+        subcluster_weights:
+          '감정 지원': 2.31
+          '친구 상담': 2.08
+          '일상 대화': 1.44
+          '갈등 해결': 1.0
+          '행사/파티 계획': 1.0
+          '조언/안내': 1.0
+          '업무/직장': 1.0
+          '육아/자녀': 1.0
+          '가족/친구': 1.0
+
+    wandb:
+      name: exp7f-augmented-final-weights
+      tags:
+        - exp7
+        - exp7f
+        - augmented
+        - weighted
+        - final
+      group: exp7-augmented-training
+      notes: "Final weights: domain threshold=500, subcluster threshold=300"

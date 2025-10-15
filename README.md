@@ -3,7 +3,8 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/HS6nBbT4)
 
 **대회**: NIKLuge 2024 - 일상 대화 요약
-**현재 Best Score**: 46.94점 (Baseline)
+**현재 Best Score**: 47.47점 (Phase 1, LP=0.5)
+**최근 실험**: 47.41점 (Exp #7-A, 증강 데이터)
 **목표**: 50점 이상 달성
 
 ---
