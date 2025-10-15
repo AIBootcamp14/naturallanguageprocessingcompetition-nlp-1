@@ -1,5 +1,8 @@
 # EDA 분석 결과 및 실행 로드맵
 
+> **이론적 배경**: 데이터 통계 및 전문가 전략은 [`/docs/EDA.md`](../../../docs/EDA.md) 참고
+> **현재 문서 목적**: Day-by-Day 실행 계획 및 즉시 적용 (실무 가이드)
+
 **분석 날짜**: 2025-10-13
 **분석 방법**: 5개 병렬 agents (file-analyzer × 2, general-purpose × 3)
 **현재 점수**: 46.9526 (Baseline Modular)

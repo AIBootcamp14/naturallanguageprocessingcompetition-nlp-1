@@ -104,7 +104,7 @@ def get_training_arguments(config: dict) -> Seq2SeqTrainingArguments:
         lr_scheduler_type=training_config['lr_scheduler_type'],
         optim=training_config['optim'],
         gradient_accumulation_steps=training_config['gradient_accumulation_steps'],
-        evaluation_strategy=training_config['evaluation_strategy'],
+        eval_strategy=training_config['evaluation_strategy'],  # evaluation_strategy → eval_strategy (transformers 최신 버전)
         save_strategy=training_config['save_strategy'],
         save_total_limit=training_config['save_total_limit'],
         fp16=training_config['fp16'],

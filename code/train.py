@@ -15,6 +15,7 @@
 import sys
 import os
 import argparse
+import importlib.util
 
 # 경로 설정
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,8 +30,13 @@ import torch
 from utils.config import load_experiment_config, validate_config
 from utils.logger import setup_logger, log_experiment_start, log_experiment_end
 
+# scripts/utils.py 직접 로드 (set_seed 함수 사용)
+scripts_utils_path = os.path.join(scripts_dir, 'utils.py')
+spec = importlib.util.spec_from_file_location("script_utils", scripts_utils_path)
+script_utils = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(script_utils)
+
 # scripts 디렉토리의 기존 유틸리티
-from utils import set_seed
 from tokenizer_utils import load_tokenizer
 from wandb_utils import init_wandb, finish_run
 
@@ -129,7 +135,7 @@ def main():
     log_experiment_start(args.experiment, config, logger)
 
     # 5. 시드 설정
-    set_seed(config['training']['seed'])
+    script_utils.set_seed(config['training']['seed'])
     logger.info(f"Random seed 설정: {config['training']['seed']}")
 
     # 6. Wandb 초기화
