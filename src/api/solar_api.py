@@ -65,49 +65,83 @@ class SolarAPI:
         else:
             print(msg)
 
-    def _remove_placeholders(self, text: str) -> str:
+    def _validate_and_fix_summary(self, text: str, dialogue: str) -> str:
         """
-        플레이스홀더 강제 제거 (Post-processing)
+        요약문 검증 및 플레이스홀더 제거 (Post-processing)
+
+        플레이스홀더가 있으면 제거하지만, '화자' 같은 의미 없는 표현으로 대체하지 않음.
+        Solar API 프롬프트가 이미 역할 기반 명칭을 생성하도록 설계되어 있으므로,
+        여기서는 혹시 남아있는 플레이스홀더만 제거함.
 
         Args:
-            text: 원본 텍스트
+            text: Solar API 출력 텍스트
+            dialogue: 원본 대화 (fallback용)
 
         Returns:
-            플레이스홀더가 제거된 텍스트
+            검증 및 수정된 요약문
         """
         if not text:
             return text
 
-        # 1. 정확한 패턴 (#Person1#, #Person2# 등) - 오타 포함
-        placeholder_patterns = [
-            # 정확한 형태
-            r'#Person[1-4]#',
-            # 오타 형태 (#Ferson, #PAerson, #Aerson 등)
-            r'#[PFpf]?[AEae]*?person[1-4]#',
-            r'#[A-Za-z]*?erson[1-4]#',
-            # 단독 알파벳
-            r'\s+[A-D](?=\s|$|,|\.)',
-            # 한글 + 알파벳 조합 (예: "친구 A", "상사 B")
-            r'(친구|상사|비서|직원|고객|학생|선생님|교수)\s*[A-D](?=\s|$|,|\.)',
+        original = text
+        modified = text
+
+        # 1. 한글 + 알파벳 조합 제거 (예: "친구 A" → "친구")
+        # 조사 포함: 가, 이, 와, 과, 에게, 한테, 의, 은, 는, 을, 를, 도, 께서, 부터, 까지
+        korean_letter_patterns = [
+            # 가족/친구
+            r'(친구|동료|연인|형제|자매|부모|자녀|친척)\s+[A-D](?=[가이와과에한의은는을를도께부까]|\s|$|,|\.)',
+            # 업무 관계
+            r'(상사|비서|직원|관리자|팀원|부하|동료)\s+[A-D](?=[가이와과에한의은는을를도께부까]|\s|$|,|\.)',
+            # 서비스 관계
+            r'(고객|손님|구매자|회원|민원인)\s+[A-D](?=[가이와과에한의은는을를도께부까]|\s|$|,|\.)',
+            # 의료/교육
+            r'(환자|의사|간호사|약사|학생|선생님|교수|강사)\s+[A-D](?=[가이와과에한의은는을를도께부까]|\s|$|,|\.)',
+            # 일반
+            r'(사람|남자|여자|사용자|인물)\s+[A-D](?=[가이와과에한의은는을를도께부까]|\s|$|,|\.)',
         ]
 
-        modified = text
-        for pattern in placeholder_patterns:
-            # 플레이스홀더를 빈 문자열로 치환
+        for pattern in korean_letter_patterns:
+            modified = re.sub(pattern, r'\1', modified, flags=re.IGNORECASE)
+
+        # 2. #Person1#, #Person2# 같은 정확한 형태 제거
+        placeholder_exact = [
+            r'#Person[1-4]#',
+            # 오타 형태
+            r'#[PFpf]?[AEae]*?person[1-4]#',
+            r'#[A-Za-z]*?erson[1-4]#',
+        ]
+
+        for pattern in placeholder_exact:
             modified = re.sub(pattern, '', modified, flags=re.IGNORECASE)
 
-        # 2. 연속된 공백을 하나로 합치기
+        # 3. 단독 알파벳 제거 (공백으로 둘러싸인 A, B, C, D)
+        # "친구가" 같은 단어 중간의 문자는 건드리지 않음
+        modified = re.sub(r'\s+[A-D](?=[가이와과에한의은는을를도께부까]|\s|$|,|\.)', '', modified, flags=re.IGNORECASE)
+        # 문장 시작의 A/B/C/D
+        modified = re.sub(r'^[A-D](?=[가이와과에한의은는을를도께부까]|\s|,|\.)', '', modified, flags=re.IGNORECASE)
+
+        # 4. 정리: 연속 공백, 문장 앞뒤 공백, 구두점 앞 공백
         modified = re.sub(r'\s+', ' ', modified)
-
-        # 3. 문장 시작/끝 공백 제거
         modified = modified.strip()
-
-        # 4. 쉼표, 마침표 앞의 공백 제거
         modified = re.sub(r'\s+([,.])', r'\1', modified)
 
-        # 5. 문장이 너무 짧거나 비어있으면 경고
+        # 5. 플레이스홀더 잔존 여부 확인
+        placeholder_check = [
+            r'\b[A-D]\b',  # 단독 알파벳
+            r'#Person\d+#',  # #Person1#
+            r'[가-힣]+\s*[A-D](?=[가이와과])',  # 친구 A
+        ]
+
+        has_placeholder = any(re.search(p, modified, re.IGNORECASE) for p in placeholder_check)
+
+        if has_placeholder:
+            self._log(f"⚠️  플레이스홀더 잔존 감지: {modified[:80]}...")
+            self._log(f"   원본: {original[:80]}...")
+
+        # 6. 요약이 너무 짧거나 비정상적이면 경고
         if len(modified) < 20:
-            self._log(f"⚠️  플레이스홀더 제거 후 요약이 너무 짧음 ({len(modified)}자): {modified[:50]}...")
+            self._log(f"⚠️  요약이 너무 짧음 ({len(modified)}자): {modified}")
 
         return modified
 
@@ -228,7 +262,7 @@ class SolarAPI:
             메시지 리스트
         """
         # 프롬프트 버전 (캐시 무효화용)
-        PROMPT_VERSION = "v3.1_strict_enforcement"
+        PROMPT_VERSION = "v3.2_no_placeholder_fallback"
 
         system_prompt = f"""[{PROMPT_VERSION}] 당신은 대화 요약 전문가입니다.
 
@@ -244,7 +278,7 @@ class SolarAPI:
 ✅ **필수 준수사항 (MUST COMPLY)**:
 - 반드시 구체적 역할명 사용: "친구", "상사", "고객", "직원", "환자" 등
 - 명시된 이름이 있으면 반드시 사용: "Ms. Dawson", "스티븐", "Tom" 등
-- 플레이스홀더 발견 시 → "화자", "상대방"으로 대체
+- **절대 '화자', '상대방' 같은 의미 없는 표현 사용 금지** → 역할 기반 명칭 필수
 
 ---
 
@@ -377,7 +411,13 @@ class SolarAPI:
    2순위: STEP 1 역할 구조 분석 결과 → 상사/비서, 고객/상담사, 친구/친구
    3순위: STEP 2 말투 분석 → 친밀함(친구)/격식(고객-상담사) 판단
    4순위: STEP 4 내용 키워드 → 업무/일상 맥락 판단
-   5순위: 불명확할 경우 → "화자", "상대방" 사용 (A/B 절대 금지)
+   5순위: 불명확할 경우 → "첫 번째 인물", "두 번째 인물" 또는 관계 기반 추정
+
+   ⚠️  중요: '화자', '상대방' 같은 의미 없는 표현 절대 사용 금지!
+   대신 다음 중 하나 사용:
+   - 역할 추정: "지시하는 쪽", "응답하는 쪽", "요청하는 쪽", "조언하는 쪽"
+   - 순서 표현: "첫 번째 사람", "두 번째 사람"
+   - 관계 추정: "대화 참여자", "상대방" (단, 역할 명시 없이는 최후 수단)
 
    실전 예시 (반드시 참고):
 
@@ -533,7 +573,7 @@ Summary:"""
             raise RuntimeError("Solar API 클라이언트가 초기화되지 않음")
 
         # 캐시 확인 (프롬프트 버전 포함)
-        PROMPT_VERSION = "v3.1_strict_enforcement"
+        PROMPT_VERSION = "v3.2_no_placeholder_fallback"
         cache_key_string = f"{PROMPT_VERSION}_{dialogue}"
         cache_key = hashlib.md5(cache_key_string.encode()).hexdigest()
         if cache_key in self.cache:
@@ -562,8 +602,8 @@ Summary:"""
 
             summary = response.choices[0].message.content.strip()
 
-            # Post-processing: 플레이스홀더 강제 제거
-            summary = self._remove_placeholders(summary)
+            # Post-processing: 플레이스홀더 검증 및 제거
+            summary = self._validate_and_fix_summary(summary, dialogue)
 
             # 캐시 저장
             self.cache[cache_key] = summary
@@ -703,7 +743,7 @@ Summary:"""
             raise RuntimeError("Solar API 클라이언트가 초기화되지 않음")
 
         # 캐시 확인 (프롬프트 버전 + n_samples 포함)
-        PROMPT_VERSION = "v3.1_strict_enforcement"
+        PROMPT_VERSION = "v3.2_no_placeholder_fallback"
         cache_key_string = f"{PROMPT_VERSION}_voting_{n_samples}_{dialogue}"
         cache_key = hashlib.md5(cache_key_string.encode()).hexdigest()
         if cache_key in self.cache:
@@ -738,8 +778,8 @@ Summary:"""
 
                 summary = response.choices[0].message.content.strip()
 
-                # Post-processing: 플레이스홀더 강제 제거
-                summary = self._remove_placeholders(summary)
+                # Post-processing: 플레이스홀더 검증 및 제거
+                summary = self._validate_and_fix_summary(summary, dialogue)
 
                 summaries.append(summary)
 
@@ -751,7 +791,7 @@ Summary:"""
 
                 # Rate limit 방지를 위한 샘플 간 대기
                 if i < n_samples - 1:  # 마지막 샘플 후에는 대기 불필요
-                    time.sleep(2.0)  # 샘플 간 2.0초 대기 (429 에러 방지)
+                    time.sleep(3.0)  # 샘플 간 3.0초 대기 (429 에러 방지, solar-pro2 대응)
 
             # 최고 점수 요약 선택
             best_idx = scores.index(max(scores))
