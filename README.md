@@ -2,13 +2,14 @@
 
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/HS6nBbT4)
 
-NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기반 파이프라인입니다. 포트폴리오 용도로 재구성하여 실험 근거, 교훈, 재현 절차를 명확히 남겼습니다. 프로젝트에서 관리하는 실험 로그와 문서를 참고해 최신 상태를 유지합니다.
+Upstage 주관 NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기반 파이프라인입니다. 포트폴리오 용도로 재구성하여 실험 근거, 교훈, 재현 절차를 명확히 남겼습니다. 프로젝트에서 관리하는 실험 로그와 문서를 참고해 최신 상태를 유지합니다.
 
 ## 프로젝트 하이라이트
 - **최고 Public 점수: 47.47 / Private 점수: 47.31**: Public은 Phase 1(LP=0.5), Private는 Exp #7-A(데이터 증강)가 달성했습니다.
 - **Baseline 대비 개선**: Public +11.35p (47.47-36.12) / Private +11.19p (47.31-36.12)
 - **재현 가능한 워크플로우**: 모듈화 코드, CLI 스크립트, 실험 로그를 문서화하여 누구나 동일한 결과를 낼 수 있도록 구성했습니다.
 - **핵심 교훈 확립**: Loss Gap 분석, WeightedRandomSampler 함정, Dev 강건성이 Private 성능 예측 지표임을 발견했습니다.
+- **심층 연구**: Causal LM(Llama/Qwen) 탐색을 통한 LLM 파인튜닝 실전 노하우 축적 - 다국어 토큰 제어, Chat Template 최적화, QLoRA/LoRA 전략, OOD 대응 등 production-ready 체크리스트 완성
 - **대회 현황**: 2025-10-15 종료. 총 12회 제출 완료 (12/12 사용).
 
 ## 문서 허브
@@ -17,6 +18,7 @@ NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기�
 | [`docs/COMPETITION_FINAL_REPORT.md`](docs/COMPETITION_FINAL_REPORT.md) | 대회 개요, 최종 결과, 실험 요약 |
 | [`docs/EXPERIMENT_LOG.md`](docs/EXPERIMENT_LOG.md) | Baseline ~ Exp #7까지 상세 실험 기록 |
 | [`docs/LESSONS_LEARNED.md`](docs/LESSONS_LEARNED.md) | 실험 교훈, Best Practices, 재사용 가능한 체크리스트 |
+| [`docs/CAUSAL_LM_JOURNEY.md`](docs/CAUSAL_LM_JOURNEY.md) | Llama/Qwen 탐색 여정, 8가지 기술적 도전, 디코딩 제약 기법, 하이브리드 전략 |
 
 ## 빠른 시작
 1. 저장소 루트로 이동해 환경을 구성합니다.
@@ -161,6 +163,30 @@ naturallanguageprocessingcompetition-nlp-1/
 - 소수 카테고리(135개)가 epoch당 500회 반복되어 암기 현상이 발생했습니다.
 - Dev ROUGE는 36.43%로 높았으나 Public/Private 모두 46.62로 낮았습니다.
 - Train 분포와 Test 분포 불일치가 원인이었습니다.
+
+### 탐색한 대안 접근법
+
+**Causal LM (Llama/Qwen) 실험**
+
+KoBART 외에도 Causal LM 계열(Llama-3.2-Korean-3B, Qwen3-4B, Qwen2.5-7B)을 활용한 요약 시스템을 탐색했습니다. Chat template 기반 SFT와 유연한 프롬프팅을 기대했으나, 다음과 같은 도전에 직면했습니다:
+
+**핵심 도전과제:**
+- 다국어 토큰 혼입 (영어/일본어/중국어 한자 등)
+- Chat template & data collator 정합성
+- Eval loss vs ROUGE 괴리
+- 데이터 분포 시프트 (OOD)
+- RTX 3090 24GB 리소스 제약
+
+**해결 접근:**
+- 화이트리스트 기반 디코딩 제약 (prefix_allowed_tokens_fn)
+- Completion-only loss (DataCollatorForCompletionOnlyLM)
+- QLoRA/LoRA 전략적 선택
+- Gradient norm 튜닝 및 환경 안정화
+
+**최종 결론:**
+요약 태스크에서는 Seq2Seq(KoBART)가 여전히 유리하며, Causal LM은 **데이터 증강/후편집/재랭킹 도구**로 활용하는 하이브리드 전략이 가장 효율적임을 확인했습니다.
+
+상세 기록: [CAUSAL_LM_JOURNEY.md](docs/CAUSAL_LM_JOURNEY.md)
 
 ## 주요 발견
 
