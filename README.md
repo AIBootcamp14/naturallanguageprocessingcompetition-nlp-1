@@ -3,22 +3,30 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/HS6nBbT4)
 
 **대회**: NIKLuge 2024 - 일상 대화 요약
-**현재 Best Score**: 47.47점 (Phase 1, LP=0.5)
-**최근 실험**: 47.41점 (Exp #7-A, 증강 데이터)
-**목표**: 50점 이상 달성
+**상태**: ✅ **대회 종료** (2025-10-15)
+**최고 점수**: 47.47점 (Phase 1: LP=0.5)
+**개선폭**: +0.35점 (Baseline 47.12점 대비)
+**제출**: 12/12 사용 완료
 
 ---
 
 ## 프로젝트 소개
 
-한국어 일상 대화를 입력받아 핵심 내용을 요약하는 모델을 개발하는 프로젝트입니다. KoBART 기반 Seq2Seq 모델을 baseline으로 시작하여, 점진적인 개선을 통해 성능을 향상시킵니다.
+한국어 일상 대화를 입력받아 핵심 내용을 요약하는 모델을 개발하는 프로젝트입니다. KoBART 기반 Seq2Seq 모델을 baseline으로 시작하여, 체계적인 실험을 통해 성능을 향상시켰습니다.
+
+### 최종 성과
+
+- 🏆 **최고 점수**: 47.47점 (Phase 1: LP=0.5, +0.35점)
+- 📊 **총 실험**: Baseline ~ Exp #7까지 12회 제출
+- 📈 **개선 효율**: 간단한 변경(LP=0.5)으로 최고 효과
+- 📚 **교훈 확립**: Loss Gap 분석, WeightedSampler 함정 발견
 
 ### 주요 특징
 
 - ✅ **체계적인 실험 관리**: 한 번에 하나씩 변경, Test set으로만 검증
-- ✅ **코드 모듈화**: 7개 재사용 가능한 Python 모듈 (1,745줄)
-- ✅ **완벽한 재현성**: 모든 실험을 Jupyter Notebook으로 기록
-- ✅ **자동화된 검증**: CSV 포맷 검증, ROUGE 계산
+- ✅ **Loss Gap 분석**: 과적합 조기 탐지 기법 확립
+- ✅ **완벽한 문서화**: 재현 가능한 상세 기록 및 교훈 정리
+- ✅ **재사용 가능한 프레임워크**: CLI 스크립트 및 모듈화 코드
 
 ---
 
@@ -215,83 +223,76 @@ save_config(config, './config_exp2.yaml')
 
 ## 실험 결과
 
-### Completed Experiments
+### 완료된 실험 요약
 
-| Exp # | Description | ROUGE-1 | ROUGE-2 | ROUGE-L | Score | Date | Status |
-|-------|-------------|---------|---------|---------|-------|------|--------|
-| #0 | Baseline (Original) | 56.43% | 36.65% | 47.75% | **46.9426** | 2025-10-12 | ✅ |
-| #0.1 | Baseline (Modular) | 56.28% | 36.65% | 47.93% | **46.9526** | 2025-10-13 | ✅ (+0.01) |
-| #1 | Augmented Data (LLM) | 52.43% | 32.50% | 43.41% | **42.7807** | 2025-10-12 | ❌ Failed (-4.16) |
-| #2 | Post-processing v2 | 56.31% | 36.65% | 48.00% | **46.9863** | 2025-10-13 | ❌ Rollback (+0.03) |
-| #3 | Learning Rate 2e-5 (v1) | 56.19% | 36.32% | 47.57% | **46.6919** | 2025-10-13 | ❌ Failed (-0.26) |
-| #3 | Learning Rate 2e-5 (v2) | 55.93% | 36.72% | 47.17% | **46.6089** | 2025-10-13 | ❌ Failed (-0.34) |
+| 실험명 | 설명 | Test 점수 | 변화 | 날짜 | 상태 |
+|--------|------|-----------|------|------|------|
+| **Baseline** | 공식 코드 재현 | 47.12 | - | 10/12 | ✅ 성공 |
+| **Phase 1: LP=0.5** | Length Penalty 최적화 | **47.47** | **+0.35** 🏆 | 10/13 | ✅ **최고** |
+| Phase 1: LP=0.3 | LP 추가 실험 | 47.15 | +0.03 | 10/13 | ✅ 성공 |
+| Phase 1: LP=0.7 | LP 추가 실험 | 47.22 | +0.10 | 10/13 | ✅ 성공 |
+| **Exp #5** | no_repeat_ngram=3 | 47.03 | -0.44 | 10/14 | ❌ 실패 |
+| **Exp #6** | Learning Rate 3e-5 | - | - | - | ⏸️ 보류 |
+| **Exp #7-A** | 증강 데이터 (가중치 없음) | 47.41 | -0.06 | 10/15 | ✅ 안정 |
+| Exp #7-C | 가중치 max=5.0 | - | - | 10/15 | ⏭️ 스킵 |
+| **Exp #7-F** | 가중치 조정 (최종) | 46.62 | -0.79 | 10/15 | ❌ **실패** |
 
-### Planned Experiments
+**제출 통계**: 12/12 사용 완료 (100%)
+**점수 범위**: 46.62~47.47 (0.85점 차이)
+**평균 개선**: +0.35점 (Baseline 대비)
 
-| Exp # | Description | Target | Risk | Priority | Status |
-|-------|-------------|--------|------|----------|--------|
-| #4 | Learning Rate 3e-5 | +1~2 | ✅ Low | Day 3 | ❌ Skipped (LR 방향 잘못됨) |
-| #5 | Learning Rate 5e-5 | +2~3 | ⚠️ Medium | Day 4 | ❌ Skipped (LR 방향 잘못됨) |
-| #6 | Time Token | +0.5~1 | ⚠️ Medium | Day 4-5 | 📋 Planned |
-| #7 | Money Token | +0.3~0.7 | ⚠️ Medium | Day 5-6 | 📋 Planned |
-| #8 | Warmup Steps 50/100 | +0.5~1 | ✅ Low | Week 2 | 📋 Planned |
-| #9 | Epochs 30 | +0.5~1 | ✅ Low | Week 2 | 📋 Planned |
-| #10 | Data Aug (Filtered) | +0.5~1 | ⚠️ Medium | Week 2+ | 📋 Planned |
-| #11 | Data Aug (LLM Style) | +1~2 | ⚠️ Medium | Week 2+ | 📋 Planned |
+**상세 기록**: `docs/EXPERIMENT_LOG.md` 참조
 
-**참고**: 상세 계획은 `tasks/eda-findings.md` 참조
+### 핵심 교훈 (Lessons Learned)
 
-### 실패 실험 분석
+#### 1. Loss Gap이 진실 ⭐⭐⭐
 
-#### Exp #1: 증강 데이터 학습
+**정의**: `Loss Gap = Train Loss - Eval Loss`
 
-**원인**:
-1. 증강 데이터의 스타일 불일치 (번역투 → 자연스러운 한국어)
-2. 원본 데이터 스타일과 충돌
-3. 모델 혼란 발생
+**해석**:
+- **양수 (+0.15 이상)**: 건강한 학습, 제출 고려 ✅
+- **음수 (-)**: 과적합, 제출 금지 ❌
 
-**교훈**:
-- ✅ 데이터 증강 != 무조건 좋음
-- ✅ 스타일 일관성이 양보다 중요
-- ✅ Dev ROUGE가 낮으면 Test도 낮음
+**실험 증거**:
+- Exp #7-A: Loss Gap **+0.50** → Test **47.41** ✅
+- Exp #7-F: Loss Gap +0.47 → Test 46.62 ❌ (분포 왜곡)
 
-**개선 방안** (Agent 3 권장):
-- 방안 1: 필터링된 재사용 (스타일 일치 샘플만)
-- 방안 2: LLM 기반 스타일 보존 증강
-- 상세: `tasks/eda-findings.md` 참조
+#### 2. WeightedRandomSampler의 함정 ⭐⭐⭐
 
-#### Exp #2: 후처리 개선 (Post-processing v2)
+**문제 패턴**:
+```
+증강 없는 카테고리 × 가중치 = 같은 샘플 반복
+→ 모델 암기 → Test 실패
+```
 
-**원인**:
-1. 모델 출력이 이미 최적화되어 있었음
-2. Baseline의 단순함에는 이유가 있었음
-3. Dev set 검증 없이 Test로 직행 → 예측 불가
+**Exp #7-F 실패 원인**:
+- 노동/고용(135개) × 3.70배 = 500회 반복
+- Dev ROUGE 36.43% ↑ (높음)
+- Test Score 46.62 ↓ (낮음)
+- **Dev도 학습 분포 영향 받음**
 
-**교훈**:
-- ✅ "당연히 좋을 것"이라는 가정은 위험함
-- ✅ 이론적 개선 ≠ 성능 향상 (실증 필수)
-- ✅ Dev set 검증 먼저 수행하기
-- ✅ Baseline의 단순함을 존중, 모델 학습 개선에 집중
+**교훈**: 증강 없으면 가중치 절대 금지!
 
-#### Exp #3: Learning Rate 2e-5
+#### 3. Dev ROUGE ≠ Test Score ⭐⭐
 
-**원인**:
-1. **LR 2e-5가 과도함** - Baseline 1e-5가 이미 최적
-2. **모든 checkpoint에서 일관된 하락** - checkpoint 선택 무관
-3. **Dev/Test 괴리 심화** - Dev +0.81%p → Test -0.26점
-4. **checkpoint 선택의 역설** - Best loss(ckpt-1000)가 오히려 더 나쁨 (-0.34)
+| 실험 | Dev ROUGE-1 | Test Score | 상관관계 |
+|------|-------------|------------|----------|
+| Exp #7-A | 36.18% | 47.41 | Dev 낮음, Test 높음 |
+| Exp #7-F | 36.43% | 46.62 | Dev 높음, Test 낮음 ❌ |
 
-**교훈**:
-- ✅ LR 튜닝은 예상보다 **훨씬 민감함**
-- ✅ Baseline 하이퍼파라미터에는 이유가 있음
-- ✅ 잘못된 LR로는 어떤 checkpoint도 좋지 않음
-- ✅ checkpoint 최적화 < LR 선택의 중요성
-- ✅ Dev 점수(20%p 격차)로 Test 예측 불가능
+**교훈**: Test 제출만이 유일한 진실!
 
-**새로운 방향**:
-- Epochs 연장 (20 → 30)
-- Warmup Steps 조정
-- Special Tokens 추가
+#### 4. 단순함의 가치 (KISS 원칙) ⭐⭐⭐
+
+| 접근법 | 복잡도 | 소요시간 | 점수 변화 | 효율성 |
+|--------|--------|----------|-----------|--------|
+| **LP=0.5** | ⭐ 낮음 | 12초 | **+0.35** | ⭐⭐⭐ 최고 |
+| 데이터 증강 | ⭐⭐⭐ 높음 | 3시간 | -0.06 | ⭐ 낮음 |
+| 가중치 조정 | ⭐⭐ 중간 | 3시간 | -0.79 | ❌ 역효과 |
+
+**교훈**: 가장 간단한 변경이 가장 큰 효과!
+
+**상세 교훈**: `docs/LESSONS_LEARNED.md` 참조
 
 ---
 
@@ -364,66 +365,85 @@ cleaned = remove_special_tokens(
 
 ---
 
-## 로드맵
+## 대회 결과 및 향후 방향
 
-### ✅ Phase 1: Baseline 재현 및 인프라 구축 (완료)
-- [x] Baseline 재현 (46.9426점)
-- [x] 코드 모듈화 (7개 모듈, 1,745줄)
-- [x] 실험 로그 시스템
-- [x] Git 관리
+### ✅ 완료된 작업 (2025-10-12 ~ 10-15)
 
-### ✅ Phase 1.5: EDA 분석 (완료, 2025-10-13)
-- [x] 5개 agents 병렬 분석
-- [x] 후처리 개선 방안 도출
-- [x] 하이퍼파라미터 우선순위 결정
-- [x] Special Token 최적화 방안
-- [x] 데이터 증강 재시도 전략
-- [x] `tasks/eda-findings.md` 문서화
+**Phase 1: Baseline 재현 및 최적화**
+- [x] Baseline 재현 (47.12점)
+- [x] Length Penalty 최적화 (47.47점, +0.35점) 🏆
+- [x] 데이터 증강 프레임워크 구축 (1,009개)
+- [x] Loss Gap 분석 기법 확립
 
-### 🔄 Week 1 (2025-10-13 ~ 10-19) - 50점 돌파
-- [x] **Day 1 (2025-10-13)**: Exp #2 (후처리 v2) → ❌ 실패 (46.99, 변화 없음)
-- [x] **Day 1 (2025-10-13)**: Exp #3 (LR 2e-5) → ❌ 실패 (46.69, -0.26)
-- [ ] **Day 2**: Exp #9 (Epochs 30) 또는 Warmup 조정 → 47~48점 목표
-- [ ] **Day 3-4**: Time Token 또는 다른 안전한 개선
-- [ ] **Day 5-7**: 조합 최적화 → 50점 돌파 시도
+**Phase 2: 데이터 증강 실험**
+- [x] Exp #7-A: 증강 + 가중치 없음 (47.41점, 안정적)
+- [x] Exp #7-C: 가중치 max=5.0 (Loss Gap으로 사전 실패 예측)
+- [x] Exp #7-F: 가중치 조정 (46.62점, 실패 교훈)
 
-**목표**: **50점 이상 달성**
-**현재 Best**: 46.9526점 (Baseline Modular)
-**제출 횟수**: 8/12 사용 (4회 남음)
+**Phase 3: 문서화 완료**
+- [x] 전체 실험 기록 (EXPERIMENT_LOG.md)
+- [x] 최종 리포트 (COMPETITION_FINAL_REPORT.md)
+- [x] 교훈 정리 (LESSONS_LEARNED.md)
+- [x] 아카이브 가이드 (ARCHIVE.md)
 
-### 📋 Week 2 (2025-10-20 ~ 10-26) - 52~54점
-- [ ] Special Token 추가 (Time/Money)
-- [ ] Warmup Steps 조정 (50, 100)
-- [ ] Epochs 연장 (30)
-- [ ] 고급 하이퍼파라미터 조합
+**제출 통계**: 12/12 사용 완료 (100%)
+**최고 점수**: 47.47점 (Phase 1: LP=0.5)
+**개선폭**: +0.35점 (+0.74%)
 
-**목표**: **52~54점 달성**
+### 📋 향후 개선 방향 (Future Work)
 
-### 🚀 Week 3+ (Long-term) - 55점 이상
-- [ ] 데이터 증강 재시도 (필터링/LLM 스타일 보존)
-- [ ] Ensemble 기법 (선택적)
-- [ ] 더 큰 모델 실험 (mBART, KoT5)
+**즉시 적용 가능 (High Priority)**:
+1. **균등 증강** (Balanced Augmentation) - 예상: +0.8~2.0점
+   - 모든 카테고리를 300~500개로 균등화
+   - WeightedSampler 없이 자연 분포 학습
+2. **Learning Rate 튜닝** (1e-5 → 3e-5) - 예상: +0.5~1.5점
+3. **Extended Training** (Epochs 20 → 30) - 예상: +0.3~0.8점
 
-**목표**: **55점 이상**
+**장기 전략 (Lower Priority)**:
+4. **Larger Models** (gogamza/kobart-base-v2, KoT5) - 예상: +1.0~3.0점
+5. **Ensemble Methods** - 예상: +0.3~1.0점
+
+**상세 계획**: `docs/NEXT_STEPS.md` 참조
 
 ---
 
-## 성능 목표
+## 최고 성능 모델 재현
 
-- **현재**: 46.9526점 (Baseline Modular)
-- **Week 1 목표**: 50점 돌파
-- **Week 2 목표**: 52~54점
-- **최종 목표**: 55점 이상
+### 🏆 Phase 1: LP=0.5 (47.47점)
 
-### 예상 성과 (EDA 분석 기반)
+**설정**:
+```yaml
+model: digit82/kobart-summarization
+length_penalty: 0.5  # Baseline: 1.0
+num_beams: 4
+no_repeat_ngram_size: 2
+learning_rate: 1e-5
+batch_size: 50/32
+epochs: 20
+```
 
-| Timeline | Target | Key Improvements |
-|----------|--------|------------------|
-| Day 1 | 48점 | 후처리 개선 |
-| Day 2 | 49점 | LR 2e-5 |
-| Week 1 | 50점 | LR 튜닝 완료 |
-| Week 2 | 52~54점 | Special Token + Warmup |
-| Week 3+ | 55점+ | 데이터 증강 재시도 |
+**재현 방법**:
+```bash
+cd /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/code
+
+# 1. config.yaml 수정: length_penalty=0.5
+# 2. 추론 실행
+python inference.py --checkpoint checkpoint-XXXX
+```
+
+### 2위: Exp #7-A (47.41점)
+
+**설정**:
+- 증강 데이터: 13,465개 (원본 12,457 + 증강 1,009)
+- WeightedSampler: **사용 안 함** (핵심!)
+- Loss Gap: +0.50 (안정적)
+
+**재현 방법**:
+```bash
+python inference.py --experiment exp7a --checkpoint checkpoint-2068
+```
+
+**Checkpoint 경로**: `submission_exp7a/checkpoint-2068/` (1.4GB)
 
 ---
 
@@ -438,13 +458,23 @@ cleaned = remove_special_tokens(
 
 ---
 
-## 참고 자료
+## 참고 문서
 
-- [대회 페이지](대회 URL)
+### 대회 결과 문서
+- [**COMPETITION_FINAL_REPORT.md**](docs/COMPETITION_FINAL_REPORT.md) - 대회 최종 리포트
+- [**LESSONS_LEARNED.md**](docs/LESSONS_LEARNED.md) - 실험 교훈 및 Best Practices
+- [**EXPERIMENT_LOG.md**](docs/EXPERIMENT_LOG.md) - 전체 실험 상세 기록
+- [**ARCHIVE.md**](docs/ARCHIVE.md) - 프로젝트 아카이브 가이드
+
+### 기술 문서
+- [RESTART_GUIDE.md](docs/RESTART_GUIDE.md) - 재시작 가이드
+- [NEXT_STEPS.md](docs/NEXT_STEPS.md) - 향후 개선 방향
+- [code/README.md](code/README.md) - 프레임워크 사용법
+- [Competition_Overview/](docs/Competition_Overview/) - 대회 규칙
+
+### 외부 링크
 - [KoBART 모델](https://huggingface.co/digit82/kobart-summarization)
 - [ROUGE 평가 방법](docs/Competition_Overview/evaluation_method.md)
-- [Baseline 코드 설명](docs/baseline_code_summary.md)
-- [재시작 가이드](docs/RESTART_GUIDE.md)
 
 ---
 
@@ -454,6 +484,8 @@ MIT License
 
 ---
 
-**마지막 업데이트**: 2025-10-13
-**Current Best**: 46.94점 (Baseline)
-**Git Commit**: 3ac2b65
+**프로젝트 기간**: 2025-10-12 ~ 2025-10-15 (4일)
+**최고 점수**: 47.47점 (Phase 1: LP=0.5)
+**제출**: 12/12 사용 완료
+**상태**: ✅ 대회 종료, 문서화 완료
+**마지막 업데이트**: 2025-10-15
