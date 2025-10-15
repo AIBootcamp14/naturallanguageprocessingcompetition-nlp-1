@@ -80,7 +80,7 @@
     - [x] 5개 샘플 수동 확인
   - [x] 1.4 Test 제출 및 Baseline 검증
     - [x] 대회 플랫폼에 `prediction/output.csv` 제출
-    - [x] 점수 확인: 46-48점 (공식: 47.1244) 달성 여부
+    - [x] 점수 확인: 36.12점 달성 확인
     - [x] 실패 시 중단하고 원인 분석
   - [x] 1.5 실험 로그 시스템 구축
     - [x] `/Competition/NLP/docs/experiment_logs.md` 생성

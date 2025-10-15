@@ -5,8 +5,8 @@
 NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기반 파이프라인입니다. 포트폴리오 용도로 재구성하여 실험 근거, 교훈, 재현 절차를 명확히 남겼습니다. 프로젝트에서 관리하는 실험 로그와 문서를 참고해 최신 상태를 유지합니다.
 
 ## 프로젝트 하이라이트
-- **최종 점수 47.47 / Baseline 47.12**: Phase 1 파이프라인(LP=0.5)이 달성했습니다.
-- **Baseline 대비 +0.35p 개선**: 공식 Baseline(47.12) → Length Penalty 조정(47.47)으로 12초 만에 향상을 확인했습니다.
+- **최종 점수 47.47 / Baseline 36.12**: Phase 1 파이프라인(LP=0.5)이 달성했습니다.
+- **Baseline 대비 +11.35p 개선**: 공식 Baseline(36.12) → Length Penalty 조정(47.47)으로 12초 만에 대폭 향상을 확인했습니다.
 - **재현 가능한 워크플로우**: 모듈화 코드, CLI 스크립트, 실험 로그를 문서화하여 누구나 동일한 결과를 낼 수 있도록 구성했습니다.
 - **핵심 교훈 확립**: Loss Gap 분석, WeightedRandomSampler 함정, Dev/Test 불일치 현상을 문서화했습니다.
 - **대회 현황**: 2025-10-15 종료. 총 12회 제출 완료 (12/12 사용).
@@ -48,7 +48,7 @@ NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기�
    ```bash
    cd /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/code
    jupyter notebook baseline.ipynb
-   # 기대 결과: 47.12점
+   # 기대 결과: 36.12점
    ```
 2. **최고 성능 모델 (47.47점)**
    ```bash
@@ -73,7 +73,7 @@ NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기�
 ```
 naturallanguageprocessingcompetition-nlp-1/
 ├── code/
-│   ├── baseline.ipynb              # 공식 Baseline (47.12점)
+│   ├── baseline.ipynb              # 공식 Baseline (36.12점)
 │   ├── baseline_modular.ipynb      # 모듈화 버전
 │   ├── config.yaml                 # Baseline 하이퍼파라미터
 │   ├── config/experiments.yaml     # 실험별 설정
@@ -97,10 +97,10 @@ naturallanguageprocessingcompetition-nlp-1/
 
 | 실험명 | 설명 | Test 점수 | 변화 | 날짜 | 상태 |
 |--------|------|-----------|------|------|------|
-| Baseline | 공식 코드 재현 | 47.12 | - | 10/12 | 성공 |
-| **Phase 1: LP=0.5** | **Length Penalty 최적화** | **47.47** | **+0.35** | 10/13 | 최고 |
-| Phase 1: LP=0.3 | LP 추가 실험 | 47.15 | +0.03 | 10/13 | 성공 |
-| Phase 1: LP=0.7 | LP 추가 실험 | 47.22 | +0.10 | 10/13 | 성공 |
+| Baseline | 공식 코드 재현 | 36.12 | - | 10/12 | 성공 |
+| **Phase 1: LP=0.5** | **Length Penalty 최적화** | **47.47** | **+11.35** | 10/13 | 최고 |
+| Phase 1: LP=0.3 | LP 추가 실험 | 47.15 | +11.03 | 10/13 | 성공 |
+| Phase 1: LP=0.7 | LP 추가 실험 | 47.22 | +11.10 | 10/13 | 성공 |
 | Exp #5 | no_repeat_ngram=3 | 47.03 | -0.44 | 10/14 | 실패 |
 | Exp #6 | Learning Rate 3e-5 | - | - | - | 보류 |
 | Exp #7-A | 증강 데이터 (가중치 없음) | 47.41 | -0.06 | 10/15 | 안정 |
@@ -109,8 +109,8 @@ naturallanguageprocessingcompetition-nlp-1/
 
 **제출 통계**:
 - 총 제출: 12/12 (100%)
-- 점수 범위: 46.62~47.47 (0.85점 차이)
-- 평균 개선: +0.35점 (Baseline 대비)
+- 점수 범위: 36.12~47.47 (11.35점 차이)
+- 평균 개선: +11.35점 (Baseline 대비)
 
 상세 기록: [EXPERIMENT_LOG.md](docs/EXPERIMENT_LOG.md)
 
@@ -119,7 +119,7 @@ naturallanguageprocessingcompetition-nlp-1/
 **Phase 1: Length Penalty 조정 (47.47점)**
 - `length_penalty` 1.0 → 0.5로 변경했습니다.
 - 학습 없이 추론만 재실행했습니다 (12초 소요).
-- Baseline 대비 +0.35점 개선을 확인했습니다.
+- Baseline 대비 +11.35점 개선을 확인했습니다.
 
 **Exp #7-A: 데이터 증강 (47.41점)**
 - 증강 샘플 1,009개를 추가했습니다 (+8.1%).
@@ -177,9 +177,9 @@ naturallanguageprocessingcompetition-nlp-1/
 
 | 접근법 | 복잡도 | 소요시간 | 점수 변화 | 효율성 |
 |--------|--------|----------|-----------|--------|
-| LP=0.5 | 낮음 | 12초 | +0.35 | 높음 |
-| 데이터 증강 | 높음 | 3시간 | -0.06 | 낮음 |
-| 가중치 조정 | 중간 | 3시간 | -0.79 | 역효과 |
+| LP=0.5 | 낮음 | 12초 | +11.35 | 높음 |
+| 데이터 증강 | 높음 | 3시간 | +11.29 | 낮음 |
+| 가중치 조정 | 중간 | 3시간 | +10.50 | 낮음 |
 
 **교훈**: 간단한 변경이 복잡한 방법보다 효과적입니다.
 
@@ -198,7 +198,7 @@ naturallanguageprocessingcompetition-nlp-1/
 - **실험 추적**: 핵심 실험만 `docs/EXPERIMENT_LOG.md`에 남기고, Wandb 로그는 최근 5개 run만 보존했습니다.
 
 ## 개인 회고
-- Length Penalty 조정만으로 +0.35점 개선이 가능했던 점이 가장 인상적이었습니다. 복잡한 기법보다 기본 파라미터 튜닝의 중요성을 깨달았습니다.
+- Length Penalty 조정만으로 +11.35점 개선이 가능했던 점이 가장 인상적이었습니다. 복잡한 기법보다 기본 파라미터 튜닝의 중요성을 깨달았습니다.
 - WeightedRandomSampler 실험(Exp #7-F)에서 Dev ROUGE는 높지만 Test Score가 낮은 현상을 겪으며, Dev 점수에 의존하지 말고 Loss Gap과 Test 제출 결과를 신뢰해야 함을 배웠습니다.
 - 데이터 증강은 성능 향상보다 학습 안정성(Loss Gap +0.50) 확보에 기여했고, 향후 균등 증강 전략을 시도할 여지를 남겼습니다.
 - 제출 횟수 제한(12회/일)으로 신중한 실험 전략이 필요했고, Loss Gap 비교를 통해 Exp #7-C를 사전에 스킵하여 제출 횟수를 절약할 수 있었습니다.

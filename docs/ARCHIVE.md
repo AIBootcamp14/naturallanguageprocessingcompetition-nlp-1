@@ -582,7 +582,7 @@ head submission_exp7a.csv
 
 ---
 
-### Baseline 재현 (47.12점)
+### Baseline 재현 (36.12점)
 
 **Option 1: 기존 checkpoint 사용** (시나리오 A/C 적용 시)
 ```bash
