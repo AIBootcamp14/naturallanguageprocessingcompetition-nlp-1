@@ -1,0 +1,13 @@
+{"time":"2025-10-15T06:22:56.943521551+09:00","level":"INFO","msg":"stream: starting","core version":"0.22.2"}
+{"time":"2025-10-15T06:22:57.567884099+09:00","level":"INFO","msg":"stream: created new stream","id":"auf53gld"}
+{"time":"2025-10-15T06:22:57.567967929+09:00","level":"INFO","msg":"handler: started","stream_id":"auf53gld"}
+{"time":"2025-10-15T06:22:57.567991273+09:00","level":"INFO","msg":"stream: started","id":"auf53gld"}
+{"time":"2025-10-15T06:22:57.567993944+09:00","level":"INFO","msg":"sender: started","stream_id":"auf53gld"}
+{"time":"2025-10-15T06:22:57.568011232+09:00","level":"INFO","msg":"writer: started","stream_id":"auf53gld"}
+{"time":"2025-10-15T07:49:38.01356869+09:00","level":"INFO","msg":"api: retrying HTTP error","status":502,"url":"https://api.wandb.ai/files/ieyeppo/nlp-competition/auf53gld/file_stream","body":"\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>502 Server Error</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Server Error</h1>\n<h2>The server encountered a temporary error and could not complete your request.<p>Please try again in 30 seconds.</h2>\n<h2></h2>\n</body></html>\n"}
+{"time":"2025-10-15T08:17:27.089588511+09:00","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"updating run metadata","runtime_seconds":0.001742274}],"total_operations":1}}
+{"time":"2025-10-15T08:17:28.003482992+09:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-10-15T08:17:28.394582763+09:00","level":"INFO","msg":"stream: closing","id":"auf53gld"}
+{"time":"2025-10-15T08:17:28.394593367+09:00","level":"INFO","msg":"handler: closed","stream_id":"auf53gld"}
+{"time":"2025-10-15T08:17:28.394648931+09:00","level":"INFO","msg":"sender: closed","stream_id":"auf53gld"}
+{"time":"2025-10-15T08:17:28.39465244+09:00","level":"INFO","msg":"stream: closed","id":"auf53gld"}

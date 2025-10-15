@@ -1,0 +1,76 @@
+{
+  "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "CPython 3.11.9",
+  "startedAt": "2025-10-14T23:17:33.299800Z",
+  "args": [
+    "--mode",
+    "kfold",
+    "--models",
+    "kobart",
+    "--epochs",
+    "10",
+    "--batch_size",
+    "16",
+    "--gradient_accumulation_steps",
+    "10",
+    "--learning_rate",
+    "9.14e-5",
+    "--warmup_ratio",
+    "0.00136",
+    "--weight_decay",
+    "0.0995",
+    "--scheduler_type",
+    "cosine",
+    "--max_grad_norm",
+    "1.0",
+    "--label_smoothing",
+    "0.1",
+    "--use_augmentation",
+    "--augmentation_ratio",
+    "0.5",
+    "--augmentation_methods",
+    "back_translation",
+    "paraphrase",
+    "--k_folds",
+    "5",
+    "--experiment_name",
+    "kobart_balanced_kfold",
+    "--seed",
+    "42",
+    "--resume"
+  ],
+  "program": "/home/ieyeppo/AI_Lab/natural-language-processing-competition/scripts/train.py",
+  "codePath": "scripts/train.py",
+  "codePathLocal": "scripts/train.py",
+  "git": {
+    "remote": "git@github.com:iejob/natural-language-processing-competition.git",
+    "commit": "21356f862e0d268091fcb65b569d913cbc51282d"
+  },
+  "email": "ieyeppo.job@gmail.com",
+  "root": "/home/ieyeppo/AI_Lab/natural-language-processing-competition/wandb",
+  "host": "ZONYEKONGZEE",
+  "executable": "/home/ieyeppo/.pyenv/versions/nlp3_11_9/bin/python",
+  "cpu_count": 10,
+  "cpu_count_logical": 20,
+  "gpu": "NVIDIA GeForce RTX 3080 Ti Laptop GPU",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "1081101176832",
+      "used": "81186045952"
+    }
+  },
+  "memory": {
+    "total": "16606470144"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 3080 Ti Laptop GPU",
+      "memoryTotal": "17179869184",
+      "architecture": "Ampere",
+      "uuid": "GPU-5d8a4483-7097-1ed5-e08d-d7cca05fc40e"
+    }
+  ],
+  "cudaVersion": "12.9",
+  "writerId": "zefw0dwfsui74cntrg0chx8b8agp0h0i"
+}
