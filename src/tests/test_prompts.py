@@ -4,12 +4,15 @@
 PRD 15: 프롬프트 엔지니어링 전략 구현
 """
 
+# ------------------------- 표준 라이브러리 ------------------------- #
 import sys
 from pathlib import Path
 
+# 프로젝트 루트 경로 설정
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# ------------------------- 프로젝트 모듈 ------------------------- #
 from src.prompts import (
     PromptTemplate,
     PromptLibrary,
@@ -19,13 +22,18 @@ from src.prompts import (
 )
 
 
+# ==================== 테스트 함수 정의 ==================== #
+# ---------------------- PromptTemplate 클래스 테스트 ---------------------- #
 def test_prompt_template():
     """PromptTemplate 클래스 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 1: PromptTemplate 클래스")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # PromptTemplate 인스턴스 생성
         template = PromptTemplate(
             name="test_template",
             template="대화: {dialogue}\n요약: {summary}",
@@ -40,18 +48,21 @@ def test_prompt_template():
             summary="인사"
         )
 
+        # 템플릿 정보 출력
         print(f"템플릿 이름: {template.name}")
         print(f"카테고리: {template.category}")
         print(f"변수: {template.variables}")
         print(f"포맷 결과:\n{result}")
 
-        # 검증
+        # -------------- 검증 -------------- #
+        # 포맷 결과 검증
         assert "안녕하세요" in result, "대화 내용이 없음"
         assert "인사" in result, "요약 내용이 없음"
 
-        # 누락된 변수 테스트
+        # -------------- 누락된 변수 테스트 -------------- #
+        # 누락된 변수로 호출 시 에러 발생 확인
         try:
-            template.format(dialogue="테스트")  # summary 누락
+            template.format(dialogue="테스트")
             print("❌ 누락된 변수 감지 실패")
             return False
         except ValueError as e:
@@ -60,6 +71,7 @@ def test_prompt_template():
         print("✅ PromptTemplate 클래스 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -67,13 +79,17 @@ def test_prompt_template():
         return False
 
 
+# ---------------------- PromptLibrary 초기화 테스트 ---------------------- #
 def test_prompt_library_init():
     """PromptLibrary 초기화 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 2: PromptLibrary 초기화")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # PromptLibrary 인스턴스 생성
         library = PromptLibrary()
 
         # 기본 템플릿 로드 확인
@@ -82,7 +98,8 @@ def test_prompt_library_init():
         print(f"로드된 템플릿 수: {len(template_names)}")
         print(f"템플릿 목록: {template_names[:5]}...")
 
-        # 주요 템플릿 존재 확인
+        # -------------- 주요 템플릿 존재 확인 -------------- #
+        # 필수 템플릿 목록
         required_templates = [
             'zero_shot_basic',
             'few_shot_1shot',
@@ -92,6 +109,7 @@ def test_prompt_library_init():
             'compressed_minimal'
         ]
 
+        # 각 템플릿 존재 확인
         for template_name in required_templates:
             assert template_name in template_names, f"{template_name} 템플릿 없음"
             print(f"  ✓ {template_name}")
@@ -99,6 +117,7 @@ def test_prompt_library_init():
         print("✅ PromptLibrary 초기화 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -106,37 +125,46 @@ def test_prompt_library_init():
         return False
 
 
+# ---------------------- PromptLibrary 기능 테스트 ---------------------- #
 def test_prompt_library_operations():
     """PromptLibrary 기능 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 3: PromptLibrary 기능")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # PromptLibrary 생성
         library = PromptLibrary()
 
-        # 1. 템플릿 조회
+        # -------------- 1. 템플릿 조회 -------------- #
+        # 템플릿 조회
         template = library.get_template('zero_shot_basic')
         assert template is not None, "템플릿 조회 실패"
         print(f"✓ 템플릿 조회: {template.name}")
 
-        # 2. 카테고리별 조회
+        # -------------- 2. 카테고리별 조회 -------------- #
+        # 카테고리별 조회
         zero_shot_templates = library.list_templates(category='zero_shot')
         print(f"✓ Zero-shot 템플릿 수: {len(zero_shot_templates)}")
         assert len(zero_shot_templates) > 0, "Zero-shot 템플릿 없음"
 
-        # 3. 템플릿 포맷팅
+        # -------------- 3. 템플릿 포맷팅 -------------- #
+        # 템플릿 포맷팅
         dialogue = "A: 안녕하세요 B: 안녕하세요"
         formatted = template.format(dialogue=dialogue)
         assert dialogue in formatted, "대화 내용이 포맷되지 않음"
         print(f"✓ 템플릿 포맷팅 성공")
 
-        # 4. 토큰 추정
+        # -------------- 4. 토큰 추정 -------------- #
+        # 토큰 추정
         tokens = library.estimate_tokens('zero_shot_basic', dialogue=dialogue)
         print(f"✓ 토큰 추정: {tokens} 토큰")
         assert tokens > 0, "토큰 추정 실패"
 
-        # 5. 새 템플릿 추가
+        # -------------- 5. 새 템플릿 추가 -------------- #
+        # 새 템플릿 추가
         new_template = PromptTemplate(
             name="custom_template",
             template="Custom: {text}",
@@ -151,6 +179,7 @@ def test_prompt_library_operations():
         print("✅ PromptLibrary 기능 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -158,28 +187,35 @@ def test_prompt_library_operations():
         return False
 
 
+# ---------------------- 길이 기반 프롬프트 선택 테스트 ---------------------- #
 def test_prompt_selector_by_length():
     """PromptSelector 길이 기반 선택 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 4: 길이 기반 프롬프트 선택")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # PromptSelector 생성
         selector = PromptSelector()
 
-        # 짧은 대화
+        # -------------- 짧은 대화 -------------- #
+        # 짧은 대화 선택 테스트
         short_dialogue = "A: 안녕 B: 안녕"
         template = selector.select_by_length(short_dialogue)
         print(f"짧은 대화 ({len(short_dialogue.split())}단어): {template.name}")
         assert template.name == 'short_dialogue', "짧은 대화 템플릿 선택 실패"
 
-        # 중간 대화
+        # -------------- 중간 대화 -------------- #
+        # 중간 대화 선택 테스트
         medium_dialogue = " ".join(["단어"] * 250)
         template = selector.select_by_length(medium_dialogue)
         print(f"중간 대화 ({len(medium_dialogue.split())}단어): {template.name}")
         assert template.name == 'medium_dialogue', "중간 대화 템플릿 선택 실패"
 
-        # 긴 대화
+        # -------------- 긴 대화 -------------- #
+        # 긴 대화 선택 테스트
         long_dialogue = " ".join(["단어"] * 600)
         template = selector.select_by_length(long_dialogue)
         print(f"긴 대화 ({len(long_dialogue.split())}단어): {template.name}")
@@ -188,6 +224,7 @@ def test_prompt_selector_by_length():
         print("✅ 길이 기반 선택 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -195,30 +232,37 @@ def test_prompt_selector_by_length():
         return False
 
 
+# ---------------------- 참여자 수 기반 프롬프트 선택 테스트 ---------------------- #
 def test_prompt_selector_by_speakers():
     """PromptSelector 참여자 수 기반 선택 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 5: 참여자 수 기반 프롬프트 선택")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # PromptSelector 생성
         selector = PromptSelector()
 
-        # 2인 대화
+        # -------------- 2인 대화 -------------- #
+        # 2인 대화 선택 테스트
         two_person = "#Person1#: 안녕 #Person2#: 안녕"
         template = selector.select_by_speakers(two_person)
         num_speakers = selector._count_speakers(two_person)
         print(f"2인 대화 ({num_speakers}명): {template.name}")
         assert template.name == 'two_speakers', "2인 대화 템플릿 선택 실패"
 
-        # 소그룹 (3명)
+        # -------------- 소그룹 (3명) -------------- #
+        # 소그룹 대화 선택 테스트
         small_group = "#Person1#: A #Person2#: B #Person3#: C"
         template = selector.select_by_speakers(small_group)
         num_speakers = selector._count_speakers(small_group)
         print(f"소그룹 대화 ({num_speakers}명): {template.name}")
         assert template.name == 'group_small', "소그룹 템플릿 선택 실패"
 
-        # 대규모 (5명)
+        # -------------- 대규모 (5명) -------------- #
+        # 대규모 대화 선택 테스트
         large_group = "#Person1#: A #Person2#: B #Person3#: C #Person4#: D #Person5#: E"
         template = selector.select_by_speakers(large_group)
         num_speakers = selector._count_speakers(large_group)
@@ -228,6 +272,7 @@ def test_prompt_selector_by_speakers():
         print("✅ 참여자 수 기반 선택 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -235,31 +280,38 @@ def test_prompt_selector_by_speakers():
         return False
 
 
+# ---------------------- 토큰 예산 기반 프롬프트 선택 테스트 ---------------------- #
 def test_prompt_selector_by_token_budget():
     """PromptSelector 토큰 예산 기반 선택 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 6: 토큰 예산 기반 프롬프트 선택")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # PromptSelector 생성
         selector = PromptSelector()
 
-        # 매우 긴 대화 (토큰 예산의 80% 이상)
-        very_long_dialogue = "대화 내용 " * 200  # 약 400 토큰
+        # -------------- 매우 긴 대화 (토큰 예산의 80% 이상) -------------- #
+        # 매우 긴 대화 선택 테스트
+        very_long_dialogue = "대화 내용 " * 200
         template = selector.select_by_token_budget(very_long_dialogue, token_budget=500)
         estimated_tokens = selector._estimate_tokens(very_long_dialogue)
         print(f"긴 대화 ({estimated_tokens} 토큰): {template.name}")
         assert template.name == 'compressed_minimal', "압축 최소 템플릿 선택 실패"
 
-        # 중간 길이 대화
-        medium_dialogue = "대화 내용 " * 150  # 약 340 토큰 (500의 68%)
+        # -------------- 중간 길이 대화 -------------- #
+        # 중간 길이 대화 선택 테스트
+        medium_dialogue = "대화 내용 " * 150
         template = selector.select_by_token_budget(medium_dialogue, token_budget=500)
         estimated_tokens = selector._estimate_tokens(medium_dialogue)
         print(f"중간 대화 ({estimated_tokens} 토큰): {template.name}")
         assert template.name == 'compressed_concise', "압축 간결 템플릿 선택 실패"
 
-        # 짧은 대화 (여유 있음)
-        short_dialogue = "대화 내용 " * 20  # 약 40 토큰
+        # -------------- 짧은 대화 (여유 있음) -------------- #
+        # 짧은 대화 선택 테스트
+        short_dialogue = "대화 내용 " * 20
         template = selector.select_by_token_budget(short_dialogue, token_budget=500)
         estimated_tokens = selector._estimate_tokens(short_dialogue)
         print(f"짧은 대화 ({estimated_tokens} 토큰): {template.name}")
@@ -268,6 +320,7 @@ def test_prompt_selector_by_token_budget():
         print("✅ 토큰 예산 기반 선택 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -275,37 +328,47 @@ def test_prompt_selector_by_token_budget():
         return False
 
 
+# ---------------------- 적응형 프롬프트 선택 테스트 ---------------------- #
 def test_prompt_selector_adaptive():
     """PromptSelector 적응형 선택 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 7: 적응형 프롬프트 선택")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # PromptSelector 생성
         selector = PromptSelector()
 
+        # 테스트 대화
         dialogue = "#Person1#: 안녕하세요 #Person2#: 안녕하세요"
 
-        # 1. 토큰 예산 우선
+        # -------------- 1. 토큰 예산 우선 -------------- #
+        # 토큰 예산 우선 선택
         template = selector.select_adaptive(dialogue, token_budget=50)
         print(f"✓ 토큰 예산 우선: {template.name}")
 
-        # 2. 카테고리 선호
+        # -------------- 2. 카테고리 선호 -------------- #
+        # Zero-shot 카테고리 선호
         template = selector.select_adaptive(dialogue, prefer_category="zero_shot")
         print(f"✓ Zero-shot 선호: {template.name}")
         assert template.category == "zero_shot", "카테고리 선택 실패"
 
+        # CoT 카테고리 선호
         template = selector.select_adaptive(dialogue, prefer_category="cot")
         print(f"✓ CoT 선호: {template.name}")
         assert template.category == "cot", "CoT 선택 실패"
 
-        # 3. 기본 전략 (길이 기반)
+        # -------------- 3. 기본 전략 (길이 기반) -------------- #
+        # 기본 전략 선택
         template = selector.select_adaptive(dialogue)
         print(f"✓ 기본 전략: {template.name}")
 
         print("✅ 적응형 선택 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -313,19 +376,26 @@ def test_prompt_selector_adaptive():
         return False
 
 
+# ---------------------- 대화 분석 정보 테스트 ---------------------- #
 def test_selection_info():
     """대화 분석 정보 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 8: 대화 분석 정보")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
+        # PromptSelector 생성
         selector = PromptSelector()
 
+        # 테스트 대화
         dialogue = "#Person1#: 안녕하세요. 오늘 날씨가 좋네요. #Person2#: 네, 정말 좋아요."
 
+        # 대화 분석 정보 추출
         info = selector.get_selection_info(dialogue)
 
+        # -------------- 분석 정보 출력 -------------- #
         print(f"단어 수: {info['word_count']}")
         print(f"참여자 수: {info['num_speakers']}")
         print(f"추정 토큰: {info['estimated_tokens']}")
@@ -336,7 +406,8 @@ def test_selection_info():
         for char, value in info['characteristics'].items():
             print(f"  - {char}: {value}")
 
-        # 검증
+        # -------------- 검증 -------------- #
+        # 필수 정보 존재 확인
         assert 'word_count' in info, "단어 수 없음"
         assert 'num_speakers' in info, "참여자 수 없음"
         assert 'estimated_tokens' in info, "토큰 추정 없음"
@@ -346,6 +417,7 @@ def test_selection_info():
         print("✅ 대화 분석 정보 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -353,23 +425,29 @@ def test_selection_info():
         return False
 
 
+# ---------------------- 편의 생성 함수 테스트 ---------------------- #
 def test_create_functions():
     """편의 생성 함수 테스트"""
+    # 테스트 헤더 출력
     print("\n" + "="*60)
     print("테스트 9: 편의 생성 함수")
     print("="*60)
 
+    # -------------- 테스트 실행 -------------- #
     try:
-        # create_prompt_library
+        # -------------- create_prompt_library -------------- #
+        # create_prompt_library 함수 테스트
         library = create_prompt_library()
         assert len(library.templates) > 0, "라이브러리 생성 실패"
         print(f"✓ create_prompt_library: {len(library.templates)}개 템플릿")
 
-        # create_prompt_selector
+        # -------------- create_prompt_selector -------------- #
+        # create_prompt_selector 함수 테스트
         selector = create_prompt_selector()
         assert selector.library is not None, "선택기 생성 실패"
         print(f"✓ create_prompt_selector: 라이브러리 연결 확인")
 
+        # -------------- 커스텀 라이브러리로 선택기 생성 -------------- #
         # 커스텀 라이브러리로 선택기 생성
         selector_custom = create_prompt_selector(library)
         assert selector_custom.library == library, "커스텀 라이브러리 연결 실패"
@@ -378,6 +456,7 @@ def test_create_functions():
         print("✅ 편의 생성 함수 테스트 성공")
         return True
 
+    # -------------- 예외 처리 -------------- #
     except Exception as e:
         print(f"❌ 실패: {str(e)}")
         import traceback
@@ -385,12 +464,17 @@ def test_create_functions():
         return False
 
 
+# ==================== 메인 실행부 ==================== #
+# ---------------------- 전체 테스트 실행 함수 ---------------------- #
 def main():
     """전체 테스트 실행"""
+    # 테스트 시작 헤더 출력
     print("\n" + "="*70)
     print(" "*20 + "프롬프트 엔지니어링 시스템 테스트 시작")
     print("="*70)
 
+    # -------------- 테스트 실행 -------------- #
+    # 테스트 결과 수집용 리스트
     results = []
     results.append(("PromptTemplate 클래스", test_prompt_template()))
     results.append(("PromptLibrary 초기화", test_prompt_library_init()))
@@ -402,25 +486,30 @@ def main():
     results.append(("대화 분석 정보", test_selection_info()))
     results.append(("편의 생성 함수", test_create_functions()))
 
-    # 결과 요약
+    # -------------- 결과 요약 출력 -------------- #
     print("\n" + "="*70)
     print(" "*25 + "테스트 결과 요약")
     print("="*70)
 
+    # 통과한 테스트 개수 계산
     passed = sum(1 for _, result in results if result)
     total = len(results)
 
+    # 각 테스트 결과 출력
     for test_name, result in results:
         status = "✅ 통과" if result else "❌ 실패"
         print(f"{status}: {test_name}")
 
+    # 최종 요약 출력
     print("="*70)
     print(f"총 {total}개 테스트 중 {passed}개 통과 ({passed/total*100:.0f}%)")
     print("="*70)
 
+    # 전체 테스트 통과 여부 반환
     return passed == total
 
 
+# ---------------------- 메인 진입점 ---------------------- #
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    success = main()  # 전체 테스트 실행
+    sys.exit(0 if success else 1)  # 성공 시 0, 실패 시 1 반환

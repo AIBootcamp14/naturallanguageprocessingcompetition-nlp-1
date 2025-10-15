@@ -1,0 +1,24 @@
+# 실행 시각: 2025-10-14 23:20:38
+# 실행 경로: /home/ieyeppo/AI_Lab/natural-language-processing-competition
+
+# 실행 명령어:
+scripts/inference.py \
+  --model \
+  experiments/20251014/20251014_183206_kobart_ultimate_kfold/fold_4/kfold/final_model \
+  --test_data \
+  data/raw/test.csv \
+  --use_solar_api \
+  --use_pretrained_correction \
+  --correction_models \
+  gogamza/kobart-base-v2 \
+  digit82/kobart-summarization \
+  --correction_strategy \
+  quality_based \
+  --max_new_tokens \
+  100 \
+  --num_beams \
+  4 \
+  --batch_size \
+  16 \
+  --output \
+  submissions/kobart_fold4_with_hf_correction.csv

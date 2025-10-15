@@ -336,6 +336,28 @@ python scripts/inference.py \
   --output submissions/kobart_ultimate_final.csv \
   --resume  # ✅ 이전 단계에서 중단된 경우 이어서 실행
 
+python scripts/kfold_ensemble_inference.py \
+  --experiment_dir experiments/20251014/20251014_183206_kobart_ultimate_kfold \
+  --test_data data/raw/test.csv \
+  --use_solar_api \
+  --solar_model solar-1-chat \
+  --solar_temperature 0.1 \
+  --solar_batch_size 5 \
+  --solar_delay 2.0 \
+  --use_pretrained_correction \
+  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization ainize/kobart-news
+  --correction_strategy quality_based \
+  --correction_threshold 0.25 \
+  --max_new_tokens 80 \
+  --min_new_tokens 20 \
+  --num_beams 8 \
+  --length_penalty 0.9214 \
+  --repetition_penalty 2 \
+  --no_repeat_ngram_size 3 \
+  --batch_size 8 \
+  --ensemble_method soft_voting \
+  --resume
+
 # 📋 실행된 명령어는 자동으로 experiments/날짜/실행폴더/command.txt에 저장됩니다
 ```
 

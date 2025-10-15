@@ -13,6 +13,11 @@ from typing import List, Dict, Optional, Union
 from pathlib import Path
 from tqdm import tqdm
 import re
+import warnings
+
+# Transformers 경고 메시지 필터링
+warnings.filterwarnings("ignore", message=".*max_new_tokens.*max_length.*")
+warnings.filterwarnings("ignore", message=".*num_labels.*id2label.*")
 
 # ---------------------- 서드파티 라이브러리 ---------------------- #
 import torch
@@ -35,6 +40,7 @@ def postprocess_summary(text: str) -> str:
     요약문 후처리: 불완전한 문장을 정제하여 완전한 문장으로 변환
 
     주요 처리 과정:
+    0. 불필요한 접두사 제거 ("대화 요약:", "Summary:" 등)
     1. 반복된 점들 제거 ("... . . ." 패턴)
     2. 불완전한 플레이스홀더 제거 (모든 패턴)
     3. 불완전한 마지막 문장 제거 (끊긴 문장 삭제)
@@ -48,10 +54,10 @@ def postprocess_summary(text: str) -> str:
         정제된 요약문
 
     Examples:
-        >>> postprocess_summary("Person1과 Person2는 #Mr.")
+        >>> postprocess_summary("대화 요약: Person1과 Person2는 #Mr.")
         'Person1과 Person2는.'
 
-        >>> postprocess_summary("회의 시간을 변경하자고 제")
+        >>> postprocess_summary("Summary: 회의 시간을 변경하자고 제")
         '회의 시간을 변경하자고.'
 
         >>> postprocess_summary("약속했... . . .")
@@ -60,6 +66,36 @@ def postprocess_summary(text: str) -> str:
     text = text.strip()                                 # 앞뒤 공백 제거
     if not text:                                        # 빈 문자열 처리
         return text
+
+    # -------------- 0. 원본 대화 복사 패턴 제거 (최우선) -------------- #
+    # test_312 같은 경우: "고객: ... 상담사: ... 요약: ..." 형태
+    # 원본 대화가 그대로 포함된 경우 제거
+
+    # 패턴 1: "고객/상담사/의사/환자: ... 요약:" 형태 (원본 + 요약 혼합)
+    dialogue_copy_pattern = r'^(고객|상담사|의사|환자|직원|손님|학생|교수|친구|A|B|#Person\d+#)\s*:\s*.+?\s+(요약|Summary)\s*[:：]'
+    if re.search(dialogue_copy_pattern, text, flags=re.DOTALL):
+        # "요약:" 또는 "Summary:" 이후 부분만 추출
+        match = re.search(r'(요약|Summary)\s*[:：]\s*(.+)', text, flags=re.DOTALL)
+        if match:
+            text = match.group(2).strip()
+        else:
+            # 요약 부분이 없으면 빈 문자열 (원본만 복사한 경우)
+            text = ""
+
+    # -------------- 0-1. 불필요한 접두사 제거 -------------- #
+    # 모든 형태의 접두사 제거
+    patterns = [
+        r'^대화\s*(내용)?\s*요약\s*[:：]\s*\n*',
+        r'^Summary\s*[:：]\s*\n*',
+        r'^요약\s*[:：]\s*\n*',
+        r'^대화\s*[:：]\s*\n*',
+        r'^대화\s*상대\s+[A-Z가-힣]*\s*(가|는|이|을|를)\s*',
+        r'^대화에서는?\s+',
+        r'^대화\s*참여자들은?\s+',
+    ]
+    for pattern in patterns:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+    text = text.lstrip('\n\t ')
 
     # -------------- 1. 반복된 점들 제거 -------------- #
     # "... . . ." 또는 연속된 점 패턴 제거
