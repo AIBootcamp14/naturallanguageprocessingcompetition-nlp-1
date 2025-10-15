@@ -18,7 +18,7 @@ python inference.py --experiment exp7a --checkpoint checkpoint-2068
 
 ### 새 실험 추가 (3단계)
 
-**1단계**: `config/experiments.yaml`에 실험 추가
+**1단계**: `config.yaml`에 실험 추가
 ```yaml
 experiments:
   exp8:
@@ -41,7 +41,7 @@ python train.py --experiment exp8
 python inference.py --experiment exp8 --checkpoint checkpoint-XXXX
 ```
 
-**끝!** 별도의 `train_exp8.py`나 `config_exp8.yaml` 파일 불필요.
+**끝!** 별도의 실험별 파일 불필요.
 
 ---
 
@@ -49,7 +49,7 @@ python inference.py --experiment exp8 --checkpoint checkpoint-XXXX
 
 ### 주요 특징
 
-- **통합 설정**: 모든 실험을 `config/experiments.yaml`에서 관리
+- **통합 설정**: 모든 실험을 `config.yaml`에서 관리
 - **코드 재사용**: 단일 CLI로 모든 실험 실행 (중복 코드 95% ↓)
 - **자동 가중치**: WeightedRandomSampler 자동 적용
 - **기존 호환**: `scripts/` 디렉토리 유틸리티 그대로 활용
@@ -59,7 +59,7 @@ python inference.py --experiment exp8 --checkpoint checkpoint-XXXX
 | 항목 | Before (기존) | After (프레임워크) |
 |------|--------------|-------------------|
 | 학습 스크립트 | 20+ 파일 | 1 파일 (`train.py`) |
-| Config 파일 | 10+ 파일 | 1 파일 (`experiments.yaml`) |
+| Config 파일 | 10+ 파일 | 1 파일 (`config.yaml`) |
 | 새 실험 추가 | 파일 복제 + 수동 수정 | Config에 3줄 추가 |
 | 유지보수 | 모든 파일 수정 | 단일 모듈 수정 |
 
@@ -67,8 +67,7 @@ python inference.py --experiment exp8 --checkpoint checkpoint-XXXX
 
 ```
 code/
-├── config/
-│   └── experiments.yaml          # 모든 실험 설정
+├── config.yaml                   # 모든 실험 설정
 ├── core/
 │   ├── data.py                   # 데이터 & 가중치 샘플링
 │   ├── model.py                  # 모델 로드/저장
@@ -78,10 +77,6 @@ code/
 │   ├── config.py                 # Config 파싱
 │   ├── logger.py                 # 로깅
 │   └── metrics.py                # ROUGE 계산
-├── scripts/                      # 기존 유틸리티 (수정 없음)
-│   ├── data_loader.py
-│   ├── tokenizer_utils.py
-│   └── ...
 ├── train.py                      # 학습 CLI
 └── inference.py                  # 추론 CLI
 ```
@@ -102,7 +97,7 @@ python train.py --experiment exp7f   # 가중치 샘플링
 ```
 
 **자동 실행 과정**:
-1. `config/experiments.yaml`에서 설정 로드
+1. `config.yaml`에서 설정 로드
 2. defaults + 실험별 설정 병합
 3. 가중치 샘플링 자동 적용 (`use_weights: true` 시)
 4. Wandb 초기화 및 로깅
@@ -133,7 +128,7 @@ python inference.py --experiment exp7f --checkpoint checkpoint-1880 --output ./r
 
 ### 1. Config 병합 로직
 
-`experiments.yaml` 구조:
+`config.yaml` 구조:
 ```yaml
 defaults:
   # 모든 실험의 기본값
@@ -228,10 +223,10 @@ ls /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/scripts
 
 ```bash
 # 실험 목록 확인
-grep "^  exp" config/experiments.yaml
+grep "^  exp" config.yaml
 ```
 
-→ 실험 이름이 `experiments.yaml`에 존재하는지 확인
+→ 실험 이름이 `config.yaml`에 존재하는지 확인
 
 ### Wandb 오류 시
 
@@ -257,16 +252,7 @@ python -c "import pandas as pd; print(pd.read_csv('data/train.csv').columns)"
 
 ## 주의사항
 
-### 1. scripts/ 디렉토리 수정 금지
-
-프레임워크는 `scripts/`의 기존 유틸리티를 **그대로 활용**:
-- `data_loader.py`, `tokenizer_utils.py`, `model_utils.py`
-- `dataset.py`, `trainer_utils.py`, `inference_utils.py`
-- `wandb_utils.py`
-
-이 파일들은 **수정하지 마세요**. 프레임워크가 자동 import.
-
-### 2. CSV 형식
+### 1. CSV 형식
 
 Competition 제출 파일은 **index 포함** 필수:
 ```python
@@ -277,7 +263,7 @@ result_df.to_csv(output_path, index=True)
 result_df.to_csv(output_path, index=False)
 ```
 
-### 3. 토큰 정리
+### 2. 토큰 정리
 
 추론 시 특수 토큰 자동 제거 (config 설정):
 ```yaml
@@ -295,7 +281,6 @@ inference:
 
 - **기존 베이스라인**: `/Competition/NLP/docs/baseline_code_summary.md`
 - **실험 로그**: `/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/docs/EXPERIMENT_LOG.md`
-- **가중치 샘플링 원본**: `train_exp7f.py`
 
 ---
 
