@@ -295,7 +295,7 @@ inference:
 
 - **기존 베이스라인**: `/Competition/NLP/docs/baseline_code_summary.md`
 - **실험 가이드**: `/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/docs/RESTART_GUIDE.md`
-- **실험 로그**: `/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/EXPERIMENT_LOG.md`
+- **실험 로그**: `/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/docs/EXPERIMENT_LOG.md`
 - **가중치 샘플링 원본**: `train_exp7f.py`
 
 ---

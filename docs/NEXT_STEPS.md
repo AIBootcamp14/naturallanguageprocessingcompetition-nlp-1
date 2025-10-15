@@ -204,8 +204,8 @@ training:
 ## 참고 링크
 
 - [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md) - 전체 실험 이력
-- [FRAMEWORK_GUIDE.md](code/README_framework.md) - 프레임워크 사용법
-- [Competition_Overview](docs/Competition_Overview/) - 대회 규칙
+- [프레임워크 가이드](../code/README.md) - 프레임워크 사용법
+- [Competition_Overview](Competition_Overview/) - 대회 규칙
 
 ---
 
