@@ -27,8 +27,8 @@ from dotenv import load_dotenv
 load_dotenv('/Competition/NLP/.env')
 
 import torch
-from utils.config import load_experiment_config, validate_config
-from utils.logger import setup_logger, log_experiment_start, log_experiment_end
+from src.utils.config import load_experiment_config, validate_config
+from src.utils.logger import setup_logger, log_experiment_start, log_experiment_end
 
 # scripts/utils.py 직접 로드 (set_seed 함수 사용)
 scripts_utils_path = os.path.join(scripts_dir, 'utils.py')
@@ -41,9 +41,9 @@ from tokenizer_utils import load_tokenizer
 from wandb_utils import init_wandb, finish_run
 
 # core 모듈
-from core.data import DataManager
-from core.model import ModelManager
-from core.trainer import Trainer
+from src.core.data import DataManager
+from src.core.model import ModelManager
+from src.core.trainer import Trainer
 
 
 def parse_args():

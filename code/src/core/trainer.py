@@ -3,16 +3,12 @@
 학습 모듈
 """
 
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'scripts'))
-
 import torch
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from typing import Dict, Optional
 from transformers import Seq2SeqTrainer, BartForConditionalGeneration, PreTrainedTokenizerFast
-from trainer_utils import get_trainer
-from dataset import DatasetForTrain, DatasetForVal
+from src.scripts.trainer_utils import get_trainer
+from src.scripts.dataset import DatasetForTrain, DatasetForVal
 
 
 class WeightedSeq2SeqTrainer(Seq2SeqTrainer):
@@ -68,11 +64,6 @@ class Trainer:
         self.experiment_name = experiment_name
         self.device = self._get_device()
 
-        # scripts 경로 추가
-        scripts_path = os.path.join(os.path.dirname(__file__), '..', '..', 'scripts')
-        if scripts_path not in sys.path:
-            sys.path.append(scripts_path)
-
     def _get_device(self) -> torch.device:
         """
         사용할 디바이스를 반환합니다
@@ -80,7 +71,7 @@ class Trainer:
         Returns:
             torch.device
         """
-        from utils import get_device
+        from src.scripts.utils import get_device
         return get_device()
 
     def train(self, model: BartForConditionalGeneration, tokenizer: PreTrainedTokenizerFast,

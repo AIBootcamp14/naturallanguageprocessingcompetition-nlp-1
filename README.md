@@ -32,12 +32,12 @@ NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기�
 3. 최고 성능 모델(LP=0.5)을 재현합니다.
    ```bash
    # config.yaml에서 length_penalty를 0.5로 수정 후
-   python inference.py --checkpoint checkpoint-XXXX
+   python src/cli/inference.py --checkpoint checkpoint-XXXX
    ```
 4. CLI 기반 학습/추론으로 실험을 진행합니다.
    ```bash
-   python train.py --experiment exp7a
-   python inference.py --experiment exp7a --checkpoint checkpoint-2068
+   python src/cli/train.py --experiment exp7a
+   python src/cli/inference.py --experiment exp7a --checkpoint checkpoint-2068
    ```
 
 ## 재현 가능한 워크플로우
@@ -50,19 +50,19 @@ NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기�
 2. **최고 성능 모델 (47.47점)**
    ```bash
    # config.yaml 수정: length_penalty=0.5
-   python inference.py --checkpoint checkpoint-XXXX
+   python src/cli/inference.py --checkpoint checkpoint-XXXX
    # 소요 시간: 12초
    ```
 3. **데이터 증강 실험 (47.41점)**
    ```bash
    # 증강 데이터 생성 (1,009개)
-   python -m src.data.augmentation --output augmentation_final.csv
+   python src/scripts/generate_augmented_data.py --output augmentation_final.csv
 
    # 학습 (가중치 샘플링 미사용)
-   python train.py --experiment exp7a
+   python src/cli/train.py --experiment exp7a
 
    # 추론
-   python inference.py --experiment exp7a --checkpoint checkpoint-2068
+   python src/cli/inference.py --experiment exp7a --checkpoint checkpoint-2068
    ```
 4. **실험 결과 문서화**: 실험 결과는 `wandb/` 및 `logs/`에 저장되고, 요약은 `docs/EXPERIMENT_LOG.md`에 반영합니다.
 
@@ -70,14 +70,27 @@ NIKLuge 2024 일상 대화 요약 대회 참가를 위해 구축한 KoBART 기�
 ```
 naturallanguageprocessingcompetition-nlp-1/
 ├── code/
+│   ├── src/
+│   │   ├── cli/
+│   │   │   ├── train.py            # CLI 학습 스크립트
+│   │   │   └── inference.py        # CLI 추론 스크립트
+│   │   ├── core/                   # 프레임워크 모듈
+│   │   │   ├── data.py             # 데이터 로딩 & 샘플링
+│   │   │   ├── model.py            # 모델 로드/저장
+│   │   │   ├── trainer.py          # 학습 로직
+│   │   │   └── inference.py        # 추론 로직
+│   │   ├── scripts/                # 유틸리티 스크립트
+│   │   │   ├── data_loader.py      # 데이터 전처리
+│   │   │   ├── dataset.py          # 커스텀 데이터셋
+│   │   │   ├── generate_augmented_data.py  # 데이터 증강
+│   │   │   └── ...
+│   │   └── utils/                  # 유틸리티 함수
+│   │       ├── config.py           # Config 파싱
+│   │       ├── logger.py           # 로깅
+│   │       └── metrics.py          # ROUGE 계산
 │   ├── baseline.ipynb              # 공식 Baseline (36.12점)
 │   ├── baseline_modular.ipynb      # 모듈화 버전
-│   ├── config.yaml                 # Baseline 하이퍼파라미터
-│   ├── config/experiments.yaml     # 실험별 설정
-│   ├── core/                       # 프레임워크 모듈
-│   ├── utils/                      # 유틸리티 함수
-│   ├── train.py                    # CLI 학습 스크립트
-│   └── inference.py                # CLI 추론 스크립트
+│   └── config.yaml                 # 모든 실험 설정
 ├── docs/                           # 포트폴리오 문서
 ├── data/
 │   ├── train.csv                   # 학습 데이터 (12,457개)

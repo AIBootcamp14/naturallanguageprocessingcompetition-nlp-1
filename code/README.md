@@ -10,10 +10,10 @@
 cd /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/code
 
 # 학습
-python train.py --experiment exp7a
+python src/cli/train.py --experiment exp7a
 
 # 추론
-python inference.py --experiment exp7a --checkpoint checkpoint-2068
+python src/cli/inference.py --experiment exp7a --checkpoint checkpoint-2068
 ```
 
 ### 새 실험 추가 (3단계)
@@ -33,12 +33,12 @@ experiments:
 
 **2단계**: 학습 실행
 ```bash
-python train.py --experiment exp8
+python src/cli/train.py --experiment exp8
 ```
 
 **3단계**: 추론 실행
 ```bash
-python inference.py --experiment exp8 --checkpoint checkpoint-XXXX
+python src/cli/inference.py --experiment exp8 --checkpoint checkpoint-XXXX
 ```
 
 **끝!** 별도의 실험별 파일 불필요.
@@ -58,7 +58,7 @@ python inference.py --experiment exp8 --checkpoint checkpoint-XXXX
 
 | 항목 | Before (기존) | After (프레임워크) |
 |------|--------------|-------------------|
-| 학습 스크립트 | 20+ 파일 | 1 파일 (`train.py`) |
+| 학습 스크립트 | 20+ 파일 | 1 파일 (`src/cli/train.py`) |
 | Config 파일 | 10+ 파일 | 1 파일 (`config.yaml`) |
 | 새 실험 추가 | 파일 복제 + 수동 수정 | Config에 3줄 추가 |
 | 유지보수 | 모든 파일 수정 | 단일 모듈 수정 |
@@ -67,18 +67,25 @@ python inference.py --experiment exp8 --checkpoint checkpoint-XXXX
 
 ```
 code/
+├── src/
+│   ├── cli/
+│   │   ├── train.py              # 학습 CLI
+│   │   └── inference.py          # 추론 CLI
+│   ├── core/
+│   │   ├── data.py               # 데이터 & 가중치 샘플링
+│   │   ├── model.py              # 모델 로드/저장
+│   │   ├── trainer.py            # 학습 (WeightedSeq2SeqTrainer)
+│   │   └── inference.py          # 추론
+│   ├── scripts/
+│   │   ├── data_loader.py        # 데이터 로딩 유틸리티
+│   │   ├── dataset.py            # 커스텀 데이터셋
+│   │   └── ...                   # 기타 스크립트
+│   └── utils/
+│       ├── config.py             # Config 파싱
+│       ├── logger.py             # 로깅
+│       └── metrics.py            # ROUGE 계산
 ├── config.yaml                   # 모든 실험 설정
-├── core/
-│   ├── data.py                   # 데이터 & 가중치 샘플링
-│   ├── model.py                  # 모델 로드/저장
-│   ├── trainer.py                # 학습 (WeightedSeq2SeqTrainer)
-│   └── inference.py              # 추론
-├── utils/
-│   ├── config.py                 # Config 파싱
-│   ├── logger.py                 # 로깅
-│   └── metrics.py                # ROUGE 계산
-├── train.py                      # 학습 CLI
-└── inference.py                  # 추론 CLI
+└── requirements.txt
 ```
 
 ---
@@ -89,11 +96,11 @@ code/
 
 ```bash
 # 기본 사용법
-python train.py --experiment <실험명>
+python src/cli/train.py --experiment <실험명>
 
 # 예시
-python train.py --experiment exp7a   # 가중치 없음
-python train.py --experiment exp7f   # 가중치 샘플링
+python src/cli/train.py --experiment exp7a   # 가중치 없음
+python src/cli/train.py --experiment exp7f   # 가중치 샘플링
 ```
 
 **자동 실행 과정**:
@@ -107,11 +114,11 @@ python train.py --experiment exp7f   # 가중치 샘플링
 
 ```bash
 # 기본 사용법
-python inference.py --experiment <실험명> --checkpoint <체크포인트명> [--output <출력경로>]
+python src/cli/inference.py --experiment <실험명> --checkpoint <체크포인트명> [--output <출력경로>]
 
 # 예시
-python inference.py --experiment exp7a --checkpoint checkpoint-2068
-python inference.py --experiment exp7f --checkpoint checkpoint-1880 --output ./results/sub.csv
+python src/cli/inference.py --experiment exp7a --checkpoint checkpoint-2068
+python src/cli/inference.py --experiment exp7f --checkpoint checkpoint-1880 --output ./results/sub.csv
 ```
 
 **자동 실행 과정**:
@@ -176,7 +183,7 @@ experiments:
           '감정 지원': 2.31           # 130개 → 2.31배
 ```
 
-**로직** (`core/data.py`):
+**로직** (`src/core/data.py`):
 ```python
 # 인간관계/일상 도메인: 서브클러스터 가중치
 if domain == '인간관계/일상':
@@ -214,10 +221,10 @@ else:
 
 ```bash
 # scripts 경로 확인
-ls /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/scripts
+ls /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/code/src/scripts
 ```
 
-→ `train.py`와 `inference.py`가 자동으로 경로 추가함
+→ `src/cli/train.py`와 `src/cli/inference.py`가 자동으로 경로 추가함
 
 ### Config 오류 시
 

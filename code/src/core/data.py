@@ -3,16 +3,12 @@
 데이터 로딩 및 가중치 샘플링 모듈
 """
 
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'scripts'))
-
 import pandas as pd
 import torch
 from torch.utils.data import WeightedRandomSampler
 from typing import Dict, Tuple, Optional
-from data_loader import Preprocess
-from dataset import prepare_train_dataset, DatasetForTrain, DatasetForVal
+from src.scripts.data_loader import Preprocess
+from src.scripts.dataset import prepare_train_dataset, DatasetForTrain, DatasetForVal
 
 
 class DataManager:

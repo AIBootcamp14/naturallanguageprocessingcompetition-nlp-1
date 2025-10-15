@@ -586,7 +586,7 @@ Loss Gap = Train Loss - Eval Loss
 - `/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/code/exp7f_train.log`
 
 **Config 파일**:
-- `/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/code/config.yaml`
+- `/Competition/NLP/naturallanguageprocessingcompetition-nlp-1/src/config/config.yaml`
 
 **데이터**:
 - `/Competition/NLP/data/augmentation_final.csv` (13,465개)

@@ -3,18 +3,15 @@
 추론 모듈
 """
 
-import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'scripts'))
-
 import torch
 import pandas as pd
 from typing import Dict
 from torch.utils.data import DataLoader
 from transformers import BartForConditionalGeneration, PreTrainedTokenizerFast
-from data_loader import Preprocess
-from dataset import prepare_test_dataset
-from inference_utils import generate_summaries, postprocess_summaries
+from src.scripts.data_loader import Preprocess
+from src.scripts.dataset import prepare_test_dataset
+from src.scripts.inference_utils import generate_summaries, postprocess_summaries
 
 
 class Inferencer:
@@ -49,7 +46,7 @@ class Inferencer:
         Returns:
             torch.device
         """
-        from utils import get_device
+        from src.scripts.utils import get_device
         return get_device()
 
     def run(self, model: BartForConditionalGeneration, tokenizer: PreTrainedTokenizerFast,

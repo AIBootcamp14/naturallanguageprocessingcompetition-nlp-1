@@ -3,13 +3,9 @@
 모델 로딩 및 관리 모듈
 """
 
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'scripts'))
-
 import torch
 from typing import Dict
-from model_utils import load_model_for_train, load_model_for_inference
+from src.scripts.model_utils import load_model_for_train, load_model_for_inference
 from transformers import BartForConditionalGeneration, PreTrainedTokenizerFast
 
 

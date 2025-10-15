@@ -105,14 +105,27 @@ Final Score = max(ROUGE-1-F1) + max(ROUGE-2-F1) + max(ROUGE-L-F1)
 ```
 naturallanguageprocessingcompetition-nlp-1/
 ├── code/
+│   ├── src/
+│   │   ├── cli/
+│   │   │   ├── train.py            # CLI 학습 스크립트
+│   │   │   └── inference.py        # CLI 추론 스크립트
+│   │   ├── core/                   # 프레임워크 모듈
+│   │   │   ├── data.py             # 데이터 로딩 & 샘플링
+│   │   │   ├── model.py            # 모델 로드/저장
+│   │   │   ├── trainer.py          # 학습 로직
+│   │   │   └── inference.py        # 추론 로직
+│   │   ├── scripts/                # 유틸리티 스크립트
+│   │   │   ├── data_loader.py      # 데이터 전처리
+│   │   │   ├── dataset.py          # 커스텀 데이터셋
+│   │   │   ├── generate_augmented_data.py  # 데이터 증강
+│   │   │   └── ...
+│   │   └── utils/                  # 유틸리티 함수
+│   │       ├── config.py           # Config 파싱
+│   │       ├── logger.py           # 로깅
+│   │       └── metrics.py          # ROUGE 계산
 │   ├── baseline.ipynb              # 공식 Baseline
 │   ├── baseline_modular.ipynb      # 모듈화 버전
-│   ├── config.yaml                 # Baseline 설정
-│   ├── config/experiments.yaml     # 실험 설정
-│   ├── core/                       # 프레임워크 모듈
-│   ├── utils/                      # 유틸리티
-│   ├── train.py                    # CLI 학습 스크립트
-│   └── inference.py                # CLI 추론 스크립트
+│   └── config.yaml                 # 모든 실험 설정
 ├── docs/
 │   ├── EXPERIMENT_LOG.md           # 전체 실험 기록
 │   ├── LESSONS_LEARNED.md          # 실험 교훈
@@ -360,12 +373,12 @@ decoder_max_length: 100
 cd /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/code
 
 # 1. Baseline 학습 (또는 기존 checkpoint 사용)
-python train.py
+python src/cli/train.py
 
 # 2. config.yaml 수정: length_penalty=0.5
 
 # 3. 추론 실행
-python inference.py --checkpoint checkpoint-XXXX
+python src/cli/inference.py --checkpoint checkpoint-XXXX
 ```
 
 ---
@@ -417,10 +430,10 @@ dev_rouge_1: 36.18%
 cd /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/code
 
 # 1. 증강 데이터로 학습
-python train.py --experiment exp7a
+python src/cli/train.py --experiment exp7a
 
 # 2. 추론 실행
-python inference.py --experiment exp7a --checkpoint checkpoint-2068
+python src/cli/inference.py --experiment exp7a --checkpoint checkpoint-2068
 ```
 
 ---

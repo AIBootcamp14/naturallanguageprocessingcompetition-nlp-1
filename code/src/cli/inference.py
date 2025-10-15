@@ -22,15 +22,15 @@ scripts_dir = os.path.join(os.path.dirname(current_dir), 'scripts')
 sys.path.append(scripts_dir)
 
 import torch
-from utils.config import load_experiment_config, validate_config
-from utils.logger import setup_logger
+from src.utils.config import load_experiment_config, validate_config
+from src.utils.logger import setup_logger
 
 # scripts 디렉토리의 기존 유틸리티
 from tokenizer_utils import load_tokenizer
 
 # core 모듈
-from core.model import ModelManager
-from core.inference import Inferencer
+from src.core.model import ModelManager
+from src.core.inference import Inferencer
 
 
 def parse_args():
