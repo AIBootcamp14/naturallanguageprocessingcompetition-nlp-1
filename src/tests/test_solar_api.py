@@ -321,7 +321,7 @@ def test_remove_placeholders():
         all_passed = True
 
         for i, (input_text, expected_output) in enumerate(test_cases, 1):
-            result = api._remove_placeholders(input_text)
+            result = api._validate_and_fix_summary(input_text, "")
 
             # 알파벳이나 #Person# 패턴이 제거되었는지 확인
             has_placeholder = bool(
