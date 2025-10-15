@@ -68,6 +68,26 @@ defaults:
 
 # 개별 실험 설정 (defaults를 오버라이드)
 experiments:
+  exp4:
+    description: "길이 정규화 + Encoder 확장 (768 토큰)"
+    general:
+      output_dir: /Competition/NLP/naturallanguageprocessingcompetition-nlp-1/submission_exp4
+
+    tokenizer:
+      encoder_max_len: 768
+
+    inference:
+      length_penalty: 0.6
+
+    wandb:
+      name: kobart-exp4-length-norm-768
+      tags:
+        - exp4
+        - length-penalty
+        - encoder-768
+      group: phase1-experiments
+      notes: "GNMT length normalization (0.6) with extended encoder (768 tokens)"
+
   exp7a:
     description: "증강 데이터 학습 (가중치 없음 - 베이스라인)"
     general:
