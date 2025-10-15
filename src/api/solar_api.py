@@ -86,8 +86,19 @@ class SolarAPI:
         original = text
         modified = text
 
-        # 1. "친구 A와 친구 B" → "두 친구" (동일 역할 2명 패턴)
-        # 가장 먼저 처리해야 함 (다른 패턴보다 우선)
+        # 1. "이름과 이름" → "이름이 이름에게" (영어 이름 사이 "와/과" 패턴)
+        # 최우선 처리: Muriel Douglas와 James → Muriel Douglas가 James에게
+        name_and_name_patterns = [
+            # "Full Name와/과 Name" 패턴
+            (r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)(와|과)\s+([A-Z][a-z]+)가', r'\1가 \3에게'),
+            # "Name와/과 Name" 패턴
+            (r'([A-Z][a-z]+)(와|과)\s+([A-Z][a-z]+)가', r'\1이 \3에게'),
+        ]
+
+        for pattern, replacement in name_and_name_patterns:
+            modified = re.sub(pattern, replacement, modified)
+
+        # 2. "친구 A와 친구 B" → "두 친구" (동일 역할 2명 패턴)
         same_role_patterns = [
             (r'(친구|동료|연인|형제|자매)\s+([A-D])와\s+\1\s+([A-D])(?=[가이와과에한의은는을를도께부까]|\s)', r'두 \1'),
             (r'(상사|비서|직원|관리자|팀원)\s+([A-D])와\s+\1\s+([A-D])(?=[가이와과에한의은는을를도께부까]|\s)', r'두 \1'),
@@ -287,7 +298,7 @@ class SolarAPI:
             메시지 리스트
         """
         # 프롬프트 버전 (캐시 무효화용)
-        PROMPT_VERSION = "v3.4_강화된_post_processing"
+        PROMPT_VERSION = "v3.5_retry_logic_with_name_fix"
 
         system_prompt = f"""[{PROMPT_VERSION}] 당신은 대화 요약 전문가입니다.
 
@@ -652,7 +663,7 @@ Summary:"""
             raise RuntimeError("Solar API 클라이언트가 초기화되지 않음")
 
         # 캐시 확인 (프롬프트 버전 포함)
-        PROMPT_VERSION = "v3.4_강화된_post_processing"
+        PROMPT_VERSION = "v3.5_retry_logic_with_name_fix"
         cache_key_string = f"{PROMPT_VERSION}_{dialogue}"
         cache_key = hashlib.md5(cache_key_string.encode()).hexdigest()
         if cache_key in self.cache:
@@ -822,7 +833,7 @@ Summary:"""
             raise RuntimeError("Solar API 클라이언트가 초기화되지 않음")
 
         # 캐시 확인 (프롬프트 버전 + n_samples 포함)
-        PROMPT_VERSION = "v3.4_강화된_post_processing"
+        PROMPT_VERSION = "v3.5_retry_logic_with_name_fix"
         cache_key_string = f"{PROMPT_VERSION}_voting_{n_samples}_{dialogue}"
         cache_key = hashlib.md5(cache_key_string.encode()).hexdigest()
         if cache_key in self.cache:
@@ -845,32 +856,68 @@ Summary:"""
 
         self._log(f"🔄 Solar API {n_samples}회 샘플링 시작...")
 
+        retry_count = 0
+        max_retries = 3
+
         try:
             for i in range(n_samples):
-                response = self.client.chat.completions.create(
-                    model="solar-1-mini-chat",
-                    messages=messages,
-                    temperature=temperature,
-                    top_p=top_p,
-                    max_tokens=200
-                )
+                success = False
+                attempt = 0
 
-                summary = response.choices[0].message.content.strip()
+                while not success and attempt < max_retries:
+                    try:
+                        response = self.client.chat.completions.create(
+                            model="solar-1-mini-chat",
+                            messages=messages,
+                            temperature=temperature,
+                            top_p=top_p,
+                            max_tokens=200
+                        )
 
-                # Post-processing: 플레이스홀더 검증 및 제거
-                summary = self._validate_and_fix_summary(summary, dialogue)
+                        summary = response.choices[0].message.content.strip()
 
-                summaries.append(summary)
+                        # Post-processing: 플레이스홀더 검증 및 제거
+                        summary = self._validate_and_fix_summary(summary, dialogue)
 
-                # 품질 평가
-                score = self.evaluate_summary_quality(summary, dialogue)
-                scores.append(score)
+                        summaries.append(summary)
 
-                self._log(f"  샘플 {i+1}/{n_samples}: {score:.1f}점 | {summary[:50]}...")
+                        # 품질 평가
+                        score = self.evaluate_summary_quality(summary, dialogue)
+                        scores.append(score)
+
+                        self._log(f"  샘플 {i+1}/{n_samples}: {score:.1f}점 | {summary[:50]}...")
+
+                        success = True
+
+                    except Exception as e:
+                        error_msg = str(e)
+
+                        # 429 에러인 경우
+                        if "429" in error_msg or "rate limit" in error_msg.lower():
+                            attempt += 1
+                            retry_count += 1
+
+                            if attempt < max_retries:
+                                # 지수 백오프: 5초 → 10초 → 20초
+                                wait_time = 5 * (2 ** (attempt - 1))
+                                self._log(f"  ⚠️  Rate Limit 감지 - {wait_time}초 대기 후 재시도 ({attempt}/{max_retries})...")
+                                time.sleep(wait_time)
+                            else:
+                                # 최대 재시도 초과 - 이전 샘플 중 하나 복사
+                                if summaries:
+                                    self._log(f"  ⚠️  최대 재시도 초과 - 이전 샘플 재사용")
+                                    summaries.append(summaries[-1])
+                                    scores.append(scores[-1])
+                                    success = True
+                                else:
+                                    raise
+                        else:
+                            # 429가 아닌 다른 에러 - 즉시 실패
+                            raise
 
                 # Rate limit 방지를 위한 샘플 간 대기
                 if i < n_samples - 1:  # 마지막 샘플 후에는 대기 불필요
-                    time.sleep(3.0)  # 샘플 간 3.0초 대기 (429 에러 방지, solar-pro2 대응)
+                    time.sleep(4.0)  # 샘플 간 4.0초 대기 (3.0 → 4.0초 증가)
 
             # 최고 점수 요약 선택
             best_idx = scores.index(max(scores))
