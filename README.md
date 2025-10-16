@@ -19,12 +19,12 @@
 
 | 프로필 | 담당 역할 |
 |:------:|:----------|
-| <img src="https://github.com/user-attachments/assets/a24cf78c-2c8f-47b9-b53b-867557872d88" width="100" height="100"><br>[김선민](https://github.com/nimnusmik)<br>INFJ<br>경영&AI 융합 | 팀 리드<br>데이터 분석 및 전처리<br>모델 실험 및 하이퍼파라미터 튜닝<br>성능 평가 및 실험 분석 |
-| <img src="https://github.com/user-attachments/assets/489d401e-f5f5-4998-91a0-3b0f37f4490f" width="100" height="100"><br>[김병현](https://github.com/Bkankim)<br>ENFP<br> 정보보안 | 데이터 분석 및 전처리<br>모델 실험 및 하이퍼파라미터 튜닝<br>LLM 전반에 대한 연구<br>데이터 증강<br>성능 평가 및 실험 분석 |
-| <img src="https://github.com/user-attachments/assets/55180131-9401-457e-a600-312eda87ded9" width="100" height="100"><br>[임예슬](https://github.com/joy007fun/joy007fun)<br>ENTP<br>관광경영&컴퓨터공학<br>클라우드 인프라 | 데이터 분석 및 전처리<br>모델 실험 및 하이퍼파라미터 튜닝<br>성능 평가 및 실험 분석 |
-| <img src="https://github.com/user-attachments/assets/10a2c088-72cb-45cd-8772-b683bc2fb550" width="100" height="100"><br>[정서우](https://github.com/Seowoo-C)<br>ISFJ<br>화학 | 데이터 분석 및 전처리<br>모델 실험 및 하이퍼파라미터 튜닝<br>성능 평가 및 실험 분석 |
-| <img src="https://github.com/user-attachments/assets/1649f72b-14a6-4a63-bf35-20330a464c1c" width="100" height="100"><br>[정소현](https://github.com/soniajhung)<br>ESFJ<br>인사 | 모델 실험 및 하이퍼파라미터 튜닝<br>데이터 증강 및 Solar API 활용<br>LLM 프롬프트 엔지니어링 |
-| <img src="https://github.com/user-attachments/assets/5c04a858-46ed-4043-9762-b7eaf7b1149a" width="100" height="100"><br>[최현화](https://github.com/iejob)<br>ISTP<br>컴퓨터공학 | 데이터 분석 및 전처리<br>Optuna 최적화<br>모델 실험 및 하이퍼파라미터 튜닝<br>데이터 증강 및 Solar API 활용<br>K-Fold 교차검증<br>다중 모델 앙상블<br>LLM 프롬프트 엔지니어링<br>성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/a24cf78c-2c8f-47b9-b53b-867557872d88" width="100" height="100"><br>[김선민](https://github.com/nimnusmik)<br>INFJ<br>경영&AI 융합 | 팀 리드<br>데이터 분석 및 전처리, 모델 실험 및 하이퍼파라미터 튜닝<br>성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/489d401e-f5f5-4998-91a0-3b0f37f4490f" width="100" height="100"><br>[김병현](https://github.com/Bkankim)<br>ENFP<br> 정보보안 | 데이터 분석 및 전처리, 모델 실험 및 하이퍼파라미터 튜닝<br>LLM 전반에 대한 연구, 데이터 증강, 성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/55180131-9401-457e-a600-312eda87ded9" width="100" height="100"><br>[임예슬](https://github.com/joy007fun/joy007fun)<br>ENTP<br>관광경영&컴퓨터공학<br>클라우드 인프라 | 데이터 분석 및 전처리, 모델 실험 및 하이퍼파라미터 튜닝<br>성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/10a2c088-72cb-45cd-8772-b683bc2fb550" width="100" height="100"><br>[정서우](https://github.com/Seowoo-C)<br>ISFJ<br>화학 | 데이터 분석 및 전처리, 모델 실험 및 하이퍼파라미터 튜닝<br>성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/1649f72b-14a6-4a63-bf35-20330a464c1c" width="100" height="100"><br>[정소현](https://github.com/soniajhung)<br>ESFJ<br>인사 | 모델 실험 및 하이퍼파라미터 튜닝, 데이터 증강 및 Solar API 활용<br>LLM 프롬프트 엔지니어링 |
+| <img src="https://github.com/user-attachments/assets/5c04a858-46ed-4043-9762-b7eaf7b1149a" width="100" height="100"><br>[최현화](https://github.com/iejob)<br>ISTP<br>컴퓨터공학 | 데이터 분석 및 전처리, Optuna 최적화<br>모델 실험 및 하이퍼파라미터 튜닝<br>데이터 증강 및 Solar API 활용, K-Fold 교차검증<br>다중 모델 앙상블, LLM 프롬프트 엔지니어링, 성능 평가 및 실험 분석 |
 
 ### 협업 방식
 
