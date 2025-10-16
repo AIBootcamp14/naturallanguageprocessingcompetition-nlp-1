@@ -1,6 +1,0 @@
-{
-  "optimization_method": "tensorrt",
-  "quantization_bits": 8,
-  "success": false,
-  "optimal_batch_size": 64
-}

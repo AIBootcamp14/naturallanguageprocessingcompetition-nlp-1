@@ -1,8 +1,0 @@
-[2025-10-10 08:41:31] === Baseline Experiment Started ===
-[2025-10-10 08:41:31] GPU Tier: LOW
-[2025-10-10 08:41:31] GPU: NVIDIA GeForce RTX 4090
-[2025-10-10 08:41:31] Data loaded from: /home/ieyeppo/AI_Lab/natural-language-processing-competition/data/raw
-[2025-10-10 08:41:31] Train samples: 12457
-[2025-10-10 08:41:31] Dev samples: 499
-[2025-10-10 08:41:31] Test samples: 499
-[2025-10-10 08:41:35] Model loaded: digit82/kobart-summarization

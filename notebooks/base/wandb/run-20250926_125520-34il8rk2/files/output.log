@@ -1,6 +1,0 @@
----------- Make training arguments complete ----------
----------- Make trainer ----------
----------- Make trainer complete ----------
-/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/transformers/trainer.py:645: FutureWarning: `torch.cuda.amp.GradScaler(args...)` is deprecated. Please use `torch.amp.GradScaler('cuda', args...)` instead.
-  self.scaler = torch.cuda.amp.GradScaler()
-/home/ieyeppo/.pyenv/versions/nlp_py3_11_9/lib/python3.11/site-packages/transformers/trainer.py:2664: FutureWarning: `torch.cuda.amp.autocast(args...)` is deprecated. Please use `torch.amp.autocast('cuda', args...)` instead.

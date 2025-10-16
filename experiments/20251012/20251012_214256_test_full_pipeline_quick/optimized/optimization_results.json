@@ -1,7 +1,0 @@
-{
-  "optimization_method": "quantization",
-  "quantization_bits": 8,
-  "success": true,
-  "model_path": "experiments/20251012/20251012_214256_test_full_pipeline_quick/optimized/quantized_8bit",
-  "optimal_batch_size": 64
-}

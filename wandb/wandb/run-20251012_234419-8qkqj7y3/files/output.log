@@ -1,7 +1,0 @@
-2025-10-12 23:44:21 | 📋 실험명: 1012-2344-solar_10.7b_qlora
-2025-10-12 23:44:21 | 🔗 WandB URL: https://wandb.ai/ieyeppo/nlp-competition/runs/8qkqj7y3
-2025-10-12 23:44:21 | /home/ieyeppo/AI_Lab/natural-language-processing-competition/src/training/trainer.py:218: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `Seq2SeqTrainer.__init__`. Use `processing_class` instead.
-  trainer = Seq2SeqTrainer(
-2025-10-12 23:44:21 | The model is already on multiple devices. Skipping the move to device specified in `args`.
-2025-10-12 23:44:22 | 학습 진행 중...
-2025-10-12 23:44:22 | 0%|          | 0/63 [00:56<?, ?it/s]

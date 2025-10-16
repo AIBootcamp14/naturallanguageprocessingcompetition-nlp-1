@@ -1,9 +1,0 @@
-2025-10-14 18:13:13 | 📋 실험명: 1014-1813-kobart_ultimate_kfold
-2025-10-14 18:13:13 | 🔗 WandB URL: https://wandb.ai/kimsunmin0227-hufs/dialogue-summarization/runs/b4i96j74
-2025-10-14 18:13:13 | ✅ WandB 초기화 완료
-2025-10-14 18:13:13 | 프로젝트: dialogue-summarization
-2025-10-14 18:13:13 | 실험명: kobart_ultimate_kfold
-2025-10-14 18:13:16 | 📊 KFOLD 모드 실행 중...
-2025-10-14 18:13:16 | ============================================================
-[91m2025-10-14 18:13:16 | ❌ 오류 발생: 'WandbLogger' object has no attribute 'log_text'
-[0m

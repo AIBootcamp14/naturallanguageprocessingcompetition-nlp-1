@@ -1,9 +1,0 @@
-{
-  "study_name": "optuna_kobart_kobart_ultimate",
-  "n_trials": 14,
-  "n_completed": 11,
-  "n_pruned": 3,
-  "n_failed": 0,
-  "best_value": 0.46158654281217215,
-  "best_trial_number": 11
-}

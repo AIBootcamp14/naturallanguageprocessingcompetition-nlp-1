@@ -1,9 +1,0 @@
-{"time":"2025-10-10T20:06:35.688055064+09:00","level":"INFO","msg":"stream: starting","core version":"0.22.2"}
-{"time":"2025-10-10T20:06:36.148481672+09:00","level":"INFO","msg":"stream: created new stream","id":"0btj1gs4"}
-{"time":"2025-10-10T20:06:36.148528457+09:00","level":"INFO","msg":"handler: started","stream_id":"0btj1gs4"}
-{"time":"2025-10-10T20:06:36.148565437+09:00","level":"INFO","msg":"stream: started","id":"0btj1gs4"}
-{"time":"2025-10-10T20:06:36.148584041+09:00","level":"INFO","msg":"writer: started","stream_id":"0btj1gs4"}
-{"time":"2025-10-10T20:06:36.148590918+09:00","level":"INFO","msg":"sender: started","stream_id":"0btj1gs4"}
-{"time":"2025-10-11T00:28:48.011495933+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": net/http: request canceled (Client.Timeout exceeded while awaiting headers)"}
-{"time":"2025-10-11T03:21:29.625051429+09:00","level":"INFO","msg":"api: retrying HTTP error","status":502,"url":"https://api.wandb.ai/files/ieyeppo/nlp-competition/0btj1gs4/file_stream","body":"\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>502 Server Error</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Server Error</h1>\n<h2>The server encountered a temporary error and could not complete your request.<p>Please try again in 30 seconds.</h2>\n<h2></h2>\n</body></html>\n"}
-{"time":"2025-10-11T05:33:21.523382602+09:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": context deadline exceeded"}
