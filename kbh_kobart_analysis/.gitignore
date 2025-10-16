@@ -1,0 +1,124 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# 데이터 파일 (용량 큰 파일들)
+*.csv
+*.json
+data/*.csv
+data/*.json
+!data/.gitkeep
+
+# 제출 파일은 포함 (중요!)
+!submission_exp*.csv
+
+# 모델 체크포인트 및 학습 결과물
+checkpoints/
+checkpoint/
+prediction/
+predictions/
+output/
+outputs/
+results/
+submission_exp*/
+!submission_exp*.csv
+*.pth
+*.pt
+*.bin
+*.ckpt
+*.safetensors
+*.h5
+*.pkl
+*.pickle
+
+# 학습 로그
+logs/
+log/
+*.log
+runs/
+wandb/
+mlruns/
+.tensorboard/
+
+# 환경 변수 (민감 정보)
+.env
+.env.local
+.env.*.local
+*.secret
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# OS 생성 파일
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Jupyter Notebook 임시 파일
+.ipynb_checkpoints/
+
+# PyTorch Lightning
+lightning_logs/
+
+# HuggingFace Cache
+.cache/
+cache/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Scripts output
+scripts/__pycache__/
