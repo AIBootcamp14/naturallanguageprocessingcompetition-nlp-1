@@ -1,0 +1,22 @@
+# cache / checkpoints / logs
+__pycache__/
+.ipynb_checkpoints/
+wandb/
+logs/
+results/
+checkpoint-*/
+prediction/
+
+# data
+data/
+data.tar.gz
+*.csv
+*.tsv
+
+# model binaries
+*.bin
+*.safetensors
+
+# misc
+.DS_Store
+EOF
