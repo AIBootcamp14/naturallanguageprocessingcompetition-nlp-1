@@ -1,0 +1,271 @@
+# ============================================================================
+# K-Fold 교차 검증 설정 파일
+# ============================================================================
+# 용도: 5-Fold Cross Validation으로 모델의 안정성 및 일반화 성능 검증
+# 설명: 데이터를 5개로 분할하여 각각 학습/검증에 사용하고 결과를 앙상블
+# 최종 수정: 2025-10-10
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# 경로 설정 (Path Configuration)
+# ----------------------------------------------------------------------------
+paths:
+  data_dir: "../../../data/raw"  # 원본 데이터 디렉토리 경로 (상대 경로)
+  train_file: "../../../data/raw/train.csv"  # 학습 데이터 파일 경로
+  dev_file: "../../../data/raw/dev.csv"  # 검증 데이터 파일 경로
+  test_file: "../../../data/raw/test.csv"  # 테스트 데이터 파일 경로
+  output_dir: "./models/kfold"  # K-Fold 모델 저장 디렉토리 (fold별로 저장)
+  log_dir: "./logs/kfold"  # 로그 파일 저장 디렉토리 (fold별 로그 포함)
+  submission_dir: "./submissions/kfold"  # 제출 파일 저장 디렉토리
+  visualization_dir: "./logs/kfold/visualizations"  # 시각화 파일 저장 디렉토리
+  cache_dir: "./cache/kfold"  # 캐시 데이터 저장 디렉토리 (토큰화 결과 등)
+
+# ----------------------------------------------------------------------------
+# K-Fold 교차 검증 설정 (K-Fold Cross Validation Configuration)
+# ----------------------------------------------------------------------------
+kfold:
+  n_splits: 5  # 분할 수 (5-Fold: 데이터를 5개 부분으로 분할)
+  shuffle: true  # 분할 전 데이터 셔플 여부 (true: 무작위 섞기, false: 순서대로)
+  random_state: 42  # 셔플 시 사용할 랜덤 시드 (재현성 보장)
+  stratify: false  # 계층적 분할 여부 (대화 요약은 회귀 태스크이므로 불필요)
+
+  # ===== Fold별 모델 저장 설정 =====
+  save_each_fold: true  # 각 fold의 모델을 개별 저장 여부 (true: 모든 fold 저장)
+  save_best_fold_only: false  # 최고 성능 fold만 저장 여부 (false: 모든 fold 저장)
+
+  # ===== 앙상블 설정 =====
+  ensemble_method: "weighted_average"  # 앙상블 방법 (average: 평균, weighted_average: 가중 평균, voting: 투표)
+  fold_weights: "auto"  # Fold별 가중치 (auto: 자동 계산, 또는 수동 지정 [0.2, 0.2, 0.2, 0.2, 0.2])
+
+# ----------------------------------------------------------------------------
+# 모델 설정 (Model Configuration)
+# ----------------------------------------------------------------------------
+model:
+  name: "upstage/SOLAR-10.7B-Instruct-v1.0"  # 사용할 모델 이름 (Upstage SOLAR 10.7B)
+  model_type: "llm"  # 모델 타입 (llm: Large Language Model - Decoder-only)
+  use_lora: true  # LoRA 사용 여부 (대형 LLM의 효율적 파인튜닝 위해 true)
+
+  # ===== LoRA 설정 (Low-Rank Adaptation) =====
+  lora_config:
+    r: 16  # LoRA rank (저랭크 분해 차원, 높을수록 표현력 증가, 메모리 사용량 증가)
+    alpha: 32  # LoRA alpha (스케일링 파라미터, 일반적으로 r의 2배 권장)
+    dropout: 0.1  # LoRA dropout 비율 (과적합 방지, 0.1 = 10% 드롭아웃)
+    target_modules:  # LoRA를 적용할 모듈 목록 (Attention 레이어의 Query, Key, Value, Output)
+      - "q_proj"  # Query projection 레이어
+      - "v_proj"  # Value projection 레이어
+      - "k_proj"  # Key projection 레이어
+      - "o_proj"  # Output projection 레이어
+
+  load_in_8bit: true  # 8비트 양자화 로딩 (메모리 사용량 약 1/2 감소, 속도 향상)
+  max_input_length: 1024  # 입력 시퀀스 최대 길이 (토큰 단위) - 긴 대화 처리 가능
+  max_target_length: 150  # 출력 시퀀스 최대 길이 (토큰 단위) - 요약문 길이
+
+# ----------------------------------------------------------------------------
+# 학습 설정 (Training Configuration)
+# ----------------------------------------------------------------------------
+training:
+  seed: 42  # 랜덤 시드 (재현성 보장)
+  num_epochs_per_fold: 3  # 각 fold당 학습 에폭 수 (총 학습 = 3 epoch × 5 folds = 15 epoch)
+
+  # ===== 배치 크기 설정 =====
+  batch_size: 4  # GPU당 배치 크기 (10.7B 모델 + LoRA는 작은 배치 필요)
+  gradient_accumulation_steps: 8  # 그래디언트 누적 스텝 (실제 배치 = 4 × 8 = 32)
+
+  # ===== 학습률 설정 =====
+  learning_rate: 2e-5  # 학습률 (2 × 10^-5, LLM은 일반적으로 작은 학습률 사용)
+  warmup_ratio: 0.1  # Warmup 비율 (전체 스텝의 10%, 초반 안정적 학습)
+  weight_decay: 0.01  # 가중치 감쇠 (L2 정규화, 과적합 방지)
+  max_grad_norm: 0.3  # 그래디언트 클리핑 최대 노름값 (그래디언트 폭발 방지)
+
+  # ===== 옵티마이저 설정 =====
+  optimizer: "paged_adamw_8bit"  # 옵티마이저 (8비트 AdamW, 메모리 효율적)
+  adam_epsilon: 1e-8  # Adam epsilon 값 (수치 안정성)
+
+  # ===== 스케줄러 설정 =====
+  scheduler_type: "cosine"  # 학습률 스케줄러 (cosine: 코사인 감쇠, 부드러운 감소)
+
+  # ===== 조기 종료 설정 (각 fold별 적용) =====
+  early_stopping_patience: 2  # 조기 종료 인내 횟수 (2 epoch 동안 개선 없으면 중단)
+  early_stopping_threshold: 0.001  # 조기 종료 임계값 (0.001 미만 개선은 무시)
+
+  # ===== 체크포인트 설정 =====
+  save_strategy: "epoch"  # 저장 전략 (매 에폭마다 저장)
+  evaluation_strategy: "epoch"  # 평가 전략 (매 에폭마다 평가)
+  save_total_limit: 2  # Fold당 최대 저장 체크포인트 수 (디스크 공간 절약)
+  load_best_model_at_end: true  # 학습 종료 시 최고 성능 모델 로드
+  metric_for_best_model: "eval_rouge_l"  # 최고 모델 선택 기준 (ROUGE-L 점수)
+
+  # ===== 메모리 최적화 =====
+  gradient_checkpointing: true  # 그래디언트 체크포인팅 (메모리 사용량 감소, 속도 약간 감소)
+
+  # ===== Mixed Precision 설정 =====
+  fp16: true  # FP16 (16비트 부동소수점) 학습 활성화
+  fp16_opt_level: "O2"  # FP16 최적화 레벨 (O2: 거의 모든 연산을 FP16으로, 더 공격적)
+
+# ----------------------------------------------------------------------------
+# Prompt 템플릿 설정 (Prompt Template Configuration)
+# ----------------------------------------------------------------------------
+prompt_template:
+  system_prompt: "당신은 대화 요약 전문가입니다."  # 시스템 프롬프트 (모델의 역할 정의)
+
+  # ===== 지시사항 포맷 =====
+  instruction_format: |
+    ### 지시사항:
+    아래 대화를 읽고 핵심 내용을 3-5문장으로 요약하세요.
+
+    ### 대화:
+    {dialogue}
+
+    ### 요약:
+    {summary}
+
+# ----------------------------------------------------------------------------
+# 평가 설정 (Evaluation Configuration)
+# ----------------------------------------------------------------------------
+evaluation:
+  # ===== 평가 메트릭 =====
+  metrics:  # 사용할 평가 메트릭 목록
+    - "rouge"  # ROUGE 점수 (요약 품질 평가)
+
+  # ===== ROUGE 타입 =====
+  rouge_types:  # 계산할 ROUGE 타입
+    - "rouge-1"  # ROUGE-1 (단어 단위 겹침)
+    - "rouge-2"  # ROUGE-2 (2-gram 겹침)
+    - "rouge-l"  # ROUGE-L (최장 공통 부분 수열)
+
+  # ===== Fold별 평가 설정 =====
+  evaluate_each_fold: true  # 각 fold별로 개별 평가 수행 여부
+  aggregate_metrics: true  # 전체 fold의 평균 메트릭 계산 여부 (5개 fold 평균)
+
+  # ===== Generation 설정 (평가 시 생성 파라미터) =====
+  generation_config:
+    max_new_tokens: 150  # 생성할 최대 토큰 수
+    num_beams: 4  # Beam Search 빔 개수 (다양한 후보 탐색)
+    no_repeat_ngram_size: 3  # 반복 방지 n-gram 크기 (3-gram 반복 금지)
+    temperature: 0.7  # 샘플링 온도 (0.7 = 약간 창의적, 낮을수록 결정적)
+    top_p: 0.9  # Nucleus 샘플링 (누적 확률 90% 이내 토큰 선택)
+
+# ----------------------------------------------------------------------------
+# 추론 설정 (Inference Configuration)
+# ----------------------------------------------------------------------------
+inference:
+  batch_size: 8  # 추론 배치 크기 (학습보다 크게 설정 가능)
+
+  # ===== 앙상블 추론 설정 =====
+  ensemble_strategy: "weighted_voting"  # 앙상블 전략 (가중 투표 방식)
+  use_all_folds: true  # 모든 fold 모델 사용 여부 (true: 5개 모델 모두 사용)
+
+  # ===== Generation 설정 =====
+  generation_config:
+    max_new_tokens: 150  # 생성할 최대 토큰 수
+    min_length: 20  # 생성 최소 길이 (너무 짧은 요약 방지)
+    num_beams: 4  # Beam Search 빔 개수
+    no_repeat_ngram_size: 3  # 반복 방지 n-gram 크기
+    temperature: 0.7  # 샘플링 온도
+    top_p: 0.9  # Nucleus 샘플링 임계값
+    do_sample: true  # 샘플링 사용 여부 (true: 확률적 생성, false: 탐욕적 생성)
+
+# ----------------------------------------------------------------------------
+# Cross-Validation 분석 설정 (CV Analysis Configuration)
+# ----------------------------------------------------------------------------
+cv_analysis:
+  # ===== Fold별 성능 분석 =====
+  analyze_variance: true  # Fold 간 성능 분산 분석 (모델 안정성 평가)
+  identify_difficult_samples: true  # 어려운 샘플 식별 (모든 fold에서 낮은 성능 샘플)
+
+  # ===== 시각화 설정 =====
+  plot_fold_performance: true  # Fold별 성능 그래프 생성 (ROUGE 점수 비교)
+  plot_sample_difficulty: true  # 샘플 난이도 분포 그래프 생성
+  save_cv_report: true  # CV 분석 리포트 저장 (JSON 형식)
+
+# ----------------------------------------------------------------------------
+# WandB 설정 (Weights & Biases)
+# ----------------------------------------------------------------------------
+wandb:
+  project: "nlp-competition"  # WandB 프로젝트 이름
+  entity: "ieyeppo"  # WandB 엔티티 (사용자/팀 이름)
+  name: "kfold-cv-{n_splits}fold"  # 실험 이름 (n_splits는 자동 치환: kfold-cv-5fold)
+  tags:  # 실험 태그 (검색 및 필터링용)
+    - "kfold"  # K-Fold 교차 검증
+    - "cross_validation"  # 교차 검증
+    - "solar"  # SOLAR 모델
+  notes: "K-Fold 교차 검증 실험"  # 실험 설명
+  mode: "online"  # 로깅 모드 (online: 실시간, offline: 로컬, disabled: 비활성화)
+
+  # ===== Fold별 로깅 설정 =====
+  log_each_fold: true  # 각 fold별로 개별 로그 기록
+  group: "kfold_cv"  # 실험 그룹 (같은 그룹의 실험을 함께 볼 수 있음)
+
+# ----------------------------------------------------------------------------
+# 로깅 설정 (Logging Configuration)
+# ----------------------------------------------------------------------------
+logging:
+  level: "INFO"  # 로그 레벨 (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  format: "%(asctime)s - [Fold %(fold)d] - %(name)s - %(levelname)s - %(message)s"  # 로그 포맷 (Fold 번호 포함)
+  save_to_file: true  # 파일로 로그 저장 여부
+  log_every_n_steps: 50  # N 스텝마다 로그 출력
+  use_notebook_logger: true  # 노트북 전용 로거 사용 여부 (Jupyter 환경 최적화)
+  notebook_logger_path: "../../../src/logging/notebook_logger.py"  # 노트북 로거 경로
+
+  # ===== Fold별 로그 파일 설정 =====
+  separate_fold_logs: true  # Fold별로 개별 로그 파일 생성 (fold_0.log, fold_1.log, ...)
+
+# ----------------------------------------------------------------------------
+# Solar API 설정 (PRD 09, 10 - 교차 검증 시스템)
+# ----------------------------------------------------------------------------
+solar_api:
+  api_key: "up_rMJWNzzBi6YsD47RhwXPWZrZ0JKsT"  # Solar API 인증 키
+  enabled: true  # Solar API 사용 여부 (교차 검증용)
+  base_url: "https://api.upstage.ai/v1/solar"  # Solar API 기본 URL
+  model: "solar-1-mini-chat"  # 사용할 Solar 모델 (경량 모델)
+  max_tokens: 150  # 생성 최대 토큰 수
+  temperature: 0.3  # 샘플링 온도 (0.3 = 매우 결정적, 일관된 결과)
+  top_p: 0.9  # Nucleus 샘플링 임계값
+  timeout: 30  # API 요청 타임아웃 (초 단위)
+
+  # ===== K-Fold 교차 검증용 설정 =====
+  validate_each_fold: true  # 각 fold별로 Solar API 검증 수행
+  sample_size_per_fold: 5  # 각 fold당 검증할 샘플 수 (5개씩 샘플링하여 검증)
+
+# ----------------------------------------------------------------------------
+# GPU 설정 (GPU Configuration)
+# ----------------------------------------------------------------------------
+gpu:
+  device: "cuda"  # 사용할 디바이스 (cuda: GPU, cpu: CPU)
+  cuda_device: 0  # 사용할 CUDA 디바이스 번호 (0번 GPU)
+  mixed_precision: true  # Mixed Precision 학습 활성화 (FP16)
+  memory_fraction: 0.95  # GPU 메모리 사용 비율 (0.95 = 95%, 최대한 활용)
+  empty_cache_between_folds: true  # Fold 간 GPU 메모리 정리 (메모리 누수 방지)
+  use_gpu_optimization: true  # GPU 최적화 기능 사용 여부
+  gpu_check_path: "../../../src/utils/gpu_optimization/team_gpu_check.py"  # GPU 체크 스크립트 경로
+
+# ----------------------------------------------------------------------------
+# 실험 추적 (Experiment Tracking)
+# ----------------------------------------------------------------------------
+experiment:
+  name: "kfold_cv_{n_splits}fold"  # 실험 고유 이름 (n_splits는 자동 치환)
+  description: "K-Fold 교차 검증으로 모델 안정성 평가"  # 실험 설명
+  version: "1.0.0"  # 실험 버전
+  timestamp: true  # 타임스탬프 자동 추가 여부 (실험 시작 시간 기록)
+
+  # ===== Fold별 결과 저장 =====
+  save_fold_results: true  # Fold별 결과를 개별 파일로 저장
+  results_format: "json"  # 결과 파일 포맷 (json: JSON, csv: CSV, pickle: Pickle)
+
+# ----------------------------------------------------------------------------
+# 재현성 설정 (Reproducibility Configuration)
+# ----------------------------------------------------------------------------
+reproducibility:
+  seed: 42  # 전역 랜덤 시드 (모든 랜덤 연산에 적용)
+  deterministic: true  # 결정론적 모드 (동일한 입력 → 동일한 출력 보장, 속도 약간 감소)
+  benchmark: false  # cuDNN 벤치마크 모드 (false: 재현성 우선, true: 속도 우선)
+
+# ----------------------------------------------------------------------------
+# 데이터 증강 설정 (Data Augmentation Configuration)
+# ----------------------------------------------------------------------------
+data_augmentation:
+  enabled: false  # 데이터 증강 활성화 여부 (K-Fold에서는 일반적으로 비활성화)
+  techniques:  # 사용할 데이터 증강 기법 목록
+    - "paraphrase"  # 의역 (Paraphrasing)
+    - "back_translation"  # 역번역 (Back Translation)
+  augmentation_ratio: 0.2  # 증강 비율 (0.2 = 원본의 20% 추가 생성)

@@ -1,0 +1,35 @@
+2025-10-13 01:50:43 | 📋 실험명: 1013-0150-polyglot_ko_12.8b_qlora
+2025-10-13 01:50:43 | 🔗 WandB URL: https://wandb.ai/ieyeppo/nlp-competition/runs/52mgxuif
+2025-10-13 01:50:43 | /home/ieyeppo/AI_Lab/natural-language-processing-competition/src/training/trainer.py:218: FutureWarning: `tokenizer` is deprecated and will be removed in version 5.0.0 for `Seq2SeqTrainer.__init__`. Use `processing_class` instead.
+  trainer = Seq2SeqTrainer(
+2025-10-13 01:50:43 | The model is already on multiple devices. Skipping the move to device specified in `args`.
+2025-10-13 01:50:43 | 학습 진행 중...
+2025-10-13 01:50:43 | The tokenizer has new PAD/BOS/EOS tokens that differ from the model config and generation config. The model config and generation config were aligned accordingly, being updated with the tokenizer's values. Updated tokens: {'bos_token_id': None, 'pad_token_id': 2}.
+2025-10-13 01:50:43 | 0%|          | 0/125 [00:32<?, ?it/s]
+2025-10-13 01:51:11 | ❌ polyglot-ko-12.8b 학습 실패: RuntimeError: Function MmBackward0 returned an invalid gradient at index 1 - expected device meta but got cuda:0
+2025-10-13 01:51:11 | 오류 로그 저장: experiments/20251013/20251013_001540_test_full_pipeline_quick/errors/polyglot-ko-12.8b_error.log
+2025-10-13 01:51:11 | ==================================================
+2025-10-13 01:51:11 | 모델 6/6: kullm-v2
+2025-10-13 01:51:11 | ==================================================
+2025-10-13 01:51:11 | 모델 타입: causal_lm
+2025-10-13 01:51:11 | Loading Causal LM: nlpai-lab/kullm-polyglot-12.8b-v2
+2025-10-13 01:51:11 | 모델 로딩 중...
+2025-10-13 01:51:11 | Loading checkpoint shards:   0%|          | 0/3 [00:00<?, ?it/s]
+2025-10-13 01:51:16 | Loading checkpoint shards:  33%|███▎      | 1/3 [00:05<00:10,  5.05s/it]
+2025-10-13 01:51:20 | Loading checkpoint shards:  67%|██████▋   | 2/3 [00:08<00:04,  4.21s/it]
+2025-10-13 01:51:20 | Loading checkpoint shards: 100%|██████████| 3/3 [00:08<00:00,  2.90s/it]
+2025-10-13 01:51:20 | WARNING:accelerate.big_modeling:Some parameters are on the meta device because they were offloaded to the cpu.
+2025-10-13 01:51:20 | 토크나이저 로딩 중...
+2025-10-13 01:51:21 | LoRA 설정 적용 중...
+2025-10-13 01:51:21 | 🔍 자동 탐지된 target_modules: ['query_key_value', 'dense', 'dense_h_to_4h', 'dense_4h_to_h']
+2025-10-13 01:51:21 | ✅ LoRA 적용 완료
+2025-10-13 01:51:21 | 학습 가능 파라미터: 52,428,800 (0.40%)
+2025-10-13 01:51:21 | 전체 파라미터: 12,946,032,640
+2025-10-13 01:51:21 | Input require grads 활성화 (LoRA + Gradient Checkpointing)
+2025-10-13 01:51:21 | ✅ Gradient Checkpointing 활성화
+2025-10-13 01:51:21 | ✅ Causal LM 로드 완료
+2025-10-13 01:51:21 | ============================================================
+2025-10-13 01:51:21 | 모델 학습 시작
+2025-10-13 01:51:21 | ============================================================
+2025-10-13 01:51:21 | WandB 로그인 상태: ieyeppo-job
+2025-10-13 01:51:21 | wandb: Finishing previous runs because reinit is set to True.

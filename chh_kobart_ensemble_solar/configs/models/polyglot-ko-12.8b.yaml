@@ -1,0 +1,76 @@
+# ==================== EleutherAI Polyglot-Ko-12.8B 모델 설정 ==================== #
+# EleutherAI Polyglot-Ko-12.8B 모델 전용 설정
+# PRD 08: 한국어 사전학습 대규모 언어 모델
+
+_base_: ../base/causal_lm.yaml
+
+# ---------------------- 모델 설정 ---------------------- #
+model:
+  type: causal_lm                                       # 모델 타입: Causal Language Model
+  checkpoint: "EleutherAI/polyglot-ko-12.8b"            # HuggingFace 모델 체크포인트
+  size: "12.8B"                                         # 모델 파라미터 크기
+  dtype: "fp16"                                         # 데이터 타입: float16 사용
+  chat_template: "polyglot"                             # 채팅 템플릿 형식
+
+# ---------------------- LoRA 설정 (Polyglot 최적화) ---------------------- #
+lora:
+  r: 16                                                 # LoRA rank
+  alpha: 32                                             # LoRA alpha (r * 2)
+  target_modules:                                       # LoRA 적용 대상 레이어
+    - "q_proj"                                          # Query projection
+    - "k_proj"                                          # Key projection
+    - "v_proj"                                          # Value projection
+    - "o_proj"                                          # Output projection
+    - "gate_proj"                                       # Gate projection
+    - "up_proj"                                         # Up projection
+    - "down_proj"                                       # Down projection
+  dropout: 0.05                                         # LoRA dropout 비율
+  use_qlora: true                                       # QLoRA (4-bit 양자화) 사용
+
+# ---------------------- 학습 설정 (Polyglot 최적화) ---------------------- #
+training:
+  epochs: 3                                             # 총 학습 에포크
+  batch_size: 4                                         # 디바이스당 배치 크기 (12.8B 모델은 메모리 고려)
+  gradient_accumulation_steps: 1                       # 그래디언트 누적 스텝 (effective batch = 4 * 16 = 64)
+  learning_rate: 2e-5                                   # 학습률
+  lr_scheduler_type: "cosine"                           # 학습률 스케줄러: Cosine
+  warmup_ratio: 0.1                                     # 워밍업 비율
+  weight_decay: 0.1                                     # 가중치 감쇠
+  max_grad_norm: 1.2                                    # 그래디언트 클리핑 임계값
+
+# ---------------------- LLM 데이터셋 설정 ---------------------- #
+dataset:
+  format_type: "instruction"                            # Polyglot는 instruction format 사용
+  use_instruction_augmentation: false                   # Instruction Augmentation 비활성화
+
+# ---------------------- 추론 설정 (Polyglot 최적화) ---------------------- #
+inference:
+  batch_size: 16                                        # 추론 배치 크기
+
+  # HuggingFace 사전학습 모델 보정 (PRD 04, 12)
+  pretrained_correction:
+    enabled: false                                      # 기본값: 비활성화 (명령행 --use_pretrained_correction으로 활성화)
+    models:                                             # 보정에 사용할 HuggingFace 모델 리스트
+      - "gogamza/kobart-base-v2"                        # KoBART 사전학습 (일반 요약)
+      - "digit82/kobart-summarization"                  # KoBART 요약 특화 (대화 요약)
+    strategy: "quality_based"                           # 보정 전략 (quality_based 추천, threshold, voting, weighted)
+    threshold: 0.3                                      # 품질 임계값 (0.0~1.0, 낮을수록 엄격)
+
+  # Solar API 앙상블 (PRD 09)
+  solar_api:
+    enabled: false                                      # 기본값: 비활성화 (명령행 --use_solar_api로 활성화)
+    model: "solar-1-mini-chat"                          # Solar 모델 선택
+    temperature: 0.2                                    # 생성 온도 (낮을수록 일관성)
+    top_p: 0.3                                          # Top-p (낮을수록 일관성)
+    batch_size: 10                                      # 배치 크기 (Rate limit 고려)
+    delay: 1.0                                          # 배치 간 대기 시간 (초)
+
+# ---------------------- 실험 설정 ---------------------- #
+experiment:
+  name: "polyglot_ko_12.8b_qlora"                       # 실험명
+  tags:                                                 # 실험 태그
+    - "polyglot"
+    - "12.8b"
+    - "qlora"
+    - "eleutherai"
+    - "korean"

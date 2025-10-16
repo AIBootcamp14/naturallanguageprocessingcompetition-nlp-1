@@ -1,0 +1,26 @@
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_setup.py:_flush():81] Current SDK version is 0.22.2
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_setup.py:_flush():81] Configure stats pid to 197676
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_setup.py:_flush():81] Loading settings from /home/ieyeppo/.config/wandb/settings
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_setup.py:_flush():81] Loading settings from /home/ieyeppo/AI_Lab/natural-language-processing-competition/wandb/settings
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_init.py:setup_run_log_directory():705] Logging user logs to /home/ieyeppo/AI_Lab/natural-language-processing-competition/wandb/wandb/run-20251015_013735-7aw7qgki/logs/debug.log
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_init.py:setup_run_log_directory():706] Logging internal logs to /home/ieyeppo/AI_Lab/natural-language-processing-competition/wandb/wandb/run-20251015_013735-7aw7qgki/logs/debug-internal.log
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_init.py:init():832] calling init triggers
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_init.py:init():837] wandb.init called with sweep_config: {}
+config: {'mode': 'kfold', 'config': 'configs/train_config.yaml', 'experiment_name': 'kobart_balanced_kfold', 'models': ['kobart'], 'epochs': 10, 'batch_size': 16, 'learning_rate': 9.14e-05, 'gradient_accumulation_steps': 10, 'warmup_ratio': 0.00136, 'weight_decay': 0.0995, 'max_grad_norm': 1.0, 'label_smoothing': 0.1, 'scheduler_type': 'cosine', 'max_new_tokens': None, 'min_new_tokens': None, 'num_beams': None, 'temperature': None, 'top_p': None, 'top_k': None, 'repetition_penalty': None, 'length_penalty': None, 'no_repeat_ngram_size': None, 'k_folds': 5, 'fold_seed': 42, 'ensemble_strategy': 'weighted_avg', 'ensemble_weights': None, 'use_tta': False, 'tta_strategies': ['paraphrase'], 'tta_num_aug': 1, 'optuna_trials': 100, 'optuna_timeout': 7200, 'optuna_sampler': 'tpe', 'optuna_pruner': 'median', 'no_wandb': False, 'wandb_project': 'dialogue-summarization', 'save_visualizations': False, 'use_augmentation': True, 'augmentation_methods': ['back_translation', 'paraphrase'], 'augmentation_ratio': 0.5, 'use_solar_api': False, 'solar_api_key': None, 'solar_model': 'solar-1-mini-chat', 'use_pretrained_correction': False, 'correction_models': ['gogamza/kobart-base-v2', 'digit82/kobart-summarization'], 'correction_strategy': 'quality_based', 'correction_threshold': 0.3, 'prompt_strategy': 'zero_shot_simple', 'validate_data_quality': False, 'quality_threshold': 0.7, 'optimize_inference': False, 'optimization_method': 'quantization', 'quantization_bits': 8, 'use_onnx': False, 'use_full_finetuning': False, 'lora_rank': 16, 'use_batch_optimization': False, 'seed': 42, 'debug': False, 'resume': True, 'resume_from': None, 'ignore_checkpoint': False, 'train_data': 'data/raw/train.csv', 'dev_data': 'data/raw/dev.csv', 'max_train_samples': None, 'output_dir': 'experiments/20251015/20251015_013734_kobart_balanced_kfold', 'use_wandb': True, '_wandb': {}}
+2025-10-15 01:37:35,649 INFO    MainThread:197676 [wandb_init.py:init():880] starting backend
+2025-10-15 01:37:35,859 INFO    MainThread:197676 [wandb_init.py:init():883] sending inform_init request
+2025-10-15 01:37:35,864 INFO    MainThread:197676 [wandb_init.py:init():891] backend started and connected
+2025-10-15 01:37:35,865 INFO    MainThread:197676 [wandb_init.py:init():961] updated telemetry
+2025-10-15 01:37:35,870 INFO    MainThread:197676 [wandb_init.py:init():985] communicating run to backend with 90.0 second timeout
+2025-10-15 01:37:37,125 INFO    MainThread:197676 [wandb_init.py:init():1036] starting run threads in backend
+2025-10-15 01:37:37,290 INFO    MainThread:197676 [wandb_run.py:_console_start():2509] atexit reg
+2025-10-15 01:37:37,290 INFO    MainThread:197676 [wandb_run.py:_redirect():2357] redirect: wrap_raw
+2025-10-15 01:37:37,290 INFO    MainThread:197676 [wandb_run.py:_redirect():2426] Wrapping output streams.
+2025-10-15 01:37:37,290 INFO    MainThread:197676 [wandb_run.py:_redirect():2449] Redirects installed.
+2025-10-15 01:37:37,299 INFO    MainThread:197676 [wandb_init.py:init():1076] run started, returning control to user process
+2025-10-15 01:37:46,687 INFO    MainThread:197676 [wandb_run.py:_finish():2275] finishing run kimsunmin0227-hufs/dialogue-summarization/7aw7qgki
+2025-10-15 01:37:46,688 INFO    MainThread:197676 [wandb_run.py:_atexit_cleanup():2474] got exitcode: 0
+2025-10-15 01:37:46,688 INFO    MainThread:197676 [wandb_run.py:_restore():2456] restore
+2025-10-15 01:37:46,688 INFO    MainThread:197676 [wandb_run.py:_restore():2462] restore done
+2025-10-15 01:37:47,932 INFO    MainThread:197676 [wandb_run.py:_footer_sync_info():3872] logging synced files

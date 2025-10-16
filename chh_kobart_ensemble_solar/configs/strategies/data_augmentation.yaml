@@ -1,0 +1,29 @@
+# ==================== 데이터 증강 전략 Config ==================== #
+# PRD 09: 데이터 증강 전략
+# 멘토 피드백:
+#   - back_translation (한-영-한): 우수한 방법
+#   - paraphrase (의역): 괜찮은 방법
+#   - 나머지: 잘 구현하면 효과적, 잘못 구현하면 오히려 성능 저하
+
+augmentation:
+  # ---------------------- 증강 활성화 ---------------------- #
+  enable: true                                            # 데이터 증강 활성화
+
+  # ---------------------- 증강 방법 (우선순위 순) ---------------------- #
+  methods:
+    - back_translation                                    # 한-영-한 역번역 (멘토: 우수)
+    - paraphrase                                          # 의역 생성 (멘토: 괜찮음)
+    - shuffle_turns                                       # 대화 턴 섞기
+    - synonym_replacement                                 # 동의어 치환
+    - sample_dialogue                                     # 대화 샘플링
+
+  # ---------------------- 증강 비율 ---------------------- #
+  augmentation_ratio: 0.5                                 # 증강 비율 50% (권장값)
+  n_augmentations_per_sample: 2                           # 샘플당 증강 개수
+
+  # ---------------------- 방법별 확률 ---------------------- #
+  back_translation_prob: 0.7                              # 역번역 확률 (높게 설정)
+  paraphrase_prob: 0.6                                    # 의역 확률
+  shuffle_prob: 0.4                                       # 턴 섞기 확률
+  synonym_replacement_prob: 0.3                           # 동의어 치환 확률
+  sample_dialogue_prob: 0.3                               # 대화 샘플링 확률

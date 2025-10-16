@@ -1,0 +1,13 @@
+{
+  "best_params": {
+    "learning_rate": 9.138518360133624e-05,
+    "num_epochs": 7,
+    "warmup_ratio": 0.0013572013949127268,
+    "weight_decay": 0.09953784597545408,
+    "scheduler_type": "cosine",
+    "num_beams": 4,
+    "length_penalty": 0.9383576982529792
+  },
+  "best_value": 0.46158654281217215,
+  "n_trials": 14
+}

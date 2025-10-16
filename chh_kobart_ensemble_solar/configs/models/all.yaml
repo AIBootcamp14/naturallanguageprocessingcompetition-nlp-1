@@ -1,0 +1,96 @@
+# ==================== 전체 모델 앙상블 설정 ==================== #
+# 모든 모델을 참조하는 메타 설정
+# PRD 08: 앙상블 전략 - 다중 모델 조합으로 성능 향상
+
+# ---------------------- 앙상블 모델 목록 ---------------------- #
+# 앙상블에 포함될 모델들의 설정 파일 참조
+# ⚠️ 가중치: 성능 기반으로 설정 (KoBART 중심 전략)
+models:
+  # KoBART (Encoder-Decoder) - 주력 모델
+  - name: "kobart"                                      # 모델명
+    config: "configs/models/kobart.yaml"                # 설정 파일 경로
+    weight: 0.60                                        # 앙상블 가중치 (ROUGE-L: 58.5, 주력)
+    type: "encoder_decoder"                             # 모델 타입
+
+  # Llama-3.2-Korean-3B (Causal LM) - 보조 모델 1
+  - name: "llama-3.2-korean-3b"                         # 모델명
+    config: "configs/models/llama_3.2_korean_3b.yaml"   # 설정 파일 경로
+    weight: 0.20                                        # 앙상블 가중치 (ROUGE-L: ~45)
+    type: "causal_lm"                                   # 모델 타입
+
+  # Qwen3-4B (Causal LM) - 보조 모델 2
+  - name: "qwen3-4b"                                    # 모델명
+    config: "configs/models/qwen3_4b.yaml"              # 설정 파일 경로
+    weight: 0.15                                        # 앙상블 가중치 (ROUGE-L: ~44)
+    type: "causal_lm"                                   # 모델 타입
+
+  # Solar-10.7B (Causal LM) - 최소 가중치
+  - name: "solar-10.7b"                                 # 모델명
+    config: "configs/models/solar-10.7b.yaml"           # 설정 파일 경로
+    weight: 0.05                                        # 앙상블 가중치 (ROUGE-L: ~42, 최소)
+    type: "causal_lm"                                   # 모델 타입
+
+  # Polyglot-Ko-12.8B (Causal LM) - 제외 (성능 낮음)
+  # - name: "polyglot-ko-12.8b"
+  #   config: "configs/models/polyglot-ko-12.8b.yaml"
+  #   weight: 0.00
+  #   type: "causal_lm"
+
+  # KULLM-v2 (Causal LM) - 제외 (성능 낮음)
+  # - name: "kullm-v2"
+  #   config: "configs/models/kullm-v2.yaml"
+  #   weight: 0.00
+  #   type: "causal_lm"
+
+# ---------------------- 앙상블 전략 설정 ---------------------- #
+ensemble:
+  strategy: "voting"                                    # 앙상블 전략: voting, weighted_avg, stacking
+  voting_method: "soft"                                 # Voting 방법: soft (확률 평균), hard (다수결)
+  aggregation: "mean"                                   # 결과 집계 방법: mean, weighted_mean, max
+
+# ---------------------- 추론 설정 ---------------------- #
+inference:
+  batch_size: 4                                         # 추론 배치 크기 (앙상블은 메모리 사용량 고려)
+  parallel_models: false                                # 모델 병렬 실행 여부 (메모리 제약시 false)
+  save_individual_outputs: true                         # 개별 모델 출력 저장 여부
+
+  # ⚠️ 중요: 길이 제어 (max_length 대신 max_new_tokens 사용)
+  generate_max_new_tokens: 100                          # 생성할 최대 토큰 수 (최적값: 100, 적정 길이 유지)
+  generate_min_new_tokens: 30                           # 생성할 최소 토큰 수 (문장 끊김 방지)
+  generate_max_length: 512                              # 전체 최대 길이 (input+output, 여유있게 설정)
+
+  # 생성 전략
+  num_beams: 5                                          # 빔 서치 빔 개수 (품질 향상)
+  early_stopping: true                                  # 생성 조기 종료
+
+  # 반복 방지
+  no_repeat_ngram_size: 3                               # 반복 방지 n-gram 크기 (최적값: 3)
+  repetition_penalty: 1.5                               # 반복 억제 강도 (최적값: 1.5, 적절한 억제)
+  length_penalty: 1.0                                   # 길이 페널티 (1.0=중립)
+
+  # HuggingFace 사전학습 모델 보정 (PRD 04, 12)
+  pretrained_correction:
+    enabled: false                                      # 기본값: 비활성화 (명령행 --use_pretrained_correction으로 활성화)
+    models:                                             # 보정에 사용할 HuggingFace 모델 리스트
+      - "gogamza/kobart-base-v2"                        # KoBART 사전학습 (일반 요약)
+      - "digit82/kobart-summarization"                  # KoBART 요약 특화 (대화 요약)
+    strategy: "quality_based"                           # 보정 전략 (quality_based 추천, threshold, voting, weighted)
+    threshold: 0.3                                      # 품질 임계값 (0.0~1.0, 낮을수록 엄격)
+
+  # Solar API 앙상블 (PRD 09)
+  solar_api:
+    enabled: false                                      # 기본값: 비활성화 (명령행 --use_solar_api로 활성화)
+    model: "solar-1-mini-chat"                          # Solar 모델 선택
+    temperature: 0.2                                    # 생성 온도 (낮을수록 일관성)
+    top_p: 0.3                                          # Top-p (낮을수록 일관성)
+    batch_size: 10                                      # 배치 크기 (Rate limit 고려)
+    delay: 1.0                                          # 배치 간 대기 시간 (초)
+
+# ---------------------- 실험 설정 ---------------------- #
+experiment:
+  name: "ensemble_all_models"                           # 실험명
+  tags:                                                 # 실험 태그
+    - "ensemble"
+    - "all-models"
+    - "voting"
+    - "multi-model"

@@ -1,0 +1,55 @@
+_base_:
+    value: ../base/causal_lm.yaml
+_wandb:
+    value:
+        cli_version: 0.22.2
+        m: []
+        python_version: 3.11.9
+        t:
+            "1":
+                - 1
+                - 5
+                - 11
+                - 35
+                - 49
+                - 53
+                - 71
+                - 95
+                - 98
+            "3":
+                - 13
+                - 15
+                - 16
+            "4": 3.11.9
+            "5": 0.22.2
+            "6": 4.57.0
+            "10":
+                - 20
+            "12": 0.22.2
+            "13": linux-x86_64
+dataset:
+    value: '{''format_type'': ''chat'', ''use_instruction_augmentation'': False}'
+debug:
+    value: '{''use_subset'': False, ''subset_size'': 100, ''print_sample_predictions'': True, ''num_samples_to_print'': 5}'
+evaluation:
+    value: '{''metric'': ''rouge'', ''rouge_types'': [''rouge1'', ''rouge2'', ''rougeL''], ''use_stemmer'': False, ''tokenizer'': ''mecab''}'
+experiment:
+    value: '{''name'': ''qwen3_4b_qlora'', ''seed'': 42, ''deterministic'': True, ''use_wandb'': False, ''wandb_project'': ''nlp-competition'', ''wandb_entity'': None, ''wandb_tags'': [], ''tags'': [''qwen'', ''4b'', ''qlora'', ''instruct'']}'
+inference:
+    value: '{''batch_size'': 8, ''generate_max_length'': 100, ''temperature'': 0.7, ''do_sample'': True, ''top_p'': 0.9, ''top_k'': 50, ''num_beams'': 1}'
+logging:
+    value: '{''log_level'': ''INFO'', ''log_dir'': ''logs'', ''save_steps'': 100, ''logging_steps'': 10}'
+lora:
+    value: '{''r'': 16, ''alpha'': 32, ''target_modules'': [''q_proj'', ''k_proj'', ''v_proj'', ''o_proj'', ''gate_proj'', ''up_proj'', ''down_proj''], ''dropout'': 0.05, ''use_qlora'': True}'
+model:
+    value: '{''type'': ''causal_lm'', ''checkpoint'': ''Qwen/Qwen3-4B-Instruct-2507'', ''lora'': {''r'': 16, ''lora_alpha'': 32, ''lora_dropout'': 0.05, ''bias'': ''none'', ''task_type'': ''CAUSAL_LM'', ''target_modules'': [''q_proj'', ''k_proj'', ''v_proj'', ''o_proj'', ''gate_proj'', ''up_proj'', ''down_proj'']}, ''size'': ''4B'', ''dtype'': ''fp16'', ''chat_template'': ''qwen''}'
+paths:
+    value: '{''train_data'': ''data/raw/train.csv'', ''dev_data'': ''data/raw/dev.csv'', ''test_data'': ''data/raw/test.csv'', ''output_dir'': ''outputs'', ''model_save_dir'': ''models'', ''submission_dir'': ''submissions''}'
+strategies:
+    value: '{''data_augmentation'': False, ''cross_validation'': False, ''ensemble'': False, ''optuna'': False}'
+tokenizer:
+    value: '{''encoder_max_len'': 1024, ''decoder_max_len'': 200}'
+training:
+    value: '{''output_dir'': ''experiments/20251012/20251012_214256_test_full_pipeline_quick/model_2_qwen3_4b'', ''epochs'': 1, ''batch_size'': 8, ''learning_rate'': 5e-06, ''weight_decay'': 0.1, ''warmup_steps'': 500, ''save_total_limit'': 2, ''logging_steps'': 10, ''num_workers'': 4, ''early_stopping_patience'': 3, ''device'': ''cuda'', ''gradient_accumulation_steps'': 10, ''lr_scheduler_type'': ''cosine'', ''warmup_ratio'': 0.1, ''max_grad_norm'': 1.2, ''gradient_checkpointing'': True, ''fp16'': False, ''bf16'': False}'
+wandb:
+    value: '{''enabled'': True, ''project'': ''nlp-competition'', ''entity'': ''ieyeppo''}'

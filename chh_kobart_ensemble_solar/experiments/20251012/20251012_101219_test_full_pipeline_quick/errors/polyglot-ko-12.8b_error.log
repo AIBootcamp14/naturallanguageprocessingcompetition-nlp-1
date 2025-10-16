@@ -1,0 +1,12 @@
+모델: polyglot-ko-12.8b
+오류 타입: FileNotFoundError
+오류 메시지: 모델 설정 파일을 찾을 수 없습니다: configs/models/polyglot_ko_12.8b.yaml
+
+상세 트레이스백:
+Traceback (most recent call last):
+  File "/home/ieyeppo/AI_Lab/natural-language-processing-competition/src/trainers/full_pipeline_trainer.py", line 167, in _train_multiple_models
+    config = load_model_config(model_name)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ieyeppo/AI_Lab/natural-language-processing-competition/src/config/loader.py", line 253, in load_model_config
+    raise FileNotFoundError(
+FileNotFoundError: 모델 설정 파일을 찾을 수 없습니다: configs/models/polyglot_ko_12.8b.yaml

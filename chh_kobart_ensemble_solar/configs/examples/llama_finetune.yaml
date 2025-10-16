@@ -1,0 +1,319 @@
+# ==================== 실험 정보 (Experiment Information) ==================== #
+# 실험명: Llama-3.2-Korean-3B QLoRA 파인튜닝
+# 목표: LLM 파인튜닝으로 95+ ROUGE Sum 달성
+# 모델: Bllossom/llama-3.2-Korean-Bllossom-3B
+# 전략: QLoRA 4-bit + Instruction Tuning
+# Zero-shot 성능: 49.52 → 목표: 95+
+# ============================================================================ #
+
+experiment:
+  name: "llama_3.2_finetune"
+  description: "Llama-3.2-Korean-3B QLoRA 파인튜닝"
+  seed: 42
+
+
+# ==================== 모델 설정 (Model Configuration) ==================== #
+model:
+  name: "llama_3.2_3b"
+  checkpoint: "Bllossom/llama-3.2-Korean-Bllossom-3B"
+  type: "causal_lm"
+  architecture: "llama"
+
+  # ---------------------- 양자화 설정 (QLoRA 4-bit) ---------------------- #
+  quantization:
+    load_in_4bit: true
+    bnb_4bit_use_double_quant: true
+    bnb_4bit_quant_type: "nf4"
+    bnb_4bit_compute_dtype: "bfloat16"
+
+  # ---------------------- LoRA 설정 ---------------------- #
+  lora:
+    r: 16
+    lora_alpha: 32
+    lora_dropout: 0.05
+    bias: "none"
+    task_type: "CAUSAL_LM"
+
+    # -------------- LoRA 적용 모듈 -------------- #
+    target_modules:
+      # Attention 모듈
+      - "q_proj"
+      - "k_proj"
+      - "v_proj"
+      - "o_proj"
+      # MLP 모듈
+      - "gate_proj"
+      - "up_proj"
+      - "down_proj"
+
+
+# ==================== 토크나이저 설정 (Tokenizer Configuration) ==================== #
+tokenizer:
+  # ---------------------- 시퀀스 길이 제한 ---------------------- #
+  encoder_max_len: 1024
+  decoder_max_len: 200
+
+  # ---------------------- Chat Template 토큰 ---------------------- #
+  chat_template_type: "llama"
+  chat_template_tokens:
+    - "<|start_header_id|>"
+    - "<|end_header_id|>"
+    - "<|eot_id|>"
+
+  # ---------------------- 특수 토큰 ---------------------- #
+  special_tokens:
+    # 화자 토큰
+    - '#Person1#'
+    - '#Person2#'
+    - '#Person3#'
+    - '#Person4#'
+    - '#Person5#'
+    - '#Person6#'
+    - '#Person7#'
+    # PII 마스킹 토큰
+    - '#PhoneNumber#'
+    - '#Address#'
+    - '#DateOfBirth#'
+    - '#PassportNumber#'
+    - '#SSN#'
+    - '#CardNumber#'
+    - '#CarNumber#'
+    - '#Email#'
+
+  # ---------------------- Truncation 전략 ---------------------- #
+  padding_side: "left"
+  truncation_side: "left"
+
+
+# ==================== 학습 설정 (Training Configuration) ==================== #
+training:
+  # ---------------------- 기본 파라미터 ---------------------- #
+  num_train_epochs: 3
+  learning_rate: 2.0e-05
+  per_device_train_batch_size: 8
+  per_device_eval_batch_size: 8
+  gradient_accumulation_steps: 1
+
+  # ---------------------- 최적화 설정 ---------------------- #
+  optim: "paged_adamw_32bit"
+  weight_decay: 0.1
+  max_grad_norm: 1.2
+  warmup_ratio: 0.1
+  lr_scheduler_type: "cosine"
+
+  # ---------------------- 혼합 정밀도 학습 ---------------------- #
+  fp16: false
+  bf16: true
+  gradient_checkpointing: true
+  gradient_checkpointing_kwargs:
+    use_reentrant: false
+
+  # ---------------------- Early Stopping ---------------------- #
+  early_stopping_patience: 2
+  early_stopping_threshold: 0.01
+
+  # ---------------------- 체크포인트 저장 ---------------------- #
+  save_strategy: "epoch"
+  save_total_limit: 2
+  load_best_model_at_end: true
+
+  # ---------------------- 평가 및 메트릭 ---------------------- #
+  evaluation_strategy: "epoch"
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  predict_with_generate: true
+
+
+# ==================== 생성 설정 (Generation Configuration) ==================== #
+generation:
+  # ---------------------- 기본 파라미터 ---------------------- #
+  generate_max_length: 150                              # 생성 최대 길이 (베이스라인 호환)
+  min_new_tokens: 10
+
+  # ---------------------- 샘플링 전략 ---------------------- #
+  do_sample: true
+  temperature: 0.7
+  top_p: 0.9
+  top_k: 50
+
+  # ---------------------- 반복 방지 ---------------------- #
+  no_repeat_ngram_size: 3
+  repetition_penalty: 1.1
+
+
+# ==================== Instruction Template 설정 ==================== #
+instruction:
+  # ---------------------- 시스템 프롬프트 ---------------------- #
+  system_prompt: "당신은 유능한 AI 어시스턴트입니다. 사용자의 질문에 대해 친절하게 답변해주세요."
+
+  # ---------------------- 템플릿 타입 ---------------------- #
+  template_type: "llama"
+
+  # ---------------------- 입력 템플릿 ---------------------- #
+  input_template: "다음 대화를 요약하세요:\n---\n{dialogue}\n---"
+
+  # ---------------------- Instruction 다양화 ---------------------- #
+  instructions:
+    - "다음 대화를 요약해주세요."
+    - "아래 대화의 핵심 내용을 정리해주세요."
+    - "주어진 대화를 간단히 요약하세요."
+    - "다음 대화에서 중요한 정보를 추출해 요약하세요."
+    - "대화 내용을 한 문단으로 요약해주세요."
+
+
+# ==================== 경로 설정 (Path Configuration) ==================== #
+paths:
+  train_data: "data/train.csv"
+  dev_data: "data/dev.csv"
+  test_data: "data/test.csv"
+  output_dir: "outputs/llama_3.2_finetune"
+  model_save_dir: "models/llama_3.2_finetune"
+  submission_dir: "submissions/llama_3.2_finetune"
+
+
+# ==================== 로깅 설정 (Logging Configuration) ==================== #
+logging:
+  log_level: "INFO"
+  log_dir: "logs/llama_3.2_finetune"
+  logging_steps: 10
+
+
+# ==================== 전략 활성화 (Strategy Activation) ==================== #
+strategies:
+  data_augmentation: false
+  cross_validation: false
+  ensemble: false
+  optuna: false
+
+
+# ==================== 평가 설정 (Evaluation Configuration) ==================== #
+evaluation:
+  metric: "rouge"
+  rouge_types:
+    - "rouge1"
+    - "rouge2"
+    - "rougeL"
+  use_stemmer: false
+  tokenizer: "mecab"
+
+
+# ==================== 디버깅 설정 (Debug Configuration) ==================== #
+debug:
+  use_subset: false
+  subset_size: 100
+  print_sample_predictions: true
+  num_samples_to_print: 5
+
+  # ---------------------- Prompt Truncation 체크 ---------------------- #
+  check_prompt_truncation: true
+  log_truncated_samples: true
+
+
+# ==================== Chat Template 맵핑 ==================== #
+chat_templates:
+  llama:
+    system_start: "<|start_header_id|>system<|end_header_id|>\n\n"
+    system_end: "<|eot_id|>"
+    user_start: "<|start_header_id|>user<|end_header_id|>\n\n"
+    user_end: "<|eot_id|>"
+    assistant_start: "<|start_header_id|>assistant<|end_header_id|>\n\n"
+    assistant_end: "<|eot_id|>"
+
+
+# ==================== WandB 설정 ==================== #
+wandb:
+  enabled: true
+  project: "nlp-competition"
+  entity: "ieyeppo"
+  tags:
+    - "llm"
+    - "llama"
+    - "qlora"
+    - "causal_lm"
+    - "dialogue-summarization"
+    - "korean-nlp"
+    - "lora-r16"
+
+  name_template: "{nickname}_ep{epochs}_bs{effective_bs}_lr{lr}_{timestamp}"
+
+  groups:
+    causal_lm: "decoder-only-qlora"
+
+  metrics:
+    train:
+      - "train/loss"
+      - "train/learning_rate"
+      - "train/epoch"
+      - "train/grad_norm"
+      - "train/gpu_memory_gb"
+    eval:
+      - "eval/loss"
+      - "eval/rouge1"
+      - "eval/rouge2"
+      - "eval/rougeL"
+      - "eval/rouge_sum"
+    best:
+      - "best/rouge_sum"
+      - "best/epoch"
+
+
+# ============================================================================ #
+# 사용 방법 (Usage)
+# ============================================================================ #
+# 1. 기본 실행:
+#    python train.py --config configs/examples/llama_finetune.yaml
+#
+# 2. Prompt Truncation 체크:
+#    python check_truncation.py --config configs/examples/llama_finetune.yaml
+#
+# 3. 디버그 모드:
+#    python train.py --config configs/examples/llama_finetune.yaml \
+#        --override debug.use_subset=true
+# ============================================================================ #
+
+
+# ============================================================================ #
+# 예상 성능 (Expected Performance)
+# ============================================================================ #
+# Zero-shot: ROUGE Sum ~49.5
+# 목표: ROUGE Sum ≥ 95.0
+#
+# 학습 시간: ~4-6시간 (RTX 3090, QLoRA 4-bit)
+# GPU 메모리: ~8-10GB
+# ============================================================================ #
+
+
+# ============================================================================ #
+# 체크리스트 (Pre-training Checklist)
+# ============================================================================ #
+# 1. Chat Template 토큰 추가 확인
+# 2. QLoRA compute_dtype 일치 확인
+# 3. LoRA target_modules 확인
+# 4. Max length 설정 확인
+# 5. metric_for_best_model 확인
+# 6. Truncation 전략 확인
+# 7. 디스크 용량 확인
+# ============================================================================ #
+
+
+# ============================================================================ #
+# 주의사항 (Important Notes)
+# ============================================================================ #
+# 1. Prompt Truncation:
+#    - encoder_max_len=1024 (512는 6.07% 잘림)
+#    - 추론 시 left truncation 필수
+#
+# 2. Chat Template 토큰:
+#    - 누락 시 토큰 인코딩 오류 발생
+#    - 반드시 tokenizer에 추가 후 model.resize_token_embeddings() 호출
+#
+# 3. QLoRA compute_dtype:
+#    - Llama: bfloat16 (bf16=True, fp16=False)
+#    - 불일치 시 학습 불안정
+#
+# 4. LoRA target_modules:
+#    - Attention + MLP 모두 포함 필수
+#
+# 5. metric_for_best_model:
+#    - Causal LM: "eval_loss" (lower is better)
+# ============================================================================ #

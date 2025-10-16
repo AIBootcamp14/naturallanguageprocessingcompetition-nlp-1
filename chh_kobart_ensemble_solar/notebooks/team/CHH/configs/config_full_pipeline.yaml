@@ -1,0 +1,548 @@
+# ============================================================================
+# Full Pipeline Configuration - 전체 파이프라인 통합 설정
+# ============================================================================
+# 용도: 모든 최적화 기법이 적용된 최종 파이프라인
+# 포함 기능: 데이터 증강, K-Fold CV, 앙상블, Optuna, TTA, 후처리
+# 최종 수정: 2025-10-10
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# 데이터 증강 설정 (Data Augmentation)
+# ----------------------------------------------------------------------------
+augmentation:
+  enabled: true  # 데이터 증강 활성화 여부
+  target_ratio: 1.5  # 목표 증강 비율 (1.5 = 원본의 1.5배)
+  
+  techniques:  # 증강 기법 목록
+    # 역번역 (Back Translation)
+    back_translation:
+      enabled: true  # 역번역 활성화
+      languages:  # 중간 번역 언어 목록
+        - en  # 영어
+        - ja  # 일본어
+      translation_model: Helsinki-NLP/opus-mt  # 번역 모델
+    
+    # 대화 순서 재배치
+    dialogue_reordering:
+      enabled: false  # 대화 순서 재배치 비활성화 (의미 변경 가능성)
+    
+    # 패러프레이즈 (Paraphrase)
+    paraphrase:
+      enabled: true  # 패러프레이즈 활성화
+      model: lcw99/t5-base-korean-paraphrase  # 한국어 패러프레이즈 모델
+      num_variants: 2  # 생성할 변형 수
+      quality_threshold: 0.7  # 품질 임계값 (0.7 이상만 사용)
+    
+    # 토큰 교체 (Token Replacement)
+    token_replacement:
+      enabled: true  # 토큰 교체 활성화
+      preserve_entities: true  # 개체명 보존 여부
+      replacement_ratio: 0.15  # 교체 비율 (15%)
+
+# ----------------------------------------------------------------------------
+# 교차 검증 설정 (Cross Validation)
+# ----------------------------------------------------------------------------
+cross_validation:
+  enabled: true  # 교차 검증 활성화
+  n_splits: 5  # Fold 개수 (5-Fold CV)
+  shuffle: true  # 데이터 셔플 활성화
+  random_state: 42  # 랜덤 시드 (재현성)
+  train_all_folds: true  # 모든 Fold 학습 여부
+  save_all_folds: true  # 모든 Fold 모델 저장 여부
+  ensemble_folds: true  # Fold 간 앙상블 여부
+
+# ----------------------------------------------------------------------------
+# 데이터 품질 검증 (Data Quality)
+# ----------------------------------------------------------------------------
+data_quality:
+  enabled: true  # 데이터 품질 검증 활성화
+  
+  checks:  # 검증 항목
+    # 구조적 검증
+    structural:
+      check_nulls: true  # 결측값 검사
+      check_duplicates: true  # 중복 데이터 검사
+      check_encoding: true  # 인코딩 문제 검사
+    
+    # 통계적 검증
+    statistical:
+      outlier_detection: true  # 이상치 탐지
+      outlier_method: isolation_forest  # 이상치 탐지 방법 (Isolation Forest)
+      outlier_threshold: 0.05  # 이상치 임계값 (5%)
+    
+    # 의미적 검증
+    semantic:
+      check_information_loss: true  # 정보 손실 검사
+      min_compression_ratio: 0.1  # 최소 압축 비율 (10%)
+      max_compression_ratio: 0.5  # 최대 압축 비율 (50%)
+  
+  handle_issues:  # 문제 처리 방법
+    fix_encoding: true  # 인코딩 문제 자동 수정
+    remove_duplicates: true  # 중복 데이터 제거
+    remove_outliers: true  # 이상치 제거
+
+# ----------------------------------------------------------------------------
+# 배포 설정 (Deployment)
+# ----------------------------------------------------------------------------
+deployment:
+  # 모니터링 설정
+  monitoring:
+    enabled: true  # 모니터링 활성화
+    health_check_interval: 60  # 헬스 체크 간격 (초)
+    metrics_port: 9090  # 메트릭 포트
+  
+  # 서빙 설정
+  serving:
+    framework: fastapi  # 서빙 프레임워크 (FastAPI)
+    port: 8000  # 서비스 포트
+    workers: 4  # 워커 프로세스 수
+  
+  # 버저닝 설정
+  versioning:
+    enabled: true  # 모델 버저닝 활성화
+    registry: local  # 레지스트리 위치 (local/remote)
+
+# ----------------------------------------------------------------------------
+# 앙상블 설정 (Ensemble)
+# ----------------------------------------------------------------------------
+ensemble:
+  base_method: weighted_average  # 기본 앙상블 방법 (가중 평균)
+  
+  # Test Time Augmentation (TTA)
+  test_time_augmentation:
+    enabled: true  # TTA 활성화
+    num_augmentations: 5  # 증강 횟수
+    aggregation: mean  # 집계 방법 (평균)
+  
+  # 고급 앙상블 기법
+  advanced:
+    # Stacking
+    stacking:
+      enabled: true  # 스태킹 활성화
+      meta_learner: lgbm  # 메타 학습기 (LightGBM)
+      cv_folds: 3  # CV Fold 수
+    
+    # Blending
+    blending:
+      enabled: false  # 블렌딩 비활성화
+      validation_size: 0.2  # 검증 데이터 비율
+
+# ----------------------------------------------------------------------------
+# 실험 설정 (Experiment)
+# ----------------------------------------------------------------------------
+experiment:
+  name: full_pipeline_v1  # 실험 이름
+  version: 1.0.0  # 실험 버전
+  description: 모든 최적화 기법이 적용된 최종 파이프라인  # 실험 설명
+  timestamp: true  # 타임스탬프 자동 추가
+  save_all_results: true  # 모든 결과 저장
+  
+  # 결과 포맷
+  results_format:  # 저장할 결과 포맷 목록
+    - json  # JSON 형식
+    - csv  # CSV 형식
+    - pickle  # Pickle 형식
+  
+  # 체크포인팅 설정
+  checkpointing:
+    save_every_n_epochs: 1  # N 에폭마다 저장
+    save_best_only: false  # 최고 성능만 저장 여부
+    keep_last_n: 3  # 최근 N개 체크포인트 유지
+
+# ----------------------------------------------------------------------------
+# GPU 설정 (GPU Configuration)
+# ----------------------------------------------------------------------------
+gpu:
+  device: cuda  # 사용할 디바이스 (cuda/cpu)
+  cuda_device: 0  # CUDA 디바이스 번호
+  mixed_precision: true  # Mixed Precision 학습 활성화
+  memory_fraction: 0.95  # GPU 메모리 사용 비율 (95%)
+  use_gpu_optimization: true  # GPU 최적화 사용
+  gpu_check_path: ../../../src/utils/gpu_optimization/team_gpu_check.py  # GPU 체크 스크립트 경로
+  
+  # 자동 최적화
+  auto_optimization:
+    enabled: true  # 자동 최적화 활성화
+    find_optimal_batch_size: true  # 최적 배치 크기 자동 탐색
+    gradient_accumulation_auto: true  # 그래디언트 누적 자동 조정
+
+# ----------------------------------------------------------------------------
+# 하이퍼파라미터 최적화 (Hyperparameter Optimization - Optuna)
+# ----------------------------------------------------------------------------
+hyperparameter_optimization:
+  enabled: true  # 하이퍼파라미터 최적화 활성화
+  n_trials: 100  # 시도 횟수
+  metric: rouge_l  # 최적화 목표 메트릭
+  direction: maximize  # 최적화 방향 (최대화)
+  sampler: TPESampler  # 샘플러 (TPE = Tree-structured Parzen Estimator)
+  pruner: MedianPruner  # Pruner (성능 낮은 trial 조기 종료)
+  
+  # 탐색 공간 정의
+  search_space:
+    # Learning Rate
+    learning_rate:
+      type: float  # 타입: 실수
+      low: 1.0e-05  # 최소값
+      high: 0.001  # 최대값
+      log: true  # 로그 스케일 사용
+    
+    # Batch Size
+    batch_size:
+      type: categorical  # 타입: 범주형
+      choices: [4, 8, 16]  # 선택지
+    
+    # LoRA Rank
+    lora_r:
+      type: int  # 타입: 정수
+      low: 4  # 최소값
+      high: 64  # 최대값
+      step: 4  # 증가 단위
+    
+    # LoRA Alpha
+    lora_alpha:
+      type: int  # 타입: 정수
+      low: 8  # 최소값
+      high: 128  # 최대값
+      step: 8  # 증가 단위
+    
+    # Num Beams
+    num_beams:
+      type: int  # 타입: 정수
+      low: 2  # 최소값
+      high: 8  # 최대값
+    
+    # Temperature
+    temperature:
+      type: float  # 타입: 실수
+      low: 0.1  # 최소값
+      high: 1.0  # 최대값
+
+# ----------------------------------------------------------------------------
+# 추론 최적화 (Inference Optimization)
+# ----------------------------------------------------------------------------
+inference_optimization:
+  # 배치 추론
+  batch_inference:
+    enabled: true  # 배치 추론 활성화
+    optimal_batch_size: 8  # 최적 배치 크기
+    dynamic_batching: true  # 동적 배치 활성화
+  
+  # ONNX 변환
+  onnx_conversion:
+    enabled: false  # ONNX 변환 비활성화 (일단)
+    optimize: true  # ONNX 최적화
+    quantization: dynamic  # 동적 양자화
+  
+  # TensorRT
+  tensorrt:
+    enabled: false  # TensorRT 비활성화
+    precision: fp16  # 정밀도 (FP16)
+
+# ----------------------------------------------------------------------------
+# 추론 설정 (Inference Configuration)
+# ----------------------------------------------------------------------------
+inference:
+  batch_size: 8  # 추론 배치 크기
+
+  # Generation 파라미터 (Base와 동일하게 수정 - 짧고 정확한 요약)
+  max_length: 200  # 생성 최대 길이 (토큰 단위)
+  num_beams: 4  # Beam Search 빔 개수
+  no_repeat_ngram_size: 2  # 반복 방지 n-gram 크기 (Base와 동일)
+  early_stopping: true  # 조기 종료 활성화
+  remove_special_tokens: true  # 특수 토큰 제거
+
+  # 제거된 파라미터 (과도한 제약으로 인한 긴 요약문 생성 방지)
+  # min_length: 15  ← 삭제! (자연스러운 짧은 요약 허용)
+  # repetition_penalty: 1.1  ← 삭제! (불필요한 반복 억제 제거)
+  # length_penalty: 1.0  ← 삭제! (중립값이므로 불필요)
+
+# ----------------------------------------------------------------------------
+# 로깅 설정 (Logging Configuration)
+# ----------------------------------------------------------------------------
+logging:
+  level: INFO  # 로그 레벨
+  format: '%(asctime)s - [%(pipeline_stage)s] - %(name)s - %(levelname)s - %(message)s'  # 로그 포맷
+  save_to_file: true  # 파일로 저장
+  use_notebook_logger: true  # 노트북 로거 사용
+  notebook_logger_path: ../../../src/logging/notebook_logger.py  # 노트북 로거 경로
+  
+  loggers:  # 로거 목록
+    - pipeline  # 파이프라인 로거
+    - training  # 학습 로거
+    - evaluation  # 평가 로거
+    - inference  # 추론 로거
+
+# ----------------------------------------------------------------------------
+# 모델 설정 (Model Configuration)
+# ----------------------------------------------------------------------------
+models:
+  # 주 모델
+  primary_models:
+    - name: gogamza/kobart-base-v2  # 모델 이름
+      max_input_length: 1024  # 입력 최대 길이
+      max_target_length: 200  # 출력 최대 길이
+      use_lora: false  # LoRA 사용 안 함 (Encoder-Decoder는 전체 파인튜닝)
+      weight: 1.0  # 앙상블 가중치
+  
+  # 보조 모델 (앙상블용)
+  auxiliary_models:
+    - name: digit82/kobart-summarization  # 보조 모델 1
+      model_type: seq2seq  # 모델 타입
+      weight: 0.1  # 앙상블 가중치
+    
+    - name: gogamza/kobart-summarization  # 보조 모델 2
+      model_type: seq2seq  # 모델 타입
+      weight: 0.05  # 앙상블 가중치
+
+# ----------------------------------------------------------------------------
+# 경로 설정 (Paths Configuration)
+# ----------------------------------------------------------------------------
+paths:
+  data_dir: ../../../data/raw  # 원본 데이터 디렉토리
+  train_file: ../../../data/raw/train.csv  # 학습 데이터
+  dev_file: ../../../data/raw/dev.csv  # 검증 데이터
+  test_file: ../../../data/raw/test.csv  # 테스트 데이터
+  output_dir: ./models/full_pipeline  # 모델 출력 디렉토리
+  log_dir: ./logs/full_pipeline  # 로그 디렉토리
+  submission_dir: ./submissions/full_pipeline  # 제출 파일 디렉토리
+  visualization_dir: ./logs/full_pipeline/visualizations  # 시각화 디렉토리
+  cache_dir: ./cache/full_pipeline  # 캐시 디렉토리
+  preprocessed_data_dir: ./data/preprocessed  # 전처리된 데이터 디렉토리
+  augmented_data_dir: ./data/augmented  # 증강된 데이터 디렉토리
+
+# ----------------------------------------------------------------------------
+# 성능 목표 (Performance Targets)
+# ----------------------------------------------------------------------------
+performance_targets:
+  overall: 0.85  # 전체 목표 점수
+  rouge_1: 0.45  # ROUGE-1 목표
+  rouge_2: 0.3  # ROUGE-2 목표
+  rouge_l: 0.4  # ROUGE-L 목표
+
+# ----------------------------------------------------------------------------
+# 파이프라인 단계 (Pipeline Stages)
+# ----------------------------------------------------------------------------
+pipeline:
+  # 순차 실행 단계
+  stages:
+    - data_quality_check  # 데이터 품질 검증
+    - data_preprocessing  # 데이터 전처리
+    - data_augmentation  # 데이터 증강
+    - model_training  # 모델 학습
+    - cross_validation  # 교차 검증
+    - ensemble  # 앙상블
+    - hyperparameter_optimization  # 하이퍼파라미터 최적화
+    - inference_optimization  # 추론 최적화
+    - final_prediction  # 최종 예측
+  
+  # 병렬 실행 단계 (동시 실행 가능)
+  parallel_stages:
+    - [model_training, prompt_optimization]  # 모델 학습 + Prompt 최적화 병렬
+    - [cross_validation, tta_preparation]  # 교차 검증 + TTA 준비 병렬
+
+# ----------------------------------------------------------------------------
+# 후처리 설정 (Post-processing)
+# ----------------------------------------------------------------------------
+post_processing:
+  # 문법 교정
+  grammar_correction:
+    enabled: true  # 문법 교정 활성화
+    tool: py-hanspell  # 한국어 맞춤법 검사 도구
+  
+  # 길이 조정
+  length_adjustment:
+    min_length: 30  # 최소 길이 (문자 단위)
+    max_length: 200  # 최대 길이 (문자 단위)
+    target_length: 100  # 목표 길이 (문자 단위)
+  
+  # 품질 검사
+  quality_check:
+    check_coherence: true  # 일관성 검사
+    check_completeness: true  # 완전성 검사
+    min_rouge_score: 0.3  # 최소 ROUGE 점수
+
+# ----------------------------------------------------------------------------
+# 전처리 설정 (Preprocessing)
+# ----------------------------------------------------------------------------
+preprocessing:
+  # 데이터 분할
+  data_split:
+    validation_ratio: 0.1  # 검증 데이터 비율 (10%)
+    stratify: false  # 계층화 샘플링 비활성화
+    seed: 42  # 랜덤 시드
+  
+  # 노이즈 제거
+  noise_removal:
+    fix_escaped_chars: true  # 이스케이프 문자 수정 (\n → 공백)
+    normalize_whitespace: true  # 공백 정규화
+    remove_html_tags: true  # HTML 태그 제거
+    remove_special_tokens: false  # 특수 토큰 유지 (마스킹 토큰 보존)
+  
+  # 토큰 정규화
+  token_normalization:
+    # Person 토큰
+    person_tokens:
+      standardize: true  # 표준화
+      format: '#Person{id}#'  # 포맷
+    
+    # 마스킹 토큰
+    masking_tokens:
+      preserve: true  # 보존
+      tokens:  # 토큰 목록
+        - '#PhoneNumber#'
+        - '#Address#'
+        - '#SSN#'
+        - '#Email#'
+
+# ----------------------------------------------------------------------------
+# Prompt Engineering 설정
+# ----------------------------------------------------------------------------
+prompt_engineering:
+  enabled: true  # Prompt Engineering 활성화
+  
+  # A/B 테스팅
+  ab_testing:
+    enabled: true  # A/B 테스팅 활성화
+    num_variants: 5  # 변형 개수
+    selection_metric: rouge_l  # 선택 메트릭
+  
+  # Prompt 템플릿
+  templates:
+    # Zero-shot
+    zero_shot:
+      enabled: true  # Zero-shot 활성화
+      template: |
+        다음 대화를 3-5문장으로 요약하세요:
+        {dialogue}
+        
+        요약:
+    
+    # Few-shot
+    few_shot:
+      enabled: true  # Few-shot 활성화
+      num_examples: 3  # 예제 개수
+      example_selection: random  # 예제 선택 방법 (무작위)
+    
+    # Chain-of-Thought
+    chain_of_thought:
+      enabled: true  # CoT 활성화
+      template: |
+        다음 대화를 단계적으로 분석하여 요약하세요.
+        
+        1단계: 주요 주제 파악
+        2단계: 핵심 정보 추출
+        3단계: 간결한 요약 작성
+        
+        대화: {dialogue}
+        
+        분석 및 요약:
+
+# ----------------------------------------------------------------------------
+# 재현성 설정 (Reproducibility)
+# ----------------------------------------------------------------------------
+reproducibility:
+  seed: 42  # 랜덤 시드
+  deterministic: true  # 결정적 동작 활성화
+  benchmark: false  # 벤치마크 모드 비활성화
+  worker_init_fn: true  # Worker 초기화 함수 사용
+
+# ----------------------------------------------------------------------------
+# Solar API 설정 (교차 검증 시스템)
+# ----------------------------------------------------------------------------
+solar_api:
+  api_key: up_rMJWNzzBi6YsD47RhwXPWZrZ0JKsT  # Solar API 키
+  enabled: true  # Solar API 사용
+  
+  # 하이브리드 접근
+  hybrid_approach:
+    use_for_validation: true  # 검증용 사용
+    use_for_difficult_samples: true  # 어려운 샘플용 사용
+    confidence_threshold: 0.7  # 신뢰도 임계값
+  
+  # 최적화
+  optimization:
+    batch_size: 10  # 배치 크기
+    cache_responses: true  # 응답 캐시
+    token_budget: 100000  # 토큰 예산
+
+# ----------------------------------------------------------------------------
+# 학습 설정 (Training Configuration)
+# ----------------------------------------------------------------------------
+training:
+  # 기본 학습 파라미터
+  seed: 42  # 랜덤 시드
+  num_epochs: 30  # 학습 에폭 수
+  batch_size: 8  # 배치 크기
+  learning_rate: 5e-5  # 학습률
+  use_sample: false  # 샘플 데이터 사용 안 함 (전체 데이터 사용)
+  
+  # 최적화 설정
+  scheduler: linear  # 학습률 스케줄러
+  warmup_ratio: 0.0  # Warmup 비율
+  weight_decay: 0.0  # 가중치 감쇠
+  max_grad_norm: 1.0  # 그래디언트 클리핑
+  gradient_accumulation_steps: 1  # 그래디언트 누적
+  gradient_checkpointing: false  # 그래디언트 체크포인팅 비활성화 (KoBART 작음)
+  
+  # Mixed Precision
+  fp16: true  # FP16 학습 활성화
+  
+  # 조기 종료
+  early_stopping:
+    metric: eval_rouge_sum  # 조기 종료 메트릭
+    patience: 3  # 인내 횟수
+    threshold: 0.001  # 임계값
+  
+  # Encoder-Decoder 전용
+  predict_with_generate: true  # 평가 시 생성 모드 사용
+  generation_max_length: 200  # 생성 최대 길이
+  generation_num_beams: 4  # Beam Search 빔 개수
+  generation_no_repeat_ngram_size: 2  # 반복 방지 n-gram
+  
+  # 최적 모델 선택
+  evaluation_strategy: epoch  # 평가 전략 (매 에폭)
+  save_strategy: epoch  # 저장 전략 (매 에폭)
+  load_best_model_at_end: true  # 최고 모델 로드
+  metric_for_best_model: rouge_sum  # 최고 모델 선택 기준 (Encoder-Decoder용)
+  greater_is_better: true  # 클수록 좋음
+  save_total_limit: 2  # 최대 저장 개수
+
+# ----------------------------------------------------------------------------
+# 시각화 설정 (Visualization)
+# ----------------------------------------------------------------------------
+visualization:
+  enabled: true  # 시각화 활성화
+  save_path: ./logs/full_pipeline/visualizations  # 저장 경로
+  use_training_viz: true  # 학습 시각화 도구 사용
+  training_viz_path: ../../../src/utils/visualizations/training_viz.py  # 시각화 도구 경로
+  
+  # 생성할 플롯 목록
+  plots:
+    - training_curves  # 학습 곡선
+    - model_comparison  # 모델 비교
+    - confusion_matrix  # 혼동 행렬
+    - rouge_distribution  # ROUGE 분포
+    - sample_difficulty_heatmap  # 샘플 난이도 히트맵
+    - ensemble_weights  # 앙상블 가중치
+    - hyperparameter_importance  # 하이퍼파라미터 중요도
+
+# ----------------------------------------------------------------------------
+# WandB 설정 (Weights & Biases)
+# ----------------------------------------------------------------------------
+wandb:
+  project: nlp-competition  # 프로젝트 이름
+  entity: ieyeppo  # 엔티티 (사용자/팀)
+  name: full-pipeline-integrated  # 실험 이름
+  notes: 모든 기법이 통합된 최종 파이프라인  # 실험 노트
+  mode: online  # 모드 (online/offline/disabled)
+  
+  # 태그
+  tags:
+    - full_pipeline  # 전체 파이프라인
+    - production  # 프로덕션
+    - all_techniques  # 모든 기법 포함
+  
+  # 로깅 설정
+  log_artifacts: true  # 아티팩트 로깅
+  log_datasets: true  # 데이터셋 로깅
+  log_models: true  # 모델 로깅
