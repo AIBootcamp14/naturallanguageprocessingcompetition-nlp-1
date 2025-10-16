@@ -169,4 +169,4 @@ nosetests.xml # Test results
 
 # Docs 특정 파일만 제외
 /docs/*.md
-/docs/참고
+/docs/ppt
