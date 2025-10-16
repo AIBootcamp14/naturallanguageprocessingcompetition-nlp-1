@@ -321,6 +321,7 @@ python scripts/train.py \
 #
 # 💡 TIP: 다음 명령어로 최신 폴더 찾기
 # ls -lt experiments/$(ls experiments/ | tail -1) | grep kobart_ultimate_kfold
+# solar_model: solar-mini, solar-pro2
 
 python scripts/inference.py \
   --model experiments/[날짜]/kobart_ultimate_kfold/kobart/final_model \
@@ -340,21 +341,22 @@ python scripts/kfold_ensemble_inference.py \
   --experiment_dir experiments/20251014/20251014_183206_kobart_ultimate_kfold \
   --test_data data/raw/test.csv \
   --use_solar_api \
-  --solar_model solar-1-chat \
+  --solar_model solar-pro2 \
   --solar_temperature 0.1 \
-  --solar_batch_size 5 \
-  --solar_delay 2.0 \
+  --solar_use_voting \
+  --solar_n_samples 5 \
+  --solar_delay 3.0 \
   --use_pretrained_correction \
-  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization ainize/kobart-news
+  --correction_models gogamza/kobart-base-v2 digit82/kobart-summarization \
   --correction_strategy quality_based \
-  --correction_threshold 0.25 \
+  --correction_threshold 0.3 \
   --max_new_tokens 80 \
-  --min_new_tokens 20 \
-  --num_beams 8 \
-  --length_penalty 0.9214 \
-  --repetition_penalty 2 \
+  --min_new_tokens 12 \
+  --num_beams 5 \
+  --length_penalty 1.0 \
+  --repetition_penalty 1.5 \
   --no_repeat_ngram_size 3 \
-  --batch_size 8 \
+  --batch_size 16 \
   --ensemble_method soft_voting \
   --resume
 
