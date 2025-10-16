@@ -19,12 +19,12 @@
 
 | 프로필 | 이름 (깃허브) | MBTI | 전공/학과 | 담당 역할 |
 |:------:|:-------------:|:----:|:---------:|:----------|
-| <img src="https://github.com/user-attachments/assets/a24cf78c-2c8f-47b9-b53b-867557872d88" width="100" height="100"> | [김선민](https://github.com/nimnusmik) | INFJ | 경영&AI 융합 학부 | 팀 리드/전처리 및 모델 최적화 |
-| <img src="https://github.com/user-attachments/assets/489d401e-f5f5-4998-91a0-3b0f37f4490f" width="100" height="100"> | [김병현](https://github.com/Bkankim) | ENFP | 정보보안 | 전처리/EDA/모델 개발/성능 고도화 |
-| <img src="https://github.com/user-attachments/assets/55180131-9401-457e-a600-312eda87ded9" width="100" height="100"> | [임예슬](https://github.com/joy007fun/joy007fun) | ENTP | 관광경영&컴퓨터공학, 클라우드 인프라 | EDA/모델링/성능 고도화 |
-| <img src="https://github.com/user-attachments/assets/10a2c088-72cb-45cd-8772-b683bc2fb550" width="100" height="100"> | [정서우](https://github.com/Seowoo-C) | ISFJ | 화학 | EDA/모델링/성능 고도화 |
-| <img src="https://github.com/user-attachments/assets/1649f72b-14a6-4a63-bf35-20330a464c1c" width="100" height="100"> | [정소현](https://github.com/soniajhung) | ESFJ | 인사 | 모델 최적화 |
-| <img src="https://github.com/user-attachments/assets/5c04a858-46ed-4043-9762-b7eaf7b1149a" width="100" height="100"> | [최현화](https://github.com/iejob) | ISTP | 컴퓨터공학 | EDA/모델링/성능 고도화/Git 병합 및 관리 |
+| <img src="https://github.com/user-attachments/assets/a24cf78c-2c8f-47b9-b53b-867557872d88" width="100" height="100"> | [김선민](https://github.com/nimnusmik) | INFJ | 경영&AI 융합 학부 | 팀 리드/데이터 분석 및 전처리/모델 실험 및 하이퍼파라미터 튜닝/성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/489d401e-f5f5-4998-91a0-3b0f37f4490f" width="100" height="100"> | [김병현](https://github.com/Bkankim) | ENFP | 정보보안 | 데이터 분석 및 전처리/모델 실험 및 하이퍼파라미터 튜닝/LLM 전반에 대한 연구/데이터 증강/성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/55180131-9401-457e-a600-312eda87ded9" width="100" height="100"> | [임예슬](https://github.com/joy007fun/joy007fun) | ENTP | 관광경영&컴퓨터공학, 클라우드 인프라 | 데이터 분석 및 전처리/모델 실험 및 하이퍼파라미터 튜닝/성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/10a2c088-72cb-45cd-8772-b683bc2fb550" width="100" height="100"> | [정서우](https://github.com/Seowoo-C) | ISFJ | 화학 | 데이터 분석 및 전처리/모델 실험 및 하이퍼파라미터 튜닝/성능 평가 및 실험 분석 |
+| <img src="https://github.com/user-attachments/assets/1649f72b-14a6-4a63-bf35-20330a464c1c" width="100" height="100"> | [정소현](https://github.com/soniajhung) | ESFJ | 인사 | 모델 실험 및 하이퍼파라미터 튜닝/데이터 증강 및 Solar API 활용/LLM 프롬프트 엔지니어링 |
+| <img src="https://github.com/user-attachments/assets/5c04a858-46ed-4043-9762-b7eaf7b1149a" width="100" height="100"> | [최현화](https://github.com/iejob) | ISTP | 컴퓨터공학 | 데이터 분석 및 전처리/Optuna 최적화/모델 실험 및 하이퍼파라미터 튜닝/데이터 증강 및 Solar API 활용/K-Fold 교차검증/다중 모델 앙상블/LLM 프롬프트 엔지니어링/성능 평가 및 실험 분석 |
 
 ### 협업 방식
 
